@@ -1,0 +1,60 @@
+import { Background } from '@/types/background';
+
+export const AVAILABLE_BACKGROUNDS: Background[] = [
+  {
+    id: 'cosmic-purple',
+    name: 'Cosmic Purple',
+    colors: ['#0a0a1a', '#1a0a2e', '#2d1b4e'],
+    price: 0,
+    isPurchased: true,
+    preview: '🌌',
+  },
+  {
+    id: 'sunset-dreams',
+    name: 'Sunset Dreams',
+    colors: ['#1a0a1a', '#3d1f47', '#ff6b9d'],
+    price: 1.99,
+    isPurchased: false,
+    preview: '🌅',
+  },
+  {
+    id: 'ocean-depth',
+    name: 'Ocean Depth',
+    colors: ['#001f3f', '#0a4d68', '#088395'],
+    price: 1.99,
+    isPurchased: false,
+    preview: '🌊',
+  },
+  {
+    id: 'forest-magic',
+    name: 'Forest Magic',
+    colors: ['#0d1b2a', '#1b4332', '#2d6a4f'],
+    price: 1.99,
+    isPurchased: false,
+    preview: '🌲',
+  },
+  {
+    id: 'golden-hour',
+    name: 'Golden Hour',
+    colors: ['#2d1b00', '#5c3d2e', '#f4a261'],
+    price: 1.99,
+    isPurchased: false,
+    preview: '✨',
+  },
+  {
+    id: 'rose-quartz',
+    name: 'Rose Quartz',
+    colors: ['#2d1a1f', '#4d2e3a', '#ff9ebb'],
+    price: 1.99,
+    isPurchased: false,
+    preview: '🌸',
+  },
+  {
+    id: 'midnight-aurora',
+    name: 'Midnight Aurora',
+    colors: ['#0a1128', '#1e3a5f', '#00d4aa'],
+    price: 2.99,
+    isPurchased: false,
+    preview: '🌠',
+  },
+];
