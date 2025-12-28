@@ -418,7 +418,7 @@ export default function GardenScreen() {
   const [stars] = useState(() => Array.from({ length: 20 }, (_, i) => i));
   const [showBoostPrompt, setShowBoostPrompt] = useState(false);
   const [showEnergyPrompt, setShowEnergyPrompt] = useState(false);
-  const [selectedManifestation, setSelectedManifestation] = useState<Manifestation | null>(null);
+  const [selectedManifestationId, setSelectedManifestationId] = useState<string | null>(null);
   const [showNotificationSettings, setShowNotificationSettings] = useState(false);
   const [showBackgroundStore, setShowBackgroundStore] = useState(false);
   const [showStreakReward, setShowStreakReward] = useState(false);
@@ -633,7 +633,7 @@ export default function GardenScreen() {
                   manifestation={m}
                   onNurture={() => handleNurture(m.id)}
                   onBoost={() => handleBoostRequest(m.id)}
-                  onPress={() => setSelectedManifestation(m)}
+                  onPress={() => setSelectedManifestationId(m.id)}
                 />
               ))}
             </>
@@ -657,24 +657,28 @@ export default function GardenScreen() {
           </LinearGradient>
         </Pressable>
 
-        {selectedManifestation && (
+        {selectedManifestationId && (() => {
+          const selectedManifestation = manifestations.find(m => m.id === selectedManifestationId);
+          if (!selectedManifestation) return null;
+          
+          return (
           <Modal
             visible={true}
             transparent
             animationType="fade"
-            onRequestClose={() => setSelectedManifestation(null)}
+            onRequestClose={() => setSelectedManifestationId(null)}
           >
             <View style={styles.modalOverlay}>
               <Pressable 
                 style={styles.modalBackdrop}
-                onPress={() => setSelectedManifestation(null)}
+                onPress={() => setSelectedManifestationId(null)}
               />
               <View style={styles.detailModal}>
                 <View style={styles.detailHeader}>
                   <Text style={styles.detailEmoji}>{selectedManifestation.stage === 'blooming' ? '🌸' : selectedManifestation.stage === 'growing' ? '🌿' : selectedManifestation.stage === 'sprout' ? '🌱' : '🌰'}</Text>
                   <Pressable
                     style={styles.closeButton}
-                    onPress={() => setSelectedManifestation(null)}
+                    onPress={() => setSelectedManifestationId(null)}
                   >
                     <X color="#fff" size={24} />
                   </Pressable>
@@ -742,7 +746,7 @@ export default function GardenScreen() {
                             selectedManifestation.color
                           );
                           harvestManifestation(selectedManifestation.id);
-                          setSelectedManifestation(null);
+                          setSelectedManifestationId(null);
                         }}
                       >
                         <LinearGradient
@@ -760,7 +764,7 @@ export default function GardenScreen() {
                         onPress={() => {
                           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                           harvestManifestation(selectedManifestation.id);
-                          setSelectedManifestation(null);
+                          setSelectedManifestationId(null);
                         }}
                       >
                         <LinearGradient
@@ -781,7 +785,7 @@ export default function GardenScreen() {
                     onPress={() => {
                       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
                       deleteManifestation(selectedManifestation.id);
-                      setSelectedManifestation(null);
+                      setSelectedManifestationId(null);
                     }}
                   >
                     <Trash2 color="#ff4444" size={18} />
@@ -791,7 +795,8 @@ export default function GardenScreen() {
               </View>
             </View>
           </Modal>
-        )}
+          );
+        })()}
 
         {showNotificationSettings && (
           <Modal
