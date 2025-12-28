@@ -268,7 +268,7 @@ export default function ShopScreen() {
             <View style={styles.itemsGrid}>
               {SHOP_ITEMS.filter(item => item.type === 'gems').map(item => {
                 const Icon = item.icon;
-                const discount = isPremium ? 0.9 : 1;
+                const discount = isPremium ? 0.75 : 1;
                 const finalPrice = item.price * discount;
                 
                 return (
@@ -309,7 +309,7 @@ export default function ShopScreen() {
                       {isPremium && (
                         <View style={styles.discountBadge}>
                           <Crown size={10} color="#FFD700" />
-                          <Text style={styles.discountText}>10% OFF</Text>
+                          <Text style={styles.discountText}>25% OFF</Text>
                         </View>
                       )}
                     </LinearGradient>
@@ -324,7 +324,7 @@ export default function ShopScreen() {
             <View style={styles.itemsGrid}>
               {SHOP_ITEMS.filter(item => item.type === 'seeds').map(item => {
                 const Icon = item.icon;
-                const discount = isPremium ? 0.9 : 1;
+                const discount = isPremium ? 0.75 : 1;
                 const finalPrice = item.price * discount;
                 
                 return (
@@ -369,7 +369,7 @@ export default function ShopScreen() {
             <View style={styles.itemsGrid}>
               {SHOP_ITEMS.filter(item => item.type === 'booster').map(item => {
                 const Icon = item.icon;
-                const discount = isPremium ? 0.9 : 1;
+                const discount = isPremium ? 0.75 : 1;
                 const finalPrice = item.price * discount;
                 
                 return (
@@ -413,7 +413,7 @@ export default function ShopScreen() {
             <View style={styles.itemsGrid}>
               {SHOP_ITEMS.filter(item => item.type === 'energy' || item.type === 'auto').map(item => {
                 const Icon = item.icon;
-                const discount = isPremium ? 0.9 : 1;
+                const discount = isPremium ? 0.75 : 1;
                 const finalPrice = item.price * discount;
                 const isOwned = item.type === 'auto' && autoNurtureActive;
                 
@@ -458,7 +458,7 @@ export default function ShopScreen() {
             <View style={styles.infoBox}>
               <Text style={styles.infoTitle}>💳 Safe & Secure</Text>
               <Text style={styles.infoText}>
-                All purchases are processed securely. Premium members get 10% off all shop items!
+                All purchases are processed securely. Premium members get 25% off all shop items!
               </Text>
             </View>
 
