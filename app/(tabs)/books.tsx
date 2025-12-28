@@ -51,7 +51,7 @@ function BookCard({ book, onPress, discountedPrice, isPremium, hasRecentPurchase
               <View style={styles.discountBadges}>
                 {isPremium && (
                   <View style={styles.discountBadge}>
-                    <Text style={styles.discountText}>👑 50% OFF</Text>
+                    <Text style={styles.discountText}>👑 25% OFF</Text>
                   </View>
                 )}
                 {hasRecentPurchase && (
@@ -238,7 +238,7 @@ export default function BooksScreen() {
                     <View>
                       {(isPremium || hasRecentPurchase) && (
                         <View style={styles.modalDiscountBadges}>
-                          {isPremium && <Text style={styles.modalDiscountText}>👑 Premium: 50% OFF</Text>}
+                          {isPremium && <Text style={styles.modalDiscountText}>👑 Premium: 25% OFF</Text>}
                           {hasRecentPurchase && <Text style={styles.modalDiscountText}>⚡ Consecutive Purchase: +25% OFF</Text>}
                         </View>
                       )}

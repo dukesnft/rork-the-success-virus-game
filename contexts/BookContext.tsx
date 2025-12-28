@@ -80,7 +80,7 @@ export const [BookProvider, useBooks] = createContextHook(() => {
     let price = book.price;
     
     if (isPremium) {
-      price = price * 0.5;
+      price = price * 0.75;
     }
     
     const now = Date.now();

@@ -598,7 +598,7 @@ export const AVAILABLE_BOOKS: Book[] = [
     author: '@thesuccess.virus',
     description: 'Discover the power of crystals combined with intentional manifestation. Learn how to harness crystal energy and the Law of Attraction to manifest your desires.',
     coverUrl: 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=400&h=600&fit=crop',
-    price: 11.1,
+    price: 22.2,
     isPurchased: false,
     readingProgress: 0,
     category: 'manifestation',
