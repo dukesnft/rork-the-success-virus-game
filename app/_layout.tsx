@@ -14,6 +14,8 @@ import { JournalProvider } from "@/contexts/JournalContext";
 import { InventoryProvider } from "@/contexts/InventoryContext";
 import { RankingProvider } from "@/contexts/RankingContext";
 import { CommunityProvider } from "@/contexts/CommunityContext";
+import { AchievementProvider } from "@/contexts/AchievementContext";
+import { QuestProvider } from "@/contexts/QuestContext";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -41,10 +43,12 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <PremiumProvider>
-        <NotificationProvider>
-          <InventoryProvider>
-            <RankingProvider>
-              <CommunityProvider>
+        <AchievementProvider>
+          <QuestProvider>
+            <NotificationProvider>
+              <InventoryProvider>
+                <RankingProvider>
+                  <CommunityProvider>
                 <ManifestationProvider>
                   <DailyManifestationProvider>
                     <BookProvider>
@@ -58,10 +62,12 @@ export default function RootLayout() {
                     </BookProvider>
                   </DailyManifestationProvider>
                 </ManifestationProvider>
-              </CommunityProvider>
-            </RankingProvider>
-          </InventoryProvider>
-        </NotificationProvider>
+                  </CommunityProvider>
+                </RankingProvider>
+              </InventoryProvider>
+            </NotificationProvider>
+          </QuestProvider>
+        </AchievementProvider>
       </PremiumProvider>
     </QueryClientProvider>
   );

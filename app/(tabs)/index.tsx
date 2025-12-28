@@ -1,7 +1,7 @@
 import { StyleSheet, View, Text, Pressable, Animated, Dimensions, ScrollView, Modal } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Sparkles, Plus, X, Trash2, Bell, Clock, Palette, Package, Share2, ShoppingBag, Gem } from 'lucide-react-native';
+import { Sparkles, Plus, X, Trash2, Bell, Clock, Palette, Package, Share2, ShoppingBag, Gem, Trophy, Target, Zap } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useManifestations } from '@/contexts/ManifestationContext';
 import { usePremium } from '@/contexts/PremiumContext';
@@ -9,6 +9,8 @@ import { useNotifications } from '@/contexts/NotificationContext';
 import { useBackgrounds } from '@/contexts/BackgroundContext';
 import { useInventory } from '@/contexts/InventoryContext';
 import { useRankings } from '@/contexts/RankingContext';
+import { useAchievements } from '@/contexts/AchievementContext';
+import { useQuests } from '@/contexts/QuestContext';
 import { useCommunity } from '@/contexts/CommunityContext';
 import InventoryScreen from '@/app/inventory';
 import RankingsScreen from '@/app/rankings';
@@ -322,7 +324,9 @@ export default function GardenScreen() {
   const router = useRouter();
   const { manifestations, nurtureManifestation, deleteManifestation, harvestManifestation } = useManifestations();
   const { shareManifestation } = useCommunity();
-  const { isPremium, energyBoosts, energy, maxEnergy, streak, gems, consumeEnergyBoost, purchaseEnergyBoost, consumeEnergy, refillEnergy, earnGems } = usePremium();
+  const { isPremium, energyBoosts, energy, maxEnergy, streak, gems, comboCount, comboMultiplier, gardenLevel, gardenXP, maxPlantSlots, consumeEnergyBoost, purchaseEnergyBoost, consumeEnergy, refillEnergy, earnGems, incrementCombo, addGardenXP } = usePremium();
+  const { achievements, newUnlocks, clearNewUnlocks, incrementAchievement, getUnlockedCount, getTotalCount } = useAchievements();
+  const { quests, progressQuest, getCompletedCount, getTotalCount: getQuestsTotalCount } = useQuests();
   const { settings, permissionStatus, requestPermissions, updateSettings, rescheduleAllNotifications } = useNotifications();
   const { selectedBackground } = useBackgrounds();
   const [stars] = useState(() => Array.from({ length: 8 }, (_, i) => i));
@@ -336,6 +340,9 @@ export default function GardenScreen() {
   const [tempMinute, setTempMinute] = useState(settings.dailyTime.minute);
   const [showInventory, setShowInventory] = useState(false);
   const [showRankings, setShowRankings] = useState(false);
+  const [showAchievements, setShowAchievements] = useState(false);
+  const [showQuests, setShowQuests] = useState(false);
+  const [showCombo, setShowCombo] = useState(false);
   const { getTotalSeedsCount } = useInventory();
   const { checkInStreak, updateSeedRankings } = useRankings();
 
@@ -343,14 +350,25 @@ export default function GardenScreen() {
     if (energy >= 1) {
       const success = consumeEnergy(1);
       if (success) {
+        const multiplier = incrementCombo();
         nurtureManifestation(id);
+        addGardenXP(5 * multiplier);
+        progressQuest('nurture', 1);
+        incrementAchievement('nurture_100', 1);
+        incrementAchievement('energy_efficient', 1);
+        
+        if (multiplier > 1) {
+          setShowCombo(true);
+          setTimeout(() => setShowCombo(false), 1500);
+        }
+        
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       }
     } else {
       setShowEnergyPrompt(true);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
-  }, [energy, consumeEnergy, nurtureManifestation]);
+  }, [energy, consumeEnergy, nurtureManifestation, incrementCombo, addGardenXP, progressQuest, incrementAchievement]);
 
   const handleBoostRequest = useCallback((id: string) => {
     if (energyBoosts > 0) {
@@ -460,6 +478,25 @@ export default function GardenScreen() {
           </View>
           <Text style={styles.subtitle}>Nurture your intentions into reality</Text>
           
+          <View style={styles.gardenLevelContainer}>
+            <View style={styles.levelBadge}>
+              <Trophy color="#FFD700" size={16} />
+              <Text style={styles.levelText}>Level {gardenLevel}</Text>
+            </View>
+            <View style={styles.xpBarContainer}>
+              <View style={styles.xpBar}>
+                <LinearGradient
+                  colors={['#9370DB', '#FF69B4']}
+                  style={[styles.xpFill, { width: `${(gardenXP / (gardenLevel * 100)) * 100}%` }]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                />
+              </View>
+              <Text style={styles.xpText}>{gardenXP}/{gardenLevel * 100} XP</Text>
+            </View>
+            <Text style={styles.plantSlotsText}>Slots: {manifestations.length}/{maxPlantSlots}</Text>
+          </View>
+          
           <View style={styles.topStatsContainer}>
             <View style={styles.statusBar}>
               <Pressable 
@@ -516,6 +553,38 @@ export default function GardenScreen() {
                 style={styles.quickActionButton}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setShowQuests(true);
+                }}
+              >
+                <Target color="#FFD700" size={18} />
+                <Text style={styles.quickActionText}>Quests</Text>
+                {getCompletedCount() < getQuestsTotalCount() && (
+                  <View style={styles.quickActionBadge}>
+                    <Text style={styles.quickActionBadgeText}>{getCompletedCount()}/{getQuestsTotalCount()}</Text>
+                  </View>
+                )}
+              </Pressable>
+              
+              <Pressable 
+                style={styles.quickActionButton}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setShowAchievements(true);
+                }}
+              >
+                <Trophy color="#FFD700" size={18} />
+                <Text style={styles.quickActionText}>Achievements</Text>
+                {newUnlocks.length > 0 && (
+                  <View style={styles.quickActionBadge}>
+                    <Text style={styles.quickActionBadgeText}>!</Text>
+                  </View>
+                )}
+              </Pressable>
+              
+              <Pressable 
+                style={styles.quickActionButton}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   setShowInventory(true);
                 }}
               >
@@ -550,6 +619,14 @@ export default function GardenScreen() {
             </View>
           </View>
         </View>
+
+        {showCombo && comboCount > 1 && (
+          <View style={styles.comboIndicator}>
+            <Zap color="#FFD700" size={24} />
+            <Text style={styles.comboText}>{comboCount}x COMBO!</Text>
+            <Text style={styles.comboMultiplierText}>{comboMultiplier.toFixed(1)}x XP</Text>
+          </View>
+        )}
 
         <View style={styles.gardenArea}>
           <View style={styles.gardenGrid}>
@@ -1024,6 +1101,152 @@ export default function GardenScreen() {
 
         <InventoryScreen visible={showInventory} onClose={() => setShowInventory(false)} />
         <RankingsScreen visible={showRankings} onClose={() => setShowRankings(false)} />
+
+        {showAchievements && (
+          <Modal visible={true} transparent animationType="fade" onRequestClose={() => setShowAchievements(false)}>
+            <View style={styles.modalOverlay}>
+              <Pressable style={styles.modalBackdrop} onPress={() => setShowAchievements(false)} />
+              <View style={styles.questModal}>
+                <View style={styles.modalHeader}>
+                  <Trophy color="#FFD700" size={32} />
+                  <Pressable style={styles.closeButton} onPress={() => setShowAchievements(false)}>
+                    <X color="#fff" size={24} />
+                  </Pressable>
+                </View>
+                <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
+                  <Text style={styles.notificationTitle}>Achievements</Text>
+                  <Text style={styles.notificationSubtitle}>
+                    {getUnlockedCount()}/{getTotalCount()} Unlocked
+                  </Text>
+                  {achievements.map((achievement) => (
+                    <View
+                      key={achievement.id}
+                      style={[
+                        styles.achievementCard,
+                        achievement.unlocked && styles.achievementCardUnlocked,
+                      ]}
+                    >
+                      <Text style={styles.achievementIcon}>{achievement.icon}</Text>
+                      <View style={styles.achievementInfo}>
+                        <Text style={styles.achievementTitle}>{achievement.title}</Text>
+                        <Text style={styles.achievementDescription}>{achievement.description}</Text>
+                        <View style={styles.achievementProgress}>
+                          <View style={styles.achievementProgressBar}>
+                            <View
+                              style={[
+                                styles.achievementProgressFill,
+                                {
+                                  width: `${(achievement.currentValue / achievement.targetValue) * 100}%`,
+                                },
+                              ]}
+                            />
+                          </View>
+                          <Text style={styles.achievementProgressText}>
+                            {achievement.currentValue}/{achievement.targetValue}
+                          </Text>
+                        </View>
+                        {achievement.unlocked && (
+                          <View style={styles.achievementRewardBadge}>
+                            <Text style={styles.achievementRewardText}>✓ Unlocked</Text>
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                  ))}
+                </ScrollView>
+              </View>
+            </View>
+          </Modal>
+        )}
+
+        {showQuests && (
+          <Modal visible={true} transparent animationType="fade" onRequestClose={() => setShowQuests(false)}>
+            <View style={styles.modalOverlay}>
+              <Pressable style={styles.modalBackdrop} onPress={() => setShowQuests(false)} />
+              <View style={styles.questModal}>
+                <View style={styles.modalHeader}>
+                  <Target color="#FFD700" size={32} />
+                  <Pressable style={styles.closeButton} onPress={() => setShowQuests(false)}>
+                    <X color="#fff" size={24} />
+                  </Pressable>
+                </View>
+                <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
+                  <Text style={styles.notificationTitle}>Daily Quests</Text>
+                  <Text style={styles.notificationSubtitle}>
+                    {getCompletedCount()}/{getQuestsTotalCount()} Completed Today
+                  </Text>
+                  {quests.map((quest) => (
+                    <View
+                      key={quest.id}
+                      style={[styles.questCard, quest.completed && styles.questCardCompleted]}
+                    >
+                      <View style={styles.questHeader}>
+                        <Text style={styles.questTitle}>{quest.title}</Text>
+                        {quest.completed && <Text style={styles.questCompletedBadge}>✓</Text>}
+                      </View>
+                      <Text style={styles.questDescription}>{quest.description}</Text>
+                      <View style={styles.questProgress}>
+                        <View style={styles.questProgressBar}>
+                          <LinearGradient
+                            colors={['#9370DB', '#FF69B4']}
+                            style={[
+                              styles.questProgressFill,
+                              { width: `${(quest.currentValue / quest.targetValue) * 100}%` },
+                            ]}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 0 }}
+                          />
+                        </View>
+                        <Text style={styles.questProgressText}>
+                          {quest.currentValue}/{quest.targetValue}
+                        </Text>
+                      </View>
+                      <View style={styles.questReward}>
+                        <Gem color="#9370DB" size={16} />
+                        <Text style={styles.questRewardText}>+{quest.reward.gems} gems</Text>
+                        {quest.reward.energy && (
+                          <>
+                            <Text style={styles.questRewardSeparator}>•</Text>
+                            <Text style={styles.questRewardText}>+{quest.reward.energy} energy</Text>
+                          </>
+                        )}
+                      </View>
+                    </View>
+                  ))}
+                </ScrollView>
+              </View>
+            </View>
+          </Modal>
+        )}
+
+        {newUnlocks.length > 0 && (
+          <Modal visible={true} transparent animationType="fade" onRequestClose={clearNewUnlocks}>
+            <View style={styles.modalOverlay}>
+              <Pressable style={styles.modalBackdrop} onPress={clearNewUnlocks} />
+              <View style={styles.streakModal}>
+                <Text style={styles.streakModalEmoji}>{newUnlocks[0].icon}</Text>
+                <Text style={styles.boostModalTitle}>Achievement Unlocked!</Text>
+                <Text style={styles.boostModalText}>{newUnlocks[0].title}</Text>
+                <Text style={styles.notificationSubtitle}>{newUnlocks[0].description}</Text>
+                <View style={styles.rewardBox}>
+                  <Text style={styles.rewardText}>
+                    Reward: {newUnlocks[0].reward.gems && `+${newUnlocks[0].reward.gems} gems`}
+                    {newUnlocks[0].reward.energy && ` +${newUnlocks[0].reward.energy} energy`}
+                  </Text>
+                </View>
+                <Pressable style={styles.boostButton} onPress={() => {
+                  if (newUnlocks[0].reward.gems) earnGems(newUnlocks[0].reward.gems, 'Achievement reward');
+                  clearNewUnlocks();
+                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                }}>
+                  <LinearGradient colors={['#FFD700', '#FFA500']} style={styles.boostButtonGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                    <Text style={styles.boostButtonText}>Claim Reward</Text>
+                  </LinearGradient>
+                </Pressable>
+              </View>
+            </View>
+          </Modal>
+        )}
       </LinearGradient>
     </View>
   );
@@ -2005,5 +2228,218 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700' as const,
     color: '#fff',
+  },
+  gardenLevelContainer: {
+    marginTop: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+    borderRadius: 16,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  levelBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  levelText: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: '#FFD700',
+  },
+  xpBarContainer: {
+    marginBottom: 8,
+  },
+  xpBar: {
+    height: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginBottom: 6,
+  },
+  xpFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  xpText: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+    color: '#b8a9d9',
+    textAlign: 'center' as const,
+  },
+  plantSlotsText: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+    color: '#b8a9d9',
+    textAlign: 'center' as const,
+  },
+  comboIndicator: {
+    position: 'absolute',
+    top: 120,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(255, 215, 0, 0.95)',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    zIndex: 100,
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.6,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  comboText: {
+    fontSize: 20,
+    fontWeight: '800' as const,
+    color: '#2d1b4e',
+  },
+  comboMultiplierText: {
+    fontSize: 14,
+    fontWeight: '700' as const,
+    color: '#9370DB',
+  },
+  questModal: {
+    backgroundColor: '#2d1b4e',
+    borderRadius: 24,
+    width: width * 0.9,
+    maxWidth: 400,
+    maxHeight: height * 0.8,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 215, 0, 0.3)',
+    zIndex: 1002,
+  },
+  questCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  questCardCompleted: {
+    borderColor: '#32CD32',
+    backgroundColor: 'rgba(50, 205, 50, 0.1)',
+  },
+  questHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  questTitle: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: '#fff',
+  },
+  questCompletedBadge: {
+    fontSize: 20,
+    color: '#32CD32',
+  },
+  questDescription: {
+    fontSize: 14,
+    color: '#b8a9d9',
+    marginBottom: 12,
+  },
+  questProgress: {
+    marginBottom: 12,
+  },
+  questProgressBar: {
+    height: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginBottom: 6,
+  },
+  questProgressFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  questProgressText: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+    color: '#b8a9d9',
+    textAlign: 'right' as const,
+  },
+  questReward: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  questRewardText: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: '#9370DB',
+  },
+  questRewardSeparator: {
+    fontSize: 13,
+    color: '#b8a9d9',
+  },
+  achievementCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    flexDirection: 'row',
+    gap: 12,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  achievementCardUnlocked: {
+    borderColor: '#FFD700',
+    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+  },
+  achievementIcon: {
+    fontSize: 40,
+  },
+  achievementInfo: {
+    flex: 1,
+  },
+  achievementTitle: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: '#fff',
+    marginBottom: 4,
+  },
+  achievementDescription: {
+    fontSize: 13,
+    color: '#b8a9d9',
+    marginBottom: 8,
+  },
+  achievementProgress: {
+    marginBottom: 8,
+  },
+  achievementProgressBar: {
+    height: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 3,
+    overflow: 'hidden',
+    marginBottom: 4,
+  },
+  achievementProgressFill: {
+    height: '100%',
+    backgroundColor: '#9370DB',
+    borderRadius: 3,
+  },
+  achievementProgressText: {
+    fontSize: 11,
+    fontWeight: '600' as const,
+    color: '#b8a9d9',
+    textAlign: 'right' as const,
+  },
+  achievementRewardBadge: {
+    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
+  achievementRewardText: {
+    fontSize: 12,
+    fontWeight: '700' as const,
+    color: '#FFD700',
   },
 });

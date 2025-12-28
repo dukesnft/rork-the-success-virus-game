@@ -12,10 +12,24 @@ const GROWTH_BOOSTERS_KEY = 'growth_boosters';
 const AUTO_NURTURE_KEY = 'auto_nurture';
 const PURCHASES_KEY = 'total_purchases';
 const FREE_SEEDS_KEY = 'free_seeds_claimed';
+const COMBO_KEY = 'combo_data';
+const GARDEN_LEVEL_KEY = 'garden_level';
 
 interface FreeSeedsState {
   claimedToday: number;
   lastClaimDate: string;
+}
+
+interface ComboState {
+  count: number;
+  multiplier: number;
+  lastActionTime: number;
+}
+
+interface GardenLevel {
+  level: number;
+  xp: number;
+  maxPlantSlots: number;
 }
 
 interface PremiumState {
@@ -43,6 +57,11 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
   const [autoNurtureActive, setAutoNurtureActive] = useState(false);
   const [totalSpent, setTotalSpent] = useState(0);
   const [freeSeedsClaimed, setFreeSeedsClaimed] = useState(0);
+  const [comboCount, setComboCount] = useState(0);
+  const [comboMultiplier, setComboMultiplier] = useState(1);
+  const [gardenLevel, setGardenLevel] = useState(1);
+  const [gardenXP, setGardenXP] = useState(0);
+  const [maxPlantSlots, setMaxPlantSlots] = useState(6);
 
   const premiumQuery = useQuery({
     queryKey: ['premium'],
@@ -164,6 +183,22 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     }
   });
 
+  const comboQuery = useQuery({
+    queryKey: ['combo'],
+    queryFn: async () => {
+      const stored = await AsyncStorage.getItem(COMBO_KEY);
+      return stored ? JSON.parse(stored) : { count: 0, multiplier: 1, lastActionTime: 0 };
+    }
+  });
+
+  const gardenLevelQuery = useQuery({
+    queryKey: ['gardenLevel'],
+    queryFn: async () => {
+      const stored = await AsyncStorage.getItem(GARDEN_LEVEL_KEY);
+      return stored ? JSON.parse(stored) : { level: 1, xp: 0, maxPlantSlots: 6 };
+    }
+  });
+
   const { mutate: savePremium } = useMutation({
     mutationFn: async (data: PremiumState) => {
       await AsyncStorage.setItem(PREMIUM_STORAGE_KEY, JSON.stringify(data));
@@ -227,6 +262,20 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     }
   });
 
+  const { mutate: saveCombo } = useMutation({
+    mutationFn: async (data: ComboState) => {
+      await AsyncStorage.setItem(COMBO_KEY, JSON.stringify(data));
+      return data;
+    }
+  });
+
+  const { mutate: saveGardenLevel } = useMutation({
+    mutationFn: async (data: GardenLevel) => {
+      await AsyncStorage.setItem(GARDEN_LEVEL_KEY, JSON.stringify(data));
+      return data;
+    }
+  });
+
   useEffect(() => {
     if (premiumQuery.data) {
       setIsPremium(premiumQuery.data.isPremium);
@@ -285,6 +334,29 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
       setFreeSeedsClaimed(freeSeedsQuery.data.claimedToday);
     }
   }, [freeSeedsQuery.data]);
+
+  useEffect(() => {
+    if (comboQuery.data) {
+      const now = Date.now();
+      const timeSinceLastAction = now - comboQuery.data.lastActionTime;
+      
+      if (timeSinceLastAction > 5000) {
+        setComboCount(0);
+        setComboMultiplier(1);
+      } else {
+        setComboCount(comboQuery.data.count);
+        setComboMultiplier(comboQuery.data.multiplier);
+      }
+    }
+  }, [comboQuery.data]);
+
+  useEffect(() => {
+    if (gardenLevelQuery.data) {
+      setGardenLevel(gardenLevelQuery.data.level);
+      setGardenXP(gardenLevelQuery.data.xp);
+      setMaxPlantSlots(gardenLevelQuery.data.maxPlantSlots);
+    }
+  }, [gardenLevelQuery.data]);
 
   const upgradeToPremium = useCallback((duration: 'month' | 'year') => {
     const now = Date.now();
@@ -445,6 +517,71 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     return Math.max(0, maxFreeSeeds - freeSeedsClaimed);
   }, [freeSeedsClaimed, isPremium]);
 
+  const incrementCombo = useCallback(() => {
+    const now = Date.now();
+    const timeSinceLastAction = now - (comboQuery.data?.lastActionTime || 0);
+    
+    let newCount = comboCount;
+    let newMultiplier = comboMultiplier;
+    
+    if (timeSinceLastAction < 5000) {
+      newCount = comboCount + 1;
+      newMultiplier = Math.min(1 + Math.floor(newCount / 5) * 0.5, 3);
+    } else {
+      newCount = 1;
+      newMultiplier = 1;
+    }
+    
+    setComboCount(newCount);
+    setComboMultiplier(newMultiplier);
+    
+    saveCombo({
+      count: newCount,
+      multiplier: newMultiplier,
+      lastActionTime: now,
+    });
+    
+    return newMultiplier;
+  }, [comboCount, comboMultiplier, comboQuery.data, saveCombo]);
+
+  const resetCombo = useCallback(() => {
+    setComboCount(0);
+    setComboMultiplier(1);
+    saveCombo({ count: 0, multiplier: 1, lastActionTime: 0 });
+  }, [saveCombo]);
+
+  const addGardenXP = useCallback((amount: number) => {
+    const xpNeeded = gardenLevel * 100;
+    const newXP = gardenXP + amount;
+    
+    if (newXP >= xpNeeded) {
+      const newLevel = gardenLevel + 1;
+      const newSlots = 6 + newLevel;
+      const remainingXP = newXP - xpNeeded;
+      
+      setGardenLevel(newLevel);
+      setGardenXP(remainingXP);
+      setMaxPlantSlots(newSlots);
+      
+      saveGardenLevel({
+        level: newLevel,
+        xp: remainingXP,
+        maxPlantSlots: newSlots,
+      });
+      
+      earnGems(10 * newLevel, `Reached Garden Level ${newLevel}`);
+      return true;
+    } else {
+      setGardenXP(newXP);
+      saveGardenLevel({
+        level: gardenLevel,
+        xp: newXP,
+        maxPlantSlots,
+      });
+      return false;
+    }
+  }, [gardenLevel, gardenXP, maxPlantSlots, saveGardenLevel, earnGems]);
+
   return {
     isPremium,
     energyBoosts,
@@ -457,6 +594,11 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     autoNurtureActive,
     totalSpent,
     freeSeedsClaimed,
+    comboCount,
+    comboMultiplier,
+    gardenLevel,
+    gardenXP,
+    maxPlantSlots,
     isLoading: premiumQuery.isLoading || boostsQuery.isLoading || energyQuery.isLoading,
     upgradeToPremium,
     purchaseEnergyBoost,
@@ -476,5 +618,8 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     getFreeSeedsRemaining,
     buyWithGems,
     earnGems,
+    incrementCombo,
+    resetCombo,
+    addGardenXP,
   };
 });
