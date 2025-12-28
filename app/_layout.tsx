@@ -8,7 +8,7 @@ import { ManifestationProvider } from "@/contexts/ManifestationContext";
 import { PremiumProvider } from "@/contexts/PremiumContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { BookProvider } from "@/contexts/BookContext";
-import { WeeklyManifestationProvider } from "@/contexts/DailyManifestationContext";
+import { DailyManifestationProvider } from "@/contexts/DailyManifestationContext";
 import { BackgroundProvider } from "@/contexts/BackgroundContext";
 import { JournalProvider } from "@/contexts/JournalContext";
 import { InventoryProvider } from "@/contexts/InventoryContext";
@@ -43,7 +43,7 @@ export default function RootLayout() {
             <RankingProvider>
               <CommunityProvider>
                 <ManifestationProvider>
-                  <WeeklyManifestationProvider>
+                  <DailyManifestationProvider>
                     <BookProvider>
                       <BackgroundProvider>
                         <JournalProvider>
@@ -53,7 +53,7 @@ export default function RootLayout() {
                         </JournalProvider>
                       </BackgroundProvider>
                     </BookProvider>
-                  </WeeklyManifestationProvider>
+                  </DailyManifestationProvider>
                 </ManifestationProvider>
               </CommunityProvider>
             </RankingProvider>

@@ -68,7 +68,7 @@ function DailyCard({ text, category, used, onPress }: { text: string; category: 
 }
 
 export default function WeeklyManifestationsScreen() {
-  const { manifestations, baseCount, totalCount, extraSlots, markAsUsed, purchaseExtraSlots, refreshWeekly } = useDailyManifestations();
+  const { manifestations, baseCount, totalCount, extraSlots, markAsUsed, purchaseExtraSlots, refreshDaily } = useDailyManifestations();
   const { isPremium } = usePremium();
   const { addManifestation } = useManifestations();
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
@@ -153,7 +153,7 @@ export default function WeeklyManifestationsScreen() {
                   style={styles.refreshButton}
                   onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                    refreshWeekly();
+                    refreshDaily();
                   }}
                 >
                   <RefreshCw color="#FFD700" size={20} />

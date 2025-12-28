@@ -1,16 +1,16 @@
-export interface WeeklyManifestation {
+export interface DailyManifestation {
   id: string;
   text: string;
   category: string;
-  weekStart: string;
+  date: string;
   used: boolean;
 }
 
-export interface WeeklyManifestationState {
-  manifestations: WeeklyManifestation[];
-  lastGeneratedWeek: string;
+export interface DailyManifestationState {
+  manifestations: DailyManifestation[];
+  lastGeneratedDate: string;
   extraSlots: number;
 }
 
-export type DailyManifestation = WeeklyManifestation;
-export type DailyManifestationState = WeeklyManifestationState;
+export type WeeklyManifestation = DailyManifestation;
+export type WeeklyManifestationState = DailyManifestationState;

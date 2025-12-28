@@ -2,18 +2,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import createContextHook from '@nkzw/create-context-hook';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useEffect, useState, useCallback } from 'react';
-import { WeeklyManifestation, WeeklyManifestationState } from '@/types/dailyManifestation';
+import { DailyManifestation, DailyManifestationState } from '@/types/dailyManifestation';
 import { usePremium } from '@/contexts/PremiumContext';
 import { useManifestations } from '@/contexts/ManifestationContext';
 
-const STORAGE_KEY = 'weekly_manifestations';
+const STORAGE_KEY = 'daily_manifestations';
 
-const getWeekStart = (): string => {
+const getToday = (): string => {
   const today = new Date();
-  const dayOfWeek = today.getDay();
-  const monday = new Date(today);
-  monday.setDate(today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1));
-  return monday.toISOString().split('T')[0];
+  return today.toISOString().split('T')[0];
 };
 
 const MANIFESTATION_TEMPLATES = [
@@ -39,7 +36,7 @@ const MANIFESTATION_TEMPLATES = [
   "The universe conspires to help me with {category}",
 ];
 
-const generatePersonalizedManifestation = (categories: string[]): WeeklyManifestation => {
+const generatePersonalizedManifestation = (categories: string[]): DailyManifestation => {
   const category = categories.length > 0 
     ? categories[Math.floor(Math.random() * categories.length)]
     : 'life';
@@ -51,69 +48,69 @@ const generatePersonalizedManifestation = (categories: string[]): WeeklyManifest
     id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
     text,
     category,
-    weekStart: getWeekStart(),
+    date: getToday(),
     used: false,
   };
 };
 
-export const [WeeklyManifestationProvider, useDailyManifestations] = createContextHook(() => {
-  const [manifestations, setManifestations] = useState<WeeklyManifestation[]>([]);
+export const [DailyManifestationProvider, useDailyManifestations] = createContextHook(() => {
+  const [manifestations, setManifestations] = useState<DailyManifestation[]>([]);
   const [extraSlots, setExtraSlots] = useState(0);
   const { isPremium } = usePremium();
   const { manifestations: userManifestations } = useManifestations();
 
-  const weeklyQuery = useQuery({
-    queryKey: ['weeklyManifestations'],
+  const dailyQuery = useQuery({
+    queryKey: ['dailyManifestations'],
     queryFn: async () => {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
-      const data: WeeklyManifestationState = stored 
+      const data: DailyManifestationState = stored 
         ? JSON.parse(stored) 
-        : { manifestations: [], lastGeneratedWeek: '', extraSlots: 0 };
+        : { manifestations: [], lastGeneratedDate: '', extraSlots: 0 };
       
       return data;
     }
   });
 
   const { mutate: saveMutate } = useMutation({
-    mutationFn: async (data: WeeklyManifestationState) => {
+    mutationFn: async (data: DailyManifestationState) => {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       return data;
     }
   });
 
   useEffect(() => {
-    if (weeklyQuery.data) {
-      setManifestations(weeklyQuery.data.manifestations);
-      setExtraSlots(weeklyQuery.data.extraSlots);
+    if (dailyQuery.data) {
+      setManifestations(dailyQuery.data.manifestations);
+      setExtraSlots(dailyQuery.data.extraSlots);
       
-      const currentWeek = getWeekStart();
-      if (weeklyQuery.data.lastGeneratedWeek !== currentWeek) {
+      const today = getToday();
+      if (dailyQuery.data.lastGeneratedDate !== today) {
         const categories = userManifestations.length > 0
           ? userManifestations.map(m => m.category)
           : ['wealth', 'love', 'health', 'success', 'happiness'];
         
         const baseCount = isPremium ? 5 : 1;
-        const totalCount = baseCount + weeklyQuery.data.extraSlots;
+        const totalCount = baseCount + dailyQuery.data.extraSlots;
         
-        const newManifestations: WeeklyManifestation[] = [];
+        const newManifestations: DailyManifestation[] = [];
         for (let i = 0; i < totalCount; i++) {
           newManifestations.push(generatePersonalizedManifestation(categories));
         }
         
-        const data: WeeklyManifestationState = {
+        const data: DailyManifestationState = {
           manifestations: newManifestations,
-          lastGeneratedWeek: currentWeek,
-          extraSlots: weeklyQuery.data.extraSlots,
+          lastGeneratedDate: today,
+          extraSlots: dailyQuery.data.extraSlots,
         };
         
         setManifestations(newManifestations);
         saveMutate(data);
       }
     }
-  }, [weeklyQuery.data, isPremium, userManifestations, saveMutate]);
+  }, [dailyQuery.data, isPremium, userManifestations, saveMutate]);
 
-  const regenerateWeekly = useCallback(() => {
-    const currentWeek = getWeekStart();
+  const regenerateDaily = useCallback(() => {
+    const today = getToday();
     const baseCount = isPremium ? 5 : 1;
     const totalCount = baseCount + extraSlots;
     
@@ -121,14 +118,14 @@ export const [WeeklyManifestationProvider, useDailyManifestations] = createConte
       ? userManifestations.map(m => m.category)
       : ['wealth', 'love', 'health', 'success', 'happiness'];
     
-    const newManifestations: WeeklyManifestation[] = [];
+    const newManifestations: DailyManifestation[] = [];
     for (let i = 0; i < totalCount; i++) {
       newManifestations.push(generatePersonalizedManifestation(categories));
     }
     
-    const data: WeeklyManifestationState = {
+    const data: DailyManifestationState = {
       manifestations: newManifestations,
-      lastGeneratedWeek: currentWeek,
+      lastGeneratedDate: today,
       extraSlots,
     };
     
@@ -144,7 +141,7 @@ export const [WeeklyManifestationProvider, useDailyManifestations] = createConte
     setManifestations(updated);
     saveMutate({
       manifestations: updated,
-      lastGeneratedWeek: getWeekStart(),
+      lastGeneratedDate: getToday(),
       extraSlots,
     });
   }, [manifestations, extraSlots, saveMutate]);
@@ -157,7 +154,7 @@ export const [WeeklyManifestationProvider, useDailyManifestations] = createConte
       ? userManifestations.map(m => m.category)
       : ['wealth', 'love', 'health', 'success', 'happiness'];
     
-    const newManifestations: WeeklyManifestation[] = [];
+    const newManifestations: DailyManifestation[] = [];
     for (let i = 0; i < count; i++) {
       newManifestations.push(generatePersonalizedManifestation(categories));
     }
@@ -167,24 +164,23 @@ export const [WeeklyManifestationProvider, useDailyManifestations] = createConte
     
     saveMutate({
       manifestations: updated,
-      lastGeneratedWeek: getWeekStart(),
+      lastGeneratedDate: getToday(),
       extraSlots: newExtraSlots,
     });
   }, [extraSlots, manifestations, userManifestations, saveMutate]);
 
-  const refreshWeekly = useCallback(() => {
-    regenerateWeekly();
-  }, [regenerateWeekly]);
+  const refreshDaily = useCallback(() => {
+    regenerateDaily();
+  }, [regenerateDaily]);
 
   return {
     manifestations,
     extraSlots,
     baseCount: isPremium ? 5 : 1,
     totalCount: (isPremium ? 5 : 1) + extraSlots,
-    isLoading: weeklyQuery.isLoading,
+    isLoading: dailyQuery.isLoading,
     markAsUsed,
     purchaseExtraSlots,
-    refreshWeekly,
-    refreshDaily: refreshWeekly,
+    refreshDaily,
   };
 });

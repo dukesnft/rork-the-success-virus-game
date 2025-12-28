@@ -1,6 +1,6 @@
 import { StyleSheet, View, Text, Pressable, Animated, Dimensions, ScrollView, Modal } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Sparkles, Plus, X, Trash2, Bell, Clock, Palette, Package, Trophy } from 'lucide-react-native';
+import { Sparkles, Plus, X, Trash2, Bell, Clock, Palette, Package } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useManifestations } from '@/contexts/ManifestationContext';
 import { usePremium } from '@/contexts/PremiumContext';
@@ -597,16 +597,6 @@ export default function GardenScreen() {
                   <Text style={styles.quickActionBadgeText}>{getTotalSeeds()}</Text>
                 </View>
               )}
-            </Pressable>
-            <Pressable 
-              style={styles.quickActionButton}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setShowRankings(true);
-              }}
-            >
-              <Trophy color="#FF69B4" size={20} />
-              <Text style={styles.quickActionText}>Rankings</Text>
             </Pressable>
           </View>
         </View>
