@@ -11,6 +11,12 @@ const SPECIAL_SEEDS_KEY = 'special_seeds';
 const GROWTH_BOOSTERS_KEY = 'growth_boosters';
 const AUTO_NURTURE_KEY = 'auto_nurture';
 const PURCHASES_KEY = 'total_purchases';
+const FREE_SEEDS_KEY = 'free_seeds_claimed';
+
+interface FreeSeedsState {
+  claimedToday: number;
+  lastClaimDate: string;
+}
 
 interface PremiumState {
   isPremium: boolean;
@@ -36,6 +42,7 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
   const [growthBoosters, setGrowthBoosters] = useState(0);
   const [autoNurtureActive, setAutoNurtureActive] = useState(false);
   const [totalSpent, setTotalSpent] = useState(0);
+  const [freeSeedsClaimed, setFreeSeedsClaimed] = useState(0);
 
   const premiumQuery = useQuery({
     queryKey: ['premium'],
@@ -137,6 +144,26 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     }
   });
 
+  const freeSeedsQuery = useQuery({
+    queryKey: ['freeSeeds'],
+    queryFn: async () => {
+      const stored = await AsyncStorage.getItem(FREE_SEEDS_KEY);
+      const today = new Date().toISOString().split('T')[0];
+      
+      if (!stored) {
+        return { claimedToday: 0, lastClaimDate: today };
+      }
+      
+      const data: FreeSeedsState = JSON.parse(stored);
+      
+      if (data.lastClaimDate !== today) {
+        return { claimedToday: 0, lastClaimDate: today };
+      }
+      
+      return data;
+    }
+  });
+
   const { mutate: savePremium } = useMutation({
     mutationFn: async (data: PremiumState) => {
       await AsyncStorage.setItem(PREMIUM_STORAGE_KEY, JSON.stringify(data));
@@ -193,6 +220,13 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     }
   });
 
+  const { mutate: saveFreeSeeds } = useMutation({
+    mutationFn: async (data: FreeSeedsState) => {
+      await AsyncStorage.setItem(FREE_SEEDS_KEY, JSON.stringify(data));
+      return data;
+    }
+  });
+
   useEffect(() => {
     if (premiumQuery.data) {
       setIsPremium(premiumQuery.data.isPremium);
@@ -245,6 +279,12 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
   useEffect(() => {
     if (purchasesQuery.data !== undefined) setTotalSpent(purchasesQuery.data);
   }, [purchasesQuery.data]);
+
+  useEffect(() => {
+    if (freeSeedsQuery.data) {
+      setFreeSeedsClaimed(freeSeedsQuery.data.claimedToday);
+    }
+  }, [freeSeedsQuery.data]);
 
   const upgradeToPremium = useCallback((duration: 'month' | 'year') => {
     const now = Date.now();
@@ -370,6 +410,23 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     purchaseItem(price);
   }, [saveAutoNurture, purchaseItem]);
 
+  const claimFreeSeeds = useCallback((amount: number) => {
+    const today = new Date().toISOString().split('T')[0];
+    const newClaimed = freeSeedsClaimed + amount;
+    const newSeeds = specialSeeds + amount;
+    
+    setFreeSeedsClaimed(newClaimed);
+    setSpecialSeeds(newSeeds);
+    
+    saveFreeSeeds({ claimedToday: newClaimed, lastClaimDate: today });
+    saveSpecialSeeds(newSeeds);
+  }, [freeSeedsClaimed, specialSeeds, saveFreeSeeds, saveSpecialSeeds]);
+
+  const getFreeSeedsRemaining = useCallback(() => {
+    const maxFreeSeeds = isPremium ? 5 : 3;
+    return Math.max(0, maxFreeSeeds - freeSeedsClaimed);
+  }, [freeSeedsClaimed, isPremium]);
+
   return {
     isPremium,
     energyBoosts,
@@ -381,6 +438,7 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     growthBoosters,
     autoNurtureActive,
     totalSpent,
+    freeSeedsClaimed,
     isLoading: premiumQuery.isLoading || boostsQuery.isLoading || energyQuery.isLoading,
     upgradeToPremium,
     purchaseEnergyBoost,
@@ -396,5 +454,7 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     purchaseGrowthBooster,
     useGrowthBooster,
     purchaseAutoNurture,
+    claimFreeSeeds,
+    getFreeSeedsRemaining,
   };
 });

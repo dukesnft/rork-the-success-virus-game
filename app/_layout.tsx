@@ -26,6 +26,9 @@ function RootLayoutNav() {
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="create" options={{ presentation: "modal", headerShown: false }} />
       <Stack.Screen name="premium" options={{ presentation: "modal", headerShown: false }} />
+      <Stack.Screen name="shop" options={{ presentation: "modal", headerShown: false }} />
+      <Stack.Screen name="inventory" options={{ presentation: "modal", headerShown: false }} />
+      <Stack.Screen name="rankings" options={{ presentation: "modal", headerShown: false }} />
     </Stack>
   );
 }

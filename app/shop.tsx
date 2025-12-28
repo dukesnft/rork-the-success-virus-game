@@ -190,12 +190,15 @@ export default function ShopScreen() {
   const { 
     gems, 
     isPremium, 
+    specialSeeds,
     purchaseGems, 
     purchaseSpecialSeeds, 
     purchaseGrowthBooster, 
     purchaseEnergyBoost,
     purchaseAutoNurture,
     autoNurtureActive,
+    claimFreeSeeds,
+    getFreeSeedsRemaining,
   } = usePremium();
 
   const handlePurchase = (item: ShopItem) => {
@@ -241,9 +244,15 @@ export default function ShopScreen() {
           <View style={styles.header}>
             <View style={styles.headerLeft}>
               <Text style={styles.title}>✨ Cosmic Shop</Text>
-              <View style={styles.gemsDisplay}>
-                <Gem color="#9370DB" size={20} />
-                <Text style={styles.gemsText}>{gems.toLocaleString()}</Text>
+              <View style={styles.headerStats}>
+                <View style={styles.gemsDisplay}>
+                  <Gem color="#9370DB" size={20} />
+                  <Text style={styles.gemsText}>{gems.toLocaleString()}</Text>
+                </View>
+                <View style={styles.seedsDisplay}>
+                  <Sparkles color="#32CD32" size={20} />
+                  <Text style={styles.seedsText}>{specialSeeds}</Text>
+                </View>
               </View>
             </View>
             <Pressable
@@ -262,6 +271,51 @@ export default function ShopScreen() {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
           >
+            <View style={styles.freeSeedsSection}>
+              <LinearGradient
+                colors={['#32CD32', '#228B22']}
+                style={styles.freeSeedsCard}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.freeSeedsHeader}>
+                  <Text style={styles.freeSeedsTitle}>🎁 Free Daily Seeds</Text>
+                  {isPremium && (
+                    <View style={styles.premiumFreeBadge}>
+                      <Crown size={12} color="#FFD700" />
+                      <Text style={styles.premiumFreeText}>+2 EXTRA</Text>
+                    </View>
+                  )}
+                </View>
+                <Text style={styles.freeSeedsDescription}>
+                  Claim your free seeds every day! {isPremium ? '5' : '3'} seeds available daily.
+                </Text>
+                <View style={styles.freeSeedsProgress}>
+                  <View style={styles.freeSeedsCounter}>
+                    <Sparkles color="#fff" size={24} />
+                    <Text style={styles.freeSeedsCountText}>{getFreeSeedsRemaining()}</Text>
+                  </View>
+                  <Text style={styles.freeSeedsRemaining}>seeds remaining today</Text>
+                </View>
+                {getFreeSeedsRemaining() > 0 ? (
+                  <Pressable
+                    style={styles.claimButton}
+                    onPress={() => {
+                      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                      claimFreeSeeds(1);
+                      Alert.alert('Success!', '1 free seed claimed!');
+                    }}
+                  >
+                    <Text style={styles.claimButtonText}>Claim 1 Free Seed</Text>
+                  </Pressable>
+                ) : (
+                  <View style={styles.claimedButton}>
+                    <Text style={styles.claimedButtonText}>Come back tomorrow!</Text>
+                  </View>
+                )}
+              </LinearGradient>
+            </View>
+
             <Text style={styles.sectionTitle}>💎 Gems</Text>
             <Text style={styles.sectionSubtitle}>Premium currency for special items</Text>
             
@@ -490,6 +544,24 @@ const styles = StyleSheet.create({
   headerLeft: {
     flex: 1,
   },
+  headerStats: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  seedsDisplay: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: 'rgba(50,205,50,0.2)',
+    borderRadius: 20,
+  },
+  seedsText: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: '#32CD32',
+  },
   title: {
     fontSize: 28,
     fontWeight: 'bold' as const,
@@ -664,5 +736,90 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: 100,
+  },
+  freeSeedsSection: {
+    marginBottom: 24,
+  },
+  freeSeedsCard: {
+    borderRadius: 20,
+    padding: 24,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  freeSeedsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  freeSeedsTitle: {
+    fontSize: 24,
+    fontWeight: 'bold' as const,
+    color: '#fff',
+  },
+  premiumFreeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(255,215,0,0.3)',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+  },
+  premiumFreeText: {
+    fontSize: 10,
+    fontWeight: 'bold' as const,
+    color: '#FFD700',
+  },
+  freeSeedsDescription: {
+    fontSize: 14,
+    color: '#fff',
+    marginBottom: 16,
+    opacity: 0.9,
+  },
+  freeSeedsProgress: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  freeSeedsCounter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  freeSeedsCountText: {
+    fontSize: 48,
+    fontWeight: 'bold' as const,
+    color: '#fff',
+  },
+  freeSeedsRemaining: {
+    fontSize: 14,
+    color: '#fff',
+    opacity: 0.8,
+  },
+  claimButton: {
+    backgroundColor: '#fff',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  claimButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold' as const,
+    color: '#228B22',
+  },
+  claimedButton: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  claimedButtonText: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: '#fff',
+    opacity: 0.7,
   },
 });
