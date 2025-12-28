@@ -410,6 +410,24 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     purchaseItem(price);
   }, [saveAutoNurture, purchaseItem]);
 
+  const buyWithGems = useCallback((gemCost: number, onSuccess: () => void) => {
+    if (gems >= gemCost) {
+      const newGems = gems - gemCost;
+      setGems(newGems);
+      saveGems(newGems);
+      onSuccess();
+      return true;
+    }
+    return false;
+  }, [gems, saveGems]);
+
+  const earnGems = useCallback((amount: number, reason: string) => {
+    console.log(`Earned ${amount} gems: ${reason}`);
+    const newGems = gems + amount;
+    setGems(newGems);
+    saveGems(newGems);
+  }, [gems, saveGems]);
+
   const claimFreeSeeds = useCallback((amount: number) => {
     const today = new Date().toISOString().split('T')[0];
     const newClaimed = freeSeedsClaimed + amount;
@@ -456,5 +474,7 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     purchaseAutoNurture,
     claimFreeSeeds,
     getFreeSeedsRemaining,
+    buyWithGems,
+    earnGems,
   };
 });

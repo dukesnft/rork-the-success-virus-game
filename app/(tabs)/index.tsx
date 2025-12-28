@@ -1,6 +1,7 @@
 import { StyleSheet, View, Text, Pressable, Animated, Dimensions, ScrollView, Modal } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Sparkles, Plus, X, Trash2, Bell, Clock, Palette, Package, Share2, ShoppingBag } from 'lucide-react-native';
+import { Sparkles, Plus, X, Trash2, Bell, Clock, Palette, Package, Share2, ShoppingBag, Gem } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useManifestations } from '@/contexts/ManifestationContext';
 import { usePremium } from '@/contexts/PremiumContext';
@@ -412,7 +413,7 @@ export default function GardenScreen() {
   const router = useRouter();
   const { manifestations, nurtureManifestation, deleteManifestation, harvestManifestation } = useManifestations();
   const { shareManifestation } = useCommunity();
-  const { isPremium, energyBoosts, energy, maxEnergy, streak, consumeEnergyBoost, purchaseEnergyBoost, consumeEnergy, refillEnergy } = usePremium();
+  const { isPremium, energyBoosts, energy, maxEnergy, streak, gems, consumeEnergyBoost, purchaseEnergyBoost, consumeEnergy, refillEnergy, earnGems } = usePremium();
   const { settings, permissionStatus, requestPermissions, updateSettings, rescheduleAllNotifications } = useNotifications();
   const { selectedBackground } = useBackgrounds();
   const [stars] = useState(() => Array.from({ length: 20 }, (_, i) => i));
@@ -467,6 +468,18 @@ export default function GardenScreen() {
       setShowStreakReward(true);
     }
   }, [streak]);
+
+  useEffect(() => {
+    const checkDailyGems = async () => {
+      const today = new Date().toISOString().split('T')[0];
+      const stored = await AsyncStorage.getItem('daily_gems_claimed');
+      if (stored !== today) {
+        earnGems(5, 'Daily login bonus');
+        await AsyncStorage.setItem('daily_gems_claimed', today);
+      }
+    };
+    checkDailyGems();
+  }, [earnGems]);
 
   useEffect(() => {
     checkInStreak();
@@ -563,6 +576,13 @@ export default function GardenScreen() {
             >
               <Text style={styles.boostIcon}>⚡</Text>
               <Text style={styles.boostCount}>{energyBoosts}</Text>
+            </Pressable>
+            <Pressable 
+              style={styles.gemCounter}
+              onPress={() => router.push('/shop')}
+            >
+              <Gem color="#9370DB" size={16} />
+              <Text style={styles.gemCount}>{gems}</Text>
             </Pressable>
             <Pressable 
               style={styles.backgroundButton}
@@ -1327,6 +1347,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700' as const,
     color: '#FFA500',
+  },
+  gemCounter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(147, 112, 219, 0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(147, 112, 219, 0.4)',
+  },
+  gemCount: {
+    fontSize: 14,
+    fontWeight: '700' as const,
+    color: '#9370DB',
   },
   backgroundButton: {
     width: 36,

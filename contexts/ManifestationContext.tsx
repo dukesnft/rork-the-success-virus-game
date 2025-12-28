@@ -57,7 +57,7 @@ const generateSmartPosition = (existingManifestations: Manifestation[]): { x: nu
 
 export const [ManifestationProvider, useManifestations] = createContextHook(() => {
   const [manifestations, setManifestations] = useState<Manifestation[]>([]);
-  const { isPremium } = usePremium();
+  const { isPremium, earnGems } = usePremium();
   const { scheduleManifestationNotification, cancelManifestationNotification } = useNotifications();
   const { addToInventory } = useInventory();
 
@@ -147,13 +147,36 @@ export const [ManifestationProvider, useManifestations] = createContextHook(() =
         stage: manifestation.stage,
         color: manifestation.color,
       });
+      
+      const gemReward = manifestation.rarity === 'legendary' ? 50 : 
+                        manifestation.rarity === 'epic' ? 30 : 
+                        manifestation.rarity === 'rare' ? 15 : 10;
+      earnGems(gemReward, `Harvested ${manifestation.rarity || 'common'} bloom`);
     }
     
     const updated = manifestations.filter(m => m.id !== id);
     setManifestations(updated);
     saveMutate(updated);
     cancelManifestationNotification(id);
-  }, [manifestations, saveMutate, cancelManifestationNotification, addToInventory]);
+  }, [manifestations, saveMutate, cancelManifestationNotification, addToInventory, earnGems]);
+
+  const instantGrowManifestation = useCallback((id: string) => {
+    const updated = manifestations.map(m => {
+      if (m.id === id && m.stage !== 'blooming') {
+        const newEnergy = Math.min(m.energy + 33, m.maxEnergy);
+        return {
+          ...m,
+          energy: newEnergy,
+          stage: getStageFromEnergy(newEnergy),
+          lastNurtured: Date.now(),
+        };
+      }
+      return m;
+    });
+    
+    setManifestations(updated);
+    saveMutate(updated);
+  }, [manifestations, saveMutate]);
 
   return {
     manifestations,
@@ -162,5 +185,6 @@ export const [ManifestationProvider, useManifestations] = createContextHook(() =
     nurtureManifestation,
     deleteManifestation,
     harvestManifestation,
+    instantGrowManifestation,
   };
 });
