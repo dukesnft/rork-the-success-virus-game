@@ -140,7 +140,7 @@ export const [ManifestationProvider, useManifestations] = createContextHook(() =
     
     if (!manifestation) return;
     
-    if (manifestation.stage === 'sprout' || manifestation.stage === 'growing' || manifestation.stage === 'blooming') {
+    if (manifestation.stage === 'blooming') {
       addToInventory({
         intention: manifestation.intention,
         category: manifestation.category,

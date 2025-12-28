@@ -726,7 +726,7 @@ export default function GardenScreen() {
                     </LinearGradient>
                   </Pressable>
 
-                  {(selectedManifestation.stage === 'sprout' || selectedManifestation.stage === 'growing' || selectedManifestation.stage === 'blooming') && (
+                  {selectedManifestation.stage === 'blooming' && (
                     <Pressable
                       style={styles.harvestButton}
                       onPress={() => {
@@ -742,7 +742,7 @@ export default function GardenScreen() {
                         end={{ x: 1, y: 1 }}
                       >
                         <Package color="#fff" size={20} />
-                        <Text style={styles.nurtureButtonText}>Harvest Seed</Text>
+                        <Text style={styles.nurtureButtonText}>Harvest Bloomed Seed</Text>
                       </LinearGradient>
                     </Pressable>
                   )}
