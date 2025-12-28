@@ -13,6 +13,7 @@ import { BackgroundProvider } from "@/contexts/BackgroundContext";
 import { JournalProvider } from "@/contexts/JournalContext";
 import { InventoryProvider } from "@/contexts/InventoryContext";
 import { RankingProvider } from "@/contexts/RankingContext";
+import { CommunityProvider } from "@/contexts/CommunityContext";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -40,19 +41,21 @@ export default function RootLayout() {
         <NotificationProvider>
           <InventoryProvider>
             <RankingProvider>
-              <ManifestationProvider>
-                <WeeklyManifestationProvider>
-                  <BookProvider>
-                    <BackgroundProvider>
-                      <JournalProvider>
-                        <GestureHandlerRootView>
-                          <RootLayoutNav />
-                        </GestureHandlerRootView>
-                      </JournalProvider>
-                    </BackgroundProvider>
-                  </BookProvider>
-                </WeeklyManifestationProvider>
-              </ManifestationProvider>
+              <CommunityProvider>
+                <ManifestationProvider>
+                  <WeeklyManifestationProvider>
+                    <BookProvider>
+                      <BackgroundProvider>
+                        <JournalProvider>
+                          <GestureHandlerRootView>
+                            <RootLayoutNav />
+                          </GestureHandlerRootView>
+                        </JournalProvider>
+                      </BackgroundProvider>
+                    </BookProvider>
+                  </WeeklyManifestationProvider>
+                </ManifestationProvider>
+              </CommunityProvider>
             </RankingProvider>
           </InventoryProvider>
         </NotificationProvider>

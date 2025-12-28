@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Sparkles, BookOpen, List, Sun, PenLine } from 'lucide-react-native';
+import { Sparkles, BookOpen, List, Sun, PenLine, Users } from 'lucide-react-native';
 
 export default function TabsLayout() {
   return (
@@ -64,6 +64,15 @@ export default function TabsLayout() {
           title: 'Books',
           tabBarIcon: ({ color, size }) => (
             <BookOpen color={color} size={size} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="community"
+        options={{
+          title: 'Community',
+          tabBarIcon: ({ color, size }) => (
+            <Users color={color} size={size} />
           ),
         }}
       />
