@@ -1,8 +1,8 @@
-import { StyleSheet, View, Text, Pressable, ScrollView } from 'react-native';
+import { StyleSheet, View, Text, Pressable, ScrollView, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { List, Sparkles, Calendar, TrendingUp } from 'lucide-react-native';
 import { useManifestations } from '@/contexts/ManifestationContext';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import * as Haptics from 'expo-haptics';
 import { Manifestation } from '@/types/manifestation';
 
@@ -25,6 +25,8 @@ const CATEGORY_EMOJIS = {
 };
 
 function ManifestationCard({ manifestation }: { manifestation: Manifestation }) {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
   const getEmoji = () => {
     if (manifestation.stage === 'blooming') return '🌸';
     if (manifestation.stage === 'growing') return '🌿';
@@ -34,13 +36,30 @@ function ManifestationCard({ manifestation }: { manifestation: Manifestation }) 
 
   const daysPlanted = Math.floor((Date.now() - manifestation.createdAt) / (1000 * 60 * 60 * 24));
 
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.96,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      friction: 3,
+      useNativeDriver: true,
+    }).start();
+  };
+
   return (
     <Pressable
-      style={styles.card}
       onPress={() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
     >
+      <Animated.View style={[styles.card, { transform: [{ scale: scaleAnim }] }]}>
       <LinearGradient
         colors={[manifestation.color + '20', manifestation.color + '10']}
         style={styles.cardGradient}
@@ -86,6 +105,7 @@ function ManifestationCard({ manifestation }: { manifestation: Manifestation }) 
           />
         </View>
       </LinearGradient>
+      </Animated.View>
     </Pressable>
   );
 }
@@ -114,20 +134,43 @@ export default function ManifestationsScreen() {
     label: string; 
     value: 'all' | 'seed' | 'sprout' | 'growing' | 'blooming'; 
     emoji: string;
-  }) => (
+  }) => {
+    const scaleAnim = useRef(new Animated.Value(1)).current;
+
+    const handlePressIn = () => {
+      Animated.spring(scaleAnim, {
+        toValue: 0.92,
+        useNativeDriver: true,
+      }).start();
+    };
+
+    const handlePressOut = () => {
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 3,
+        useNativeDriver: true,
+      }).start();
+    };
+
+    return (
+    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
     <Pressable
       style={[styles.filterButton, filter === value && styles.filterButtonActive]}
       onPress={() => {
         setFilter(value);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
     >
       <Text style={styles.filterEmoji}>{emoji}</Text>
       <Text style={[styles.filterLabel, filter === value && styles.filterLabelActive]}>
         {label}
       </Text>
     </Pressable>
-  );
+    </Animated.View>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -250,13 +293,21 @@ const styles = StyleSheet.create({
   statsContainer: {
     marginHorizontal: 24,
     marginBottom: 24,
-    borderRadius: 20,
+    borderRadius: 24,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   statsGradient: {
     flexDirection: 'row',
-    paddingVertical: 20,
-    paddingHorizontal: 16,
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 24,
   },
   statBox: {
     flex: 1,
@@ -288,17 +339,28 @@ const styles = StyleSheet.create({
   filterButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 20,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 24,
     borderWidth: 2,
-    borderColor: 'transparent',
+    borderColor: 'rgba(255, 255, 255, 0.15)',
     gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
   },
   filterButtonActive: {
-    backgroundColor: 'rgba(255, 105, 180, 0.2)',
+    backgroundColor: 'rgba(255, 105, 180, 0.25)',
     borderColor: '#FF69B4',
+    borderWidth: 3,
+    shadowColor: '#FF69B4',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 4,
   },
   filterEmoji: {
     fontSize: 18,
@@ -316,15 +378,20 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   card: {
-    marginBottom: 16,
-    borderRadius: 20,
+    marginBottom: 20,
+    borderRadius: 24,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 6,
   },
   cardGradient: {
-    padding: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 20,
+    padding: 24,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 24,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -338,10 +405,17 @@ const styles = StyleSheet.create({
   categoryBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 16,
     gap: 6,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
   },
   categoryEmoji: {
     fontSize: 14,
@@ -375,14 +449,26 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize' as const,
   },
   progressBar: {
-    height: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 4,
+    height: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 6,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 2,
   },
   progressFill: {
     height: '100%',
-    borderRadius: 4,
+    borderRadius: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 1,
   },
   emptyState: {
     alignItems: 'center',
