@@ -1,11 +1,15 @@
 import { StyleSheet, View, Text, Pressable, Animated, Dimensions, ScrollView, Modal } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Sparkles, Plus, X, Trash2, Bell, Clock, Palette } from 'lucide-react-native';
+import { Sparkles, Plus, X, Trash2, Bell, Clock, Palette, Package, Trophy } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useManifestations } from '@/contexts/ManifestationContext';
 import { usePremium } from '@/contexts/PremiumContext';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { useBackgrounds } from '@/contexts/BackgroundContext';
+import { useInventory } from '@/contexts/InventoryContext';
+import { useRankings } from '@/contexts/RankingContext';
+import InventoryScreen from '@/app/inventory';
+import RankingsScreen from '@/app/rankings';
 import { useEffect, useRef, useState, memo } from 'react';
 import * as Haptics from 'expo-haptics';
 import { Manifestation } from '@/types/manifestation';
@@ -405,7 +409,7 @@ ManifestationPlant.displayName = 'ManifestationPlant';
 
 export default function GardenScreen() {
   const router = useRouter();
-  const { manifestations, nurtureManifestation, deleteManifestation } = useManifestations();
+  const { manifestations, nurtureManifestation, deleteManifestation, harvestManifestation } = useManifestations();
   const { isPremium, energyBoosts, energy, maxEnergy, streak, consumeEnergyBoost, purchaseEnergyBoost, consumeEnergy, refillEnergy } = usePremium();
   const { settings, permissionStatus, requestPermissions, updateSettings, rescheduleAllNotifications } = useNotifications();
   const { selectedBackground } = useBackgrounds();
@@ -418,6 +422,10 @@ export default function GardenScreen() {
   const [showStreakReward, setShowStreakReward] = useState(false);
   const [tempHour, setTempHour] = useState(settings.dailyTime.hour);
   const [tempMinute, setTempMinute] = useState(settings.dailyTime.minute);
+  const [showInventory, setShowInventory] = useState(false);
+  const [showRankings, setShowRankings] = useState(false);
+  const { getTotalSeeds } = useInventory();
+  const { checkInStreak, updateSeedRankings } = useRankings();
 
   const handleNurture = (id: string) => {
     if (energy >= 1) {
@@ -457,6 +465,14 @@ export default function GardenScreen() {
       setShowStreakReward(true);
     }
   }, [streak]);
+
+  useEffect(() => {
+    checkInStreak();
+  }, [checkInStreak]);
+
+  useEffect(() => {
+    updateSeedRankings();
+  }, [updateSeedRankings]);
 
   const handlePurchaseBoost = () => {
     purchaseEnergyBoost();
@@ -561,6 +577,34 @@ export default function GardenScreen() {
               }}
             >
               <Bell color={settings.enabled ? '#FFD700' : '#b8a9d9'} size={18} />
+            </Pressable>
+          </View>
+
+          <View style={styles.quickActionsRow}>
+            <Pressable 
+              style={styles.quickActionButton}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setShowInventory(true);
+              }}
+            >
+              <Package color="#FFD700" size={20} />
+              <Text style={styles.quickActionText}>Inventory</Text>
+              {getTotalSeeds() > 0 && (
+                <View style={styles.quickActionBadge}>
+                  <Text style={styles.quickActionBadgeText}>{getTotalSeeds()}</Text>
+                </View>
+              )}
+            </Pressable>
+            <Pressable 
+              style={styles.quickActionButton}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setShowRankings(true);
+              }}
+            >
+              <Trophy color="#FF69B4" size={20} />
+              <Text style={styles.quickActionText}>Rankings</Text>
             </Pressable>
           </View>
         </View>
@@ -681,6 +725,27 @@ export default function GardenScreen() {
                       <Text style={styles.nurtureButtonText}>Nurture with Love</Text>
                     </LinearGradient>
                   </Pressable>
+
+                  {(selectedManifestation.stage === 'sprout' || selectedManifestation.stage === 'growing' || selectedManifestation.stage === 'blooming') && (
+                    <Pressable
+                      style={styles.harvestButton}
+                      onPress={() => {
+                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                        harvestManifestation(selectedManifestation.id);
+                        setSelectedManifestation(null);
+                      }}
+                    >
+                      <LinearGradient
+                        colors={['#32CD32', '#228B22']}
+                        style={styles.nurtureButtonGradient}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                      >
+                        <Package color="#fff" size={20} />
+                        <Text style={styles.nurtureButtonText}>Harvest Seed</Text>
+                      </LinearGradient>
+                    </Pressable>
+                  )}
 
                   <Pressable
                     style={styles.deleteButton}
@@ -978,6 +1043,9 @@ export default function GardenScreen() {
             </View>
           </View>
         )}
+
+        <InventoryScreen visible={showInventory} onClose={() => setShowInventory(false)} />
+        <RankingsScreen visible={showRankings} onClose={() => setShowRankings(false)} />
       </LinearGradient>
     </View>
   );
@@ -1416,6 +1484,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700' as const,
     color: '#fff',
+  },
+  harvestButton: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 12,
   },
   deleteButton: {
     flexDirection: 'row',
@@ -1856,5 +1929,48 @@ const styles = StyleSheet.create({
     fontWeight: '700' as const,
     color: '#FFD700',
     textAlign: 'center' as const,
+  },
+  quickActionsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 16,
+    marginLeft: 40,
+  },
+  quickActionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  quickActionText: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: '#fff',
+  },
+  quickActionBadge: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    backgroundColor: '#FF69B4',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+    borderWidth: 2,
+    borderColor: '#2d1b4e',
+  },
+  quickActionBadgeText: {
+    fontSize: 11,
+    fontWeight: '700' as const,
+    color: '#fff',
   },
 });

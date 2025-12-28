@@ -6,6 +6,7 @@ import { Manifestation, GrowthStage } from '@/types/manifestation';
 import { ENERGY_PER_STAGE } from '@/constants/manifestation';
 import { usePremium } from '@/contexts/PremiumContext';
 import { useNotifications } from '@/contexts/NotificationContext';
+import { useInventory } from '@/contexts/InventoryContext';
 import { Dimensions } from 'react-native';
 
 const STORAGE_KEY = 'manifestations';
@@ -58,6 +59,7 @@ export const [ManifestationProvider, useManifestations] = createContextHook(() =
   const [manifestations, setManifestations] = useState<Manifestation[]>([]);
   const { isPremium } = usePremium();
   const { scheduleManifestationNotification, cancelManifestationNotification } = useNotifications();
+  const { addToInventory } = useInventory();
 
   const manifestationsQuery = useQuery({
     queryKey: ['manifestations'],
@@ -133,11 +135,32 @@ export const [ManifestationProvider, useManifestations] = createContextHook(() =
     cancelManifestationNotification(id);
   }, [manifestations, saveMutate, cancelManifestationNotification]);
 
+  const harvestManifestation = useCallback((id: string) => {
+    const manifestation = manifestations.find(m => m.id === id);
+    
+    if (!manifestation) return;
+    
+    if (manifestation.stage === 'sprout' || manifestation.stage === 'growing' || manifestation.stage === 'blooming') {
+      addToInventory({
+        intention: manifestation.intention,
+        category: manifestation.category,
+        stage: manifestation.stage,
+        color: manifestation.color,
+      });
+    }
+    
+    const updated = manifestations.filter(m => m.id !== id);
+    setManifestations(updated);
+    saveMutate(updated);
+    cancelManifestationNotification(id);
+  }, [manifestations, saveMutate, cancelManifestationNotification, addToInventory]);
+
   return {
     manifestations,
     isLoading: manifestationsQuery.isLoading,
     addManifestation,
     nurtureManifestation,
     deleteManifestation,
+    harvestManifestation,
   };
 });
