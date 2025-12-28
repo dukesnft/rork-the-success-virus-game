@@ -5,7 +5,8 @@ import { X, Sparkles, ShoppingBag, Sprout } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useManifestations } from '@/contexts/ManifestationContext';
-import { usePremium } from '@/contexts/PremiumContext';
+import { useInventory } from '@/contexts/InventoryContext';
+import { SeedRarity } from '@/types/inventory';
 import { CATEGORY_COLORS, AFFIRMATIONS } from '@/constants/manifestation';
 
 const { width, height } = Dimensions.get('window');
@@ -23,9 +24,16 @@ const CATEGORIES: { key: Category; label: string; emoji: string }[] = [
 export default function CreateScreen() {
   const router = useRouter();
   const { addManifestation } = useManifestations();
-  const { specialSeeds, useSpecialSeed: consumeSpecialSeed } = usePremium();
+  const { getTotalSeedsCount, getSeedsByRarity, useSeed: consumeSeed } = useInventory();
   const [intention, setIntention] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<Category>('abundance');
+  const [selectedRarity, setSelectedRarity] = useState<SeedRarity>('common');
+  
+  const totalSeeds = getTotalSeedsCount();
+  const commonSeeds = getSeedsByRarity('common');
+  const rareSeeds = getSeedsByRarity('rare');
+  const epicSeeds = getSeedsByRarity('epic');
+  const legendarySeeds = getSeedsByRarity('legendary');
 
   const handleCreate = () => {
     if (!intention.trim()) {
@@ -33,11 +41,12 @@ export default function CreateScreen() {
       return;
     }
 
-    if (specialSeeds <= 0) {
+    const availableSeeds = getSeedsByRarity(selectedRarity);
+    if (availableSeeds <= 0) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert(
         'No Seeds Available',
-        'You need seeds to plant an intention. Visit the shop to get more seeds!',
+        `You need a ${selectedRarity} seed to plant this intention. Visit the shop to get more seeds!`,
         [
           { text: 'Cancel', style: 'cancel' },
           { 
@@ -52,7 +61,7 @@ export default function CreateScreen() {
       return;
     }
     
-    const seedConsumed = consumeSpecialSeed();
+    const seedConsumed = consumeSeed(selectedRarity);
     if (!seedConsumed) {
       Alert.alert('Error', 'Failed to consume seed. Please try again.');
       return;
@@ -66,11 +75,11 @@ export default function CreateScreen() {
       category: selectedCategory,
       position: { x, y },
       color: CATEGORY_COLORS[selectedCategory],
-      rarity: 'common',
+      rarity: selectedRarity,
     });
     
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    Alert.alert('Success!', `Your intention has been planted! Seeds remaining: ${specialSeeds - 1}`);
+    Alert.alert('✨ Planted!', `Your ${selectedRarity} intention has been planted!`);
     router.back();
   };
 
@@ -108,10 +117,10 @@ export default function CreateScreen() {
                 end={{ x: 1, y: 1 }}
               >
                 <Sprout color="#fff" size={24} />
-                <Text style={styles.seedsCount}>{specialSeeds}</Text>
-                <Text style={styles.seedsLabel}>seeds available</Text>
+                <Text style={styles.seedsCount}>{totalSeeds}</Text>
+                <Text style={styles.seedsLabel}>total seeds</Text>
               </LinearGradient>
-              {specialSeeds === 0 && (
+              {totalSeeds === 0 && (
                 <Pressable
                   style={styles.shopButton}
                   onPress={() => {
@@ -138,6 +147,67 @@ export default function CreateScreen() {
               multiline
               autoFocus
             />
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.label}>Choose seed quality</Text>
+            <View style={styles.raritySelector}>
+              <Pressable
+                style={[styles.rarityCard, selectedRarity === 'common' && styles.rarityCardSelected]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setSelectedRarity('common');
+                }}
+              >
+                <View style={[styles.rarityBadge, { backgroundColor: '#90EE90' }]}>
+                  <Text style={styles.rarityEmoji}>🌱</Text>
+                </View>
+                <Text style={styles.rarityName}>Common</Text>
+                <Text style={styles.rarityCount}>{commonSeeds} available</Text>
+              </Pressable>
+              
+              <Pressable
+                style={[styles.rarityCard, selectedRarity === 'rare' && styles.rarityCardSelected]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setSelectedRarity('rare');
+                }}
+              >
+                <View style={[styles.rarityBadge, { backgroundColor: '#4169E1' }]}>
+                  <Text style={styles.rarityEmoji}>💎</Text>
+                </View>
+                <Text style={styles.rarityName}>Rare</Text>
+                <Text style={styles.rarityCount}>{rareSeeds} available</Text>
+              </Pressable>
+              
+              <Pressable
+                style={[styles.rarityCard, selectedRarity === 'epic' && styles.rarityCardSelected]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setSelectedRarity('epic');
+                }}
+              >
+                <View style={[styles.rarityBadge, { backgroundColor: '#9370DB' }]}>
+                  <Text style={styles.rarityEmoji}>⚡</Text>
+                </View>
+                <Text style={styles.rarityName}>Epic</Text>
+                <Text style={styles.rarityCount}>{epicSeeds} available</Text>
+              </Pressable>
+              
+              <Pressable
+                style={[styles.rarityCard, selectedRarity === 'legendary' && styles.rarityCardSelected]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setSelectedRarity('legendary');
+                }}
+              >
+                <View style={[styles.rarityBadge, { backgroundColor: '#FFD700' }]}>
+                  <Text style={styles.rarityEmoji}>👑</Text>
+                </View>
+                <Text style={styles.rarityName}>Legendary</Text>
+                <Text style={styles.rarityCount}>{legendarySeeds} available</Text>
+              </Pressable>
+            </View>
           </View>
 
           <View style={styles.section}>
@@ -175,34 +245,34 @@ export default function CreateScreen() {
             <Text style={styles.affirmation}>{randomAffirmation}</Text>
           </View>
 
-          {specialSeeds === 0 && (
+          {getSeedsByRarity(selectedRarity) === 0 && (
             <View style={styles.limitWarning}>
-              <Text style={styles.limitText}>🌱 No Seeds Available</Text>
-              <Text style={styles.limitSubtext}>You need seeds to plant intentions. Visit the shop to get free daily seeds or purchase more!</Text>
+              <Text style={styles.limitText}>🌱 No {selectedRarity.charAt(0).toUpperCase() + selectedRarity.slice(1)} Seeds</Text>
+              <Text style={styles.limitSubtext}>You don&apos;t have any {selectedRarity} seeds. Choose a different rarity or visit the shop!</Text>
             </View>
           )}
 
-          {specialSeeds > 0 && (
+          {getSeedsByRarity(selectedRarity) > 0 && (
             <View style={styles.seedInfo}>
-              <Text style={styles.seedInfoTitle}>🌱 Seed Required</Text>
-              <Text style={styles.seedInfoText}>Planting this intention will use 1 seed from your inventory</Text>
+              <Text style={styles.seedInfoTitle}>🌱 {selectedRarity.charAt(0).toUpperCase() + selectedRarity.slice(1)} Seed Required</Text>
+              <Text style={styles.seedInfoText}>Planting this intention will use 1 {selectedRarity} seed. Higher rarity seeds grow faster and earn more gems!</Text>
             </View>
           )}
 
           <Pressable
-            style={[styles.createButton, (!intention.trim() || specialSeeds === 0) && styles.createButtonDisabled]}
+            style={[styles.createButton, (!intention.trim() || getSeedsByRarity(selectedRarity) === 0) && styles.createButtonDisabled]}
             onPress={handleCreate}
-            disabled={!intention.trim() || specialSeeds === 0}
+            disabled={!intention.trim() || getSeedsByRarity(selectedRarity) === 0}
           >
             <LinearGradient
-              colors={(intention.trim() && specialSeeds > 0) ? ['#9370DB', '#FF69B4'] : ['#4a4a4a', '#3a3a3a']}
+              colors={(intention.trim() && getSeedsByRarity(selectedRarity) > 0) ? ['#9370DB', '#FF69B4'] : ['#4a4a4a', '#3a3a3a']}
               style={styles.createButtonGradient}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
             >
               <Sparkles color="#fff" size={24} />
               <Text style={styles.createButtonText}>
-                {specialSeeds === 0 ? 'No Seeds Available' : 'Plant Intention (1 seed)'}
+                {getSeedsByRarity(selectedRarity) === 0 ? `No ${selectedRarity} seeds` : `Plant with ${selectedRarity} seed`}
               </Text>
             </LinearGradient>
           </Pressable>
@@ -427,5 +497,44 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#b8a9d9',
     lineHeight: 18,
+  },
+  raritySelector: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  rarityCard: {
+    width: (width - 72) / 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  rarityCardSelected: {
+    borderColor: '#FFD700',
+    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+  },
+  rarityBadge: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  rarityEmoji: {
+    fontSize: 32,
+  },
+  rarityName: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: '#fff',
+    marginBottom: 4,
+  },
+  rarityCount: {
+    fontSize: 12,
+    color: '#b8a9d9',
   },
 });

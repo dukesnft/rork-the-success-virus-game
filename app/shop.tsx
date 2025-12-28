@@ -404,7 +404,7 @@ export default function ShopScreen() {
                   Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                   spendGems(300);
                   addSeeds('common', 10);
-                  Alert.alert('Success!', '10 Common seeds added to your inventory!');
+                  Alert.alert('✨ Success!', '10 Common seeds added to your inventory!');
                 } else {
                   Alert.alert('Not Enough Gems', 'You need 300 gems to purchase this item.');
                 }
@@ -437,7 +437,7 @@ export default function ShopScreen() {
                   Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                   spendGems(500);
                   addSeeds('rare', 5);
-                  Alert.alert('Success!', '5 Rare seeds added to your inventory!');
+                  Alert.alert('💎 Success!', '5 Rare seeds added to your inventory!');
                 } else {
                   Alert.alert('Not Enough Gems', 'You need 500 gems to purchase this item.');
                 }
@@ -470,7 +470,7 @@ export default function ShopScreen() {
                   Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                   spendGems(1000);
                   addSeeds('epic', 3);
-                  Alert.alert('Success!', '3 Epic seeds added to your inventory!');
+                  Alert.alert('⚡ Success!', '3 Epic seeds added to your inventory!');
                 } else {
                   Alert.alert('Not Enough Gems', 'You need 1,000 gems to purchase this item.');
                 }
@@ -503,7 +503,7 @@ export default function ShopScreen() {
                   Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                   spendGems(2000);
                   addSeeds('legendary', 1);
-                  Alert.alert('Success!', '1 Legendary seed added to your inventory!');
+                  Alert.alert('👑 Legendary!', '1 Legendary seed added to your inventory!');
                 } else {
                   Alert.alert('Not Enough Gems', 'You need 2,000 gems to purchase this item.');
                 }
@@ -538,7 +538,7 @@ export default function ShopScreen() {
                   for (let i = 0; i < 10; i++) {
                     refillEnergy();
                   }
-                  Alert.alert('Success!', '10 Energy refills added!');
+                  Alert.alert('💫 Energy Refilled!', '10 Energy refills added!');
                 } else {
                   Alert.alert('Not Enough Gems', 'You need 500 gems to purchase this item.');
                 }
@@ -571,7 +571,7 @@ export default function ShopScreen() {
                   Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                   spendGems(300);
                   purchaseGrowthBooster(10, 0);
-                  Alert.alert('Success!', '10 Growth boosters added!');
+                  Alert.alert('🚀 Boosted!', '10 Growth boosters added!');
                 } else {
                   Alert.alert('Not Enough Gems', 'You need 300 gems to purchase this item.');
                 }
@@ -606,7 +606,7 @@ export default function ShopScreen() {
                   addSeeds('common', 10);
                   addSeeds('rare', 5);
                   addSeeds('epic', 3);
-                  Alert.alert('Success!', 'Mega seed bundle added to your inventory!');
+                  Alert.alert('🌟 Amazing!', 'Mega seed bundle added to your inventory!');
                 } else {
                   Alert.alert('Not Enough Gems', 'You need 1,500 gems to purchase this item.');
                 }

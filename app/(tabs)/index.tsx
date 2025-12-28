@@ -749,7 +749,12 @@ export default function GardenScreen() {
                   <Pressable
                     style={styles.nurtureButton}
                     onPress={() => {
-                      handleNurture(selectedManifestation.id);
+                      if (energy >= 1) {
+                        handleNurture(selectedManifestation.id);
+                      } else {
+                        setSelectedManifestationId(null);
+                        setShowEnergyPrompt(true);
+                      }
                     }}
                   >
                     <LinearGradient
@@ -759,7 +764,7 @@ export default function GardenScreen() {
                       end={{ x: 1, y: 1 }}
                     >
                       <Sparkles color="#fff" size={20} />
-                      <Text style={styles.nurtureButtonText}>Nurture with Love</Text>
+                      <Text style={styles.nurtureButtonText}>Nurture with Love (1 💫)</Text>
                     </LinearGradient>
                   </Pressable>
 
@@ -1319,32 +1324,34 @@ const styles = StyleSheet.create({
   },
   topStatsContainer: {
     marginTop: 16,
-    gap: 10,
+    gap: 8,
   },
   statusBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
-    paddingHorizontal: 16,
+    gap: 6,
+    paddingHorizontal: 8,
+    flexWrap: 'wrap',
   },
   secondaryBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingHorizontal: 16,
+    gap: 6,
+    paddingHorizontal: 8,
+    flexWrap: 'wrap',
   },
   premiumBadge: {
     backgroundColor: 'rgba(255, 215, 0, 0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: 'rgba(255, 215, 0, 0.4)',
   },
   premiumText: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '700' as const,
     color: '#FFD700',
     letterSpacing: 0.5,
@@ -1353,18 +1360,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 165, 0, 0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
     borderRadius: 12,
-    gap: 6,
+    gap: 4,
     borderWidth: 1,
     borderColor: 'rgba(255, 165, 0, 0.4)',
   },
   boostIcon: {
-    fontSize: 16,
+    fontSize: 14,
   },
   boostCount: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700' as const,
     color: '#FFA500',
   },
@@ -1372,10 +1379,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(147, 112, 219, 0.25)',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 14,
-    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    gap: 4,
     borderWidth: 1.5,
     borderColor: 'rgba(147, 112, 219, 0.5)',
     shadowColor: '#9370DB',
@@ -1385,14 +1392,14 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   gemCount: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '800' as const,
     color: '#9370DB',
   },
   iconButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1950,18 +1957,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(147, 112, 219, 0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
     borderRadius: 12,
-    gap: 6,
+    gap: 4,
     borderWidth: 1,
     borderColor: 'rgba(147, 112, 219, 0.4)',
   },
   energyIcon: {
-    fontSize: 16,
+    fontSize: 14,
   },
   energyCount: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700' as const,
     color: '#9370DB',
   },
@@ -1969,18 +1976,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 69, 0, 0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
     borderRadius: 12,
-    gap: 6,
+    gap: 4,
     borderWidth: 1,
     borderColor: 'rgba(255, 69, 0, 0.4)',
   },
   streakIcon: {
-    fontSize: 16,
+    fontSize: 14,
   },
   streakCount: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700' as const,
     color: '#FF4500',
   },
@@ -2042,20 +2049,19 @@ const styles = StyleSheet.create({
     marginLeft: 40,
   },
   quickActionButton: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: 6,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   quickActionText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600' as const,
     color: '#fff',
   },
