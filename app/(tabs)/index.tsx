@@ -12,7 +12,7 @@ import { useRankings } from '@/contexts/RankingContext';
 import { useCommunity } from '@/contexts/CommunityContext';
 import InventoryScreen from '@/app/inventory';
 import RankingsScreen from '@/app/rankings';
-import { useEffect, useRef, useState, memo } from 'react';
+import { useEffect, useRef, useState, memo, useCallback } from 'react';
 import * as Haptics from 'expo-haptics';
 import { Manifestation } from '@/types/manifestation';
 import { Background } from '@/types/background';
@@ -139,39 +139,28 @@ BackgroundStoreModal.displayName = 'BackgroundStoreModal';
 
 const Star = memo(({ delay }: { delay: number }) => {
   const opacity = useRef(new Animated.Value(0)).current;
-  const scale = useRef(new Animated.Value(0)).current;
+  const [position] = useState(() => ({
+    left: Math.random() * width,
+    top: Math.random() * height * 0.6,
+  }));
 
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
         Animated.delay(delay),
-        Animated.parallel([
-          Animated.timing(opacity, {
-            toValue: 1,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
-          Animated.timing(scale, {
-            toValue: 1,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
-        ]),
-        Animated.parallel([
-          Animated.timing(opacity, {
-            toValue: 0,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
-          Animated.timing(scale, {
-            toValue: 0,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
-        ]),
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: 0,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
       ])
     ).start();
-  }, [delay, opacity, scale]);
+  }, [delay, opacity]);
 
   return (
     <Animated.View
@@ -179,9 +168,8 @@ const Star = memo(({ delay }: { delay: number }) => {
         styles.star,
         {
           opacity,
-          transform: [{ scale }],
-          left: Math.random() * width,
-          top: Math.random() * height * 0.6,
+          left: position.left,
+          top: position.top,
         },
       ]}
     />
@@ -191,66 +179,31 @@ const Star = memo(({ delay }: { delay: number }) => {
 Star.displayName = 'Star';
 
 const ManifestationPlant = memo(({ manifestation, onNurture, onBoost, onPress }: { manifestation: Manifestation; onNurture: () => void; onBoost: () => void; onPress: () => void }) => {
-  const scaleAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
-  const rotateAnim = useRef(new Animated.Value(0)).current;
-  const sparkleAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
-  const [showParticles, setShowParticles] = useState(false);
 
   useEffect(() => {
-    Animated.spring(scaleAnim, {
-      toValue: 1,
-      friction: 4,
-      tension: 40,
-      useNativeDriver: true,
-    }).start();
-
-    Animated.loop(
+    const glowLoop = Animated.loop(
       Animated.sequence([
         Animated.timing(glowAnim, {
           toValue: 1,
-          duration: 2000,
+          duration: 2500,
           useNativeDriver: true,
         }),
         Animated.timing(glowAnim, {
           toValue: 0,
-          duration: 2000,
+          duration: 2500,
           useNativeDriver: true,
         }),
       ])
-    ).start();
+    );
+    glowLoop.start();
 
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(rotateAnim, {
-          toValue: 1,
-          duration: 4000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(rotateAnim, {
-          toValue: 0,
-          duration: 4000,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(sparkleAnim, {
-          toValue: 1,
-          duration: 1500,
-          useNativeDriver: true,
-        }),
-        Animated.timing(sparkleAnim, {
-          toValue: 0,
-          duration: 1500,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  }, [glowAnim, rotateAnim, sparkleAnim, scaleAnim]);
+    return () => {
+      glowLoop.stop();
+    };
+  }, [glowAnim]);
 
   const handlePress = () => {
     const stage = manifestation.stage;
@@ -260,13 +213,10 @@ const ManifestationPlant = memo(({ manifestation, onNurture, onBoost, onPress }:
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
     
-    setShowParticles(true);
-    setTimeout(() => setShowParticles(false), 1000);
-    
     Animated.parallel([
       Animated.sequence([
         Animated.spring(scaleAnim, {
-          toValue: 1.3,
+          toValue: 1.2,
           friction: 3,
           tension: 100,
           useNativeDriver: true,
@@ -280,13 +230,13 @@ const ManifestationPlant = memo(({ manifestation, onNurture, onBoost, onPress }:
       ]),
       Animated.sequence([
         Animated.timing(pulseAnim, {
-          toValue: 1.5,
-          duration: 200,
+          toValue: 1.3,
+          duration: 150,
           useNativeDriver: true,
         }),
         Animated.timing(pulseAnim, {
           toValue: 1,
-          duration: 200,
+          duration: 150,
           useNativeDriver: true,
         }),
       ]),
@@ -309,27 +259,7 @@ const ManifestationPlant = memo(({ manifestation, onNurture, onBoost, onPress }:
 
   const glowOpacity = glowAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0.4, 1],
-  });
-
-  const glowScale = glowAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [1, 1.3],
-  });
-
-  const rotate = rotateAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['-5deg', '5deg'],
-  });
-
-  const sparkleOpacity = sparkleAnim.interpolate({
-    inputRange: [0, 0.5, 1],
-    outputRange: [0, 1, 0],
-  });
-
-  const sparkleScale = sparkleAnim.interpolate({
-    inputRange: [0, 0.5, 1],
-    outputRange: [0.5, 1, 0.5],
+    outputRange: [0.5, 0.9],
   });
 
   return (
@@ -345,36 +275,15 @@ const ManifestationPlant = memo(({ manifestation, onNurture, onBoost, onPress }:
           { 
             opacity: glowOpacity, 
             backgroundColor: manifestation.color,
-            transform: [{ scale: Animated.multiply(glowScale, pulseAnim) }]
+            transform: [{ scale: pulseAnim }]
           }
         ]} 
       />
-      <Animated.View 
-        style={[
-          styles.plantSparkle,
-          {
-            opacity: sparkleOpacity,
-            transform: [{ scale: sparkleScale }],
-            backgroundColor: manifestation.color,
-          }
-        ]}
-      />
-      {showParticles && (
-        <>
-          <Animated.View style={[styles.particle, { backgroundColor: manifestation.color, top: -20, left: 10, opacity: sparkleOpacity }]} />
-          <Animated.View style={[styles.particle, { backgroundColor: manifestation.color, top: -15, left: 70, opacity: sparkleOpacity }]} />
-          <Animated.View style={[styles.particle, { backgroundColor: manifestation.color, top: 10, left: -10, opacity: sparkleOpacity }]} />
-          <Animated.View style={[styles.particle, { backgroundColor: manifestation.color, top: 15, left: 85, opacity: sparkleOpacity }]} />
-        </>
-      )}
       <Animated.Text 
         style={[
           styles.plantEmoji, 
           { 
-            transform: [
-              { scale: scaleAnim },
-              { rotate }
-            ] 
+            transform: [{ scale: scaleAnim }] 
           }
         ]}
       >
@@ -416,7 +325,7 @@ export default function GardenScreen() {
   const { isPremium, energyBoosts, energy, maxEnergy, streak, gems, consumeEnergyBoost, purchaseEnergyBoost, consumeEnergy, refillEnergy, earnGems } = usePremium();
   const { settings, permissionStatus, requestPermissions, updateSettings, rescheduleAllNotifications } = useNotifications();
   const { selectedBackground } = useBackgrounds();
-  const [stars] = useState(() => Array.from({ length: 20 }, (_, i) => i));
+  const [stars] = useState(() => Array.from({ length: 8 }, (_, i) => i));
   const [showBoostPrompt, setShowBoostPrompt] = useState(false);
   const [showEnergyPrompt, setShowEnergyPrompt] = useState(false);
   const [selectedManifestationId, setSelectedManifestationId] = useState<string | null>(null);
@@ -427,10 +336,10 @@ export default function GardenScreen() {
   const [tempMinute, setTempMinute] = useState(settings.dailyTime.minute);
   const [showInventory, setShowInventory] = useState(false);
   const [showRankings, setShowRankings] = useState(false);
-  const { getTotalSeeds } = useInventory();
+  const { getTotalSeedsCount } = useInventory();
   const { checkInStreak, updateSeedRankings } = useRankings();
 
-  const handleNurture = (id: string) => {
+  const handleNurture = useCallback((id: string) => {
     if (energy >= 1) {
       const success = consumeEnergy(1);
       if (success) {
@@ -441,9 +350,9 @@ export default function GardenScreen() {
       setShowEnergyPrompt(true);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
-  };
+  }, [energy, consumeEnergy, nurtureManifestation]);
 
-  const handleBoostRequest = (id: string) => {
+  const handleBoostRequest = useCallback((id: string) => {
     if (energyBoosts > 0) {
       const success = consumeEnergyBoost();
       if (success) {
@@ -455,7 +364,7 @@ export default function GardenScreen() {
     } else {
       setShowBoostPrompt(true);
     }
-  };
+  }, [energyBoosts, consumeEnergyBoost, nurtureManifestation]);
 
   const handleRefillEnergy = () => {
     refillEnergy();
@@ -612,9 +521,9 @@ export default function GardenScreen() {
               >
                 <Package color="#FFD700" size={18} />
                 <Text style={styles.quickActionText}>Seeds</Text>
-                {getTotalSeeds() > 0 && (
+                {getTotalSeedsCount() > 0 && (
                   <View style={styles.quickActionBadge}>
-                    <Text style={styles.quickActionBadgeText}>{getTotalSeeds()}</Text>
+                    <Text style={styles.quickActionBadgeText}>{getTotalSeedsCount()}</Text>
                   </View>
                 )}
               </Pressable>
