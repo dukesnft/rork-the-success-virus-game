@@ -14,12 +14,12 @@ const generateDailyQuests = (): DailyQuest[] => {
   const expiresAt = tomorrow.getTime();
 
   const questTemplates: { type: QuestType; title: string; description: string; target: number; gems: number; energy?: number }[] = [
-    { type: 'nurture', title: 'Daily Care', description: 'Nurture 5 manifestations', target: 5, gems: 20, energy: 5 },
-    { type: 'nurture', title: 'Extra Love', description: 'Nurture 10 manifestations', target: 10, gems: 35, energy: 10 },
-    { type: 'plant', title: 'New Beginnings', description: 'Plant 2 new manifestations', target: 2, gems: 25 },
-    { type: 'harvest', title: 'Harvest Time', description: 'Harvest 1 blooming manifestation', target: 1, gems: 30, energy: 10 },
-    { type: 'share', title: 'Spread Joy', description: 'Share 2 manifestations to community', target: 2, gems: 40 },
-    { type: 'streak', title: 'Consistency is Key', description: 'Maintain your login streak', target: 1, gems: 15, energy: 5 },
+    { type: 'nurture', title: 'Daily Care', description: 'Nurture 5 manifestations', target: 5, gems: 35, energy: 8 },
+    { type: 'nurture', title: 'Extra Love', description: 'Nurture 10 manifestations', target: 10, gems: 60, energy: 15 },
+    { type: 'plant', title: 'New Beginnings', description: 'Plant 2 new manifestations', target: 2, gems: 45 },
+    { type: 'harvest', title: 'Harvest Time', description: 'Harvest 1 blooming manifestation', target: 1, gems: 55, energy: 12 },
+    { type: 'share', title: 'Spread Joy', description: 'Share 2 manifestations to community', target: 2, gems: 70 },
+    { type: 'streak', title: 'Consistency is Key', description: 'Maintain your login streak', target: 1, gems: 30, energy: 8 },
   ];
 
   const selectedQuests = questTemplates

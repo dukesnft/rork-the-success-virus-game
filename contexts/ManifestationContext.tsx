@@ -110,7 +110,7 @@ export const [ManifestationProvider, useManifestations] = createContextHook(() =
   }, [manifestations, saveMutate, scheduleManifestationNotification]);
 
   const nurtureManifestation = useCallback((id: string) => {
-    const energyGain = isPremium ? 15 : 10;
+    const energyGain = isPremium ? 18 : 12;
     const updated = manifestations.map(m => {
       if (m.id === id) {
         const newEnergy = Math.min(m.energy + energyGain, m.maxEnergy);
@@ -148,9 +148,9 @@ export const [ManifestationProvider, useManifestations] = createContextHook(() =
         color: manifestation.color,
       });
       
-      const gemReward = manifestation.rarity === 'legendary' ? 50 : 
-                        manifestation.rarity === 'epic' ? 30 : 
-                        manifestation.rarity === 'rare' ? 15 : 10;
+      const gemReward = manifestation.rarity === 'legendary' ? 100 : 
+                        manifestation.rarity === 'epic' ? 60 : 
+                        manifestation.rarity === 'rare' ? 30 : 20;
       earnGems(gemReward, `Harvested ${manifestation.rarity || 'common'} bloom`);
     }
     

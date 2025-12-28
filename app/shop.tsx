@@ -400,13 +400,13 @@ export default function ShopScreen() {
             <Pressable
               style={styles.gemStoreCard}
               onPress={() => {
-                if (gems >= 300) {
+                if (gems >= 200) {
                   Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                  spendGems(300);
+                  spendGems(200);
                   addSeeds('common', 10);
                   Alert.alert('✨ Success!', '10 Common seeds added to your inventory!');
                 } else {
-                  Alert.alert('Not Enough Gems', 'You need 300 gems to purchase this item.');
+                  Alert.alert('Not Enough Gems', 'You need 200 gems to purchase this item.');
                 }
               }}
             >
@@ -425,7 +425,7 @@ export default function ShopScreen() {
                 </View>
                 <View style={styles.gemStorePriceBox}>
                   <Gem color="#FFD700" size={20} />
-                  <Text style={styles.gemStorePrice}>300</Text>
+                  <Text style={styles.gemStorePrice}>200</Text>
                 </View>
               </LinearGradient>
             </Pressable>
@@ -433,13 +433,13 @@ export default function ShopScreen() {
             <Pressable
               style={styles.gemStoreCard}
               onPress={() => {
-                if (gems >= 500) {
+                if (gems >= 350) {
                   Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                  spendGems(500);
+                  spendGems(350);
                   addSeeds('rare', 5);
                   Alert.alert('💎 Success!', '5 Rare seeds added to your inventory!');
                 } else {
-                  Alert.alert('Not Enough Gems', 'You need 500 gems to purchase this item.');
+                  Alert.alert('Not Enough Gems', 'You need 350 gems to purchase this item.');
                 }
               }}
             >
@@ -458,7 +458,7 @@ export default function ShopScreen() {
                 </View>
                 <View style={styles.gemStorePriceBox}>
                   <Gem color="#FFD700" size={20} />
-                  <Text style={styles.gemStorePrice}>500</Text>
+                  <Text style={styles.gemStorePrice}>350</Text>
                 </View>
               </LinearGradient>
             </Pressable>
@@ -466,13 +466,13 @@ export default function ShopScreen() {
             <Pressable
               style={styles.gemStoreCard}
               onPress={() => {
-                if (gems >= 1000) {
+                if (gems >= 700) {
                   Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                  spendGems(1000);
+                  spendGems(700);
                   addSeeds('epic', 3);
                   Alert.alert('⚡ Success!', '3 Epic seeds added to your inventory!');
                 } else {
-                  Alert.alert('Not Enough Gems', 'You need 1,000 gems to purchase this item.');
+                  Alert.alert('Not Enough Gems', 'You need 700 gems to purchase this item.');
                 }
               }}
             >
@@ -491,7 +491,7 @@ export default function ShopScreen() {
                 </View>
                 <View style={styles.gemStorePriceBox}>
                   <Gem color="#FFD700" size={20} />
-                  <Text style={styles.gemStorePrice}>1,000</Text>
+                  <Text style={styles.gemStorePrice}>700</Text>
                 </View>
               </LinearGradient>
             </Pressable>
@@ -499,13 +499,13 @@ export default function ShopScreen() {
             <Pressable
               style={styles.gemStoreCard}
               onPress={() => {
-                if (gems >= 2000) {
+                if (gems >= 1400) {
                   Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                  spendGems(2000);
+                  spendGems(1400);
                   addSeeds('legendary', 1);
                   Alert.alert('👑 Legendary!', '1 Legendary seed added to your inventory!');
                 } else {
-                  Alert.alert('Not Enough Gems', 'You need 2,000 gems to purchase this item.');
+                  Alert.alert('Not Enough Gems', 'You need 1,400 gems to purchase this item.');
                 }
               }}
             >
@@ -524,7 +524,7 @@ export default function ShopScreen() {
                 </View>
                 <View style={styles.gemStorePriceBox}>
                   <Gem color="#FFD700" size={20} />
-                  <Text style={styles.gemStorePrice}>2,000</Text>
+                  <Text style={styles.gemStorePrice}>1,400</Text>
                 </View>
               </LinearGradient>
             </Pressable>
@@ -532,15 +532,15 @@ export default function ShopScreen() {
             <Pressable
               style={styles.gemStoreCard}
               onPress={() => {
-                if (gems >= 500) {
+                if (gems >= 350) {
                   Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                  spendGems(500);
+                  spendGems(350);
                   for (let i = 0; i < 10; i++) {
                     refillEnergy();
                   }
                   Alert.alert('💫 Energy Refilled!', '10 Energy refills added!');
                 } else {
-                  Alert.alert('Not Enough Gems', 'You need 500 gems to purchase this item.');
+                  Alert.alert('Not Enough Gems', 'You need 350 gems to purchase this item.');
                 }
               }}
             >
@@ -559,7 +559,7 @@ export default function ShopScreen() {
                 </View>
                 <View style={styles.gemStorePriceBox}>
                   <Gem color="#FFD700" size={20} />
-                  <Text style={styles.gemStorePrice}>500</Text>
+                  <Text style={styles.gemStorePrice}>350</Text>
                 </View>
               </LinearGradient>
             </Pressable>
@@ -567,13 +567,13 @@ export default function ShopScreen() {
             <Pressable
               style={styles.gemStoreCard}
               onPress={() => {
-                if (gems >= 300) {
+                if (gems >= 200) {
                   Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                  spendGems(300);
+                  spendGems(200);
                   purchaseGrowthBooster(10, 0);
                   Alert.alert('🚀 Boosted!', '10 Growth boosters added!');
                 } else {
-                  Alert.alert('Not Enough Gems', 'You need 300 gems to purchase this item.');
+                  Alert.alert('Not Enough Gems', 'You need 200 gems to purchase this item.');
                 }
               }}
             >
@@ -592,7 +592,7 @@ export default function ShopScreen() {
                 </View>
                 <View style={styles.gemStorePriceBox}>
                   <Gem color="#FFD700" size={20} />
-                  <Text style={styles.gemStorePrice}>300</Text>
+                  <Text style={styles.gemStorePrice}>200</Text>
                 </View>
               </LinearGradient>
             </Pressable>
@@ -600,15 +600,15 @@ export default function ShopScreen() {
             <Pressable
               style={styles.gemStoreCard}
               onPress={() => {
-                if (gems >= 1500) {
+                if (gems >= 1000) {
                   Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                  spendGems(1500);
+                  spendGems(1000);
                   addSeeds('common', 10);
                   addSeeds('rare', 5);
                   addSeeds('epic', 3);
                   Alert.alert('🌟 Amazing!', 'Mega seed bundle added to your inventory!');
                 } else {
-                  Alert.alert('Not Enough Gems', 'You need 1,500 gems to purchase this item.');
+                  Alert.alert('Not Enough Gems', 'You need 1,000 gems to purchase this item.');
                 }
               }}
             >
@@ -627,7 +627,7 @@ export default function ShopScreen() {
                 </View>
                 <View style={styles.gemStorePriceBox}>
                   <Gem color="#FFD700" size={20} />
-                  <Text style={styles.gemStorePrice}>1,500</Text>
+                  <Text style={styles.gemStorePrice}>1,000</Text>
                 </View>
               </LinearGradient>
             </Pressable>
@@ -635,10 +635,12 @@ export default function ShopScreen() {
             <View style={styles.infoBox}>
               <Text style={styles.infoTitle}>💎 Earn Gems Daily</Text>
               <Text style={styles.infoText}>
-                • Daily login: +5 gems{"\n"}
-                • Complete manifestations: +10-50 gems{"\n"}
-                • Weekly streak bonus: +25 gems{"\n"}
-                • Share to community: +15 gems
+                • Daily login: +10 gems{"\n"}
+                • Complete manifestations: +20-100 gems{"\n"}
+                • Weekly streak bonus: +50 gems{"\n"}
+                • Share to community: +30 gems{"\n"}
+                • Daily quests: +30-70 gems{"\n"}
+                • Achievements: +20-500 gems
               </Text>
             </View>
 

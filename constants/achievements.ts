@@ -8,7 +8,7 @@ export const ACHIEVEMENTS: Omit<Achievement, 'currentValue' | 'unlocked' | 'unlo
     category: 'growth',
     icon: '🌱',
     targetValue: 1,
-    reward: { gems: 10, energy: 5 }
+    reward: { gems: 20, energy: 8 }
   },
   {
     id: 'plant_10',
@@ -17,7 +17,7 @@ export const ACHIEVEMENTS: Omit<Achievement, 'currentValue' | 'unlocked' | 'unlo
     category: 'growth',
     icon: '🌿',
     targetValue: 10,
-    reward: { gems: 25, seeds: { rarity: 'rare', count: 1 } }
+    reward: { gems: 50, seeds: { rarity: 'rare', count: 2 }, energy: 15 }
   },
   {
     id: 'plant_50',
@@ -26,7 +26,7 @@ export const ACHIEVEMENTS: Omit<Achievement, 'currentValue' | 'unlocked' | 'unlo
     category: 'growth',
     icon: '🌳',
     targetValue: 50,
-    reward: { gems: 100, seeds: { rarity: 'epic', count: 2 } }
+    reward: { gems: 200, seeds: { rarity: 'epic', count: 3 }, energy: 25 }
   },
   {
     id: 'first_bloom',
@@ -35,7 +35,7 @@ export const ACHIEVEMENTS: Omit<Achievement, 'currentValue' | 'unlocked' | 'unlo
     category: 'growth',
     icon: '🌸',
     targetValue: 1,
-    reward: { gems: 15, energy: 10 }
+    reward: { gems: 30, energy: 15 }
   },
   {
     id: 'bloom_25',
@@ -44,7 +44,7 @@ export const ACHIEVEMENTS: Omit<Achievement, 'currentValue' | 'unlocked' | 'unlo
     category: 'collection',
     icon: '🌺',
     targetValue: 25,
-    reward: { gems: 75, seeds: { rarity: 'epic', count: 1 } }
+    reward: { gems: 150, seeds: { rarity: 'epic', count: 2 }, energy: 20 }
   },
   {
     id: 'bloom_100',
@@ -53,7 +53,7 @@ export const ACHIEVEMENTS: Omit<Achievement, 'currentValue' | 'unlocked' | 'unlo
     category: 'collection',
     icon: '🌻',
     targetValue: 100,
-    reward: { gems: 250, seeds: { rarity: 'legendary', count: 1 } }
+    reward: { gems: 500, seeds: { rarity: 'legendary', count: 2 }, energy: 50 }
   },
   {
     id: 'streak_7',
@@ -62,7 +62,7 @@ export const ACHIEVEMENTS: Omit<Achievement, 'currentValue' | 'unlocked' | 'unlo
     category: 'dedication',
     icon: '🔥',
     targetValue: 7,
-    reward: { gems: 50, energy: 20 }
+    reward: { gems: 100, energy: 30 }
   },
   {
     id: 'streak_30',
@@ -71,7 +71,7 @@ export const ACHIEVEMENTS: Omit<Achievement, 'currentValue' | 'unlocked' | 'unlo
     category: 'dedication',
     icon: '⚡',
     targetValue: 30,
-    reward: { gems: 200, seeds: { rarity: 'legendary', count: 1 } }
+    reward: { gems: 400, seeds: { rarity: 'legendary', count: 2 }, energy: 50 }
   },
   {
     id: 'share_10',
@@ -80,7 +80,7 @@ export const ACHIEVEMENTS: Omit<Achievement, 'currentValue' | 'unlocked' | 'unlo
     category: 'social',
     icon: '💫',
     targetValue: 10,
-    reward: { gems: 40, energy: 15 }
+    reward: { gems: 80, energy: 25 }
   },
   {
     id: 'nurture_100',
@@ -89,7 +89,7 @@ export const ACHIEVEMENTS: Omit<Achievement, 'currentValue' | 'unlocked' | 'unlo
     category: 'mastery',
     icon: '✨',
     targetValue: 100,
-    reward: { gems: 80, seeds: { rarity: 'rare', count: 5 } }
+    reward: { gems: 150, seeds: { rarity: 'rare', count: 8 }, energy: 30 }
   },
   {
     id: 'legendary_seed',
@@ -98,7 +98,7 @@ export const ACHIEVEMENTS: Omit<Achievement, 'currentValue' | 'unlocked' | 'unlo
     category: 'mastery',
     icon: '👑',
     targetValue: 1,
-    reward: { gems: 150, seeds: { rarity: 'legendary', count: 2 } }
+    reward: { gems: 300, seeds: { rarity: 'legendary', count: 3 }, energy: 40 }
   },
   {
     id: 'epic_seed',
@@ -107,7 +107,7 @@ export const ACHIEVEMENTS: Omit<Achievement, 'currentValue' | 'unlocked' | 'unlo
     category: 'mastery',
     icon: '💎',
     targetValue: 1,
-    reward: { gems: 50, seeds: { rarity: 'epic', count: 1 } }
+    reward: { gems: 100, seeds: { rarity: 'epic', count: 2 }, energy: 20 }
   },
   {
     id: 'all_categories',
@@ -116,7 +116,7 @@ export const ACHIEVEMENTS: Omit<Achievement, 'currentValue' | 'unlocked' | 'unlo
     category: 'collection',
     icon: '🌈',
     targetValue: 5,
-    reward: { gems: 100, seeds: { rarity: 'epic', count: 3 } }
+    reward: { gems: 200, seeds: { rarity: 'epic', count: 4 }, energy: 30 }
   },
   {
     id: 'energy_efficient',
@@ -125,6 +125,6 @@ export const ACHIEVEMENTS: Omit<Achievement, 'currentValue' | 'unlocked' | 'unlo
     category: 'mastery',
     icon: '⚙️',
     targetValue: 50,
-    reward: { gems: 60, energy: 30 }
+    reward: { gems: 120, energy: 40 }
   },
 ];

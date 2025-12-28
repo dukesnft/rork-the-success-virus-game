@@ -93,8 +93,8 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
       
       if (!stored) {
         return {
-          energy: 10,
-          maxEnergy: 10,
+          energy: 15,
+          maxEnergy: 15,
           lastRefreshDate: today,
           streak: 1,
           lastPlayDate: today,
@@ -291,7 +291,7 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
   useEffect(() => {
     if (energyQuery.data) {
       const isPremiumUser = premiumQuery.data?.isPremium || false;
-      const baseMax = isPremiumUser ? 20 : 10;
+      const baseMax = isPremiumUser ? 25 : 15;
       
       setEnergy(energyQuery.data.energy);
       setMaxEnergy(baseMax);
@@ -526,7 +526,11 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     
     if (timeSinceLastAction < 5000) {
       newCount = comboCount + 1;
-      newMultiplier = Math.min(1 + Math.floor(newCount / 5) * 0.5, 3);
+      newMultiplier = Math.min(1 + Math.floor(newCount / 3) * 0.5, 4);
+      
+      if (newCount % 10 === 0) {
+        earnGems(Math.floor(newCount / 2), `${newCount}x Combo Bonus!`);
+      }
     } else {
       newCount = 1;
       newMultiplier = 1;
@@ -542,7 +546,7 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     });
     
     return newMultiplier;
-  }, [comboCount, comboMultiplier, comboQuery.data, saveCombo]);
+  }, [comboCount, comboMultiplier, comboQuery.data, saveCombo, earnGems]);
 
   const resetCombo = useCallback(() => {
     setComboCount(0);
@@ -569,7 +573,19 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
         maxPlantSlots: newSlots,
       });
       
-      earnGems(10 * newLevel, `Reached Garden Level ${newLevel}`);
+      earnGems(25 * newLevel, `Reached Garden Level ${newLevel}`);
+      
+      const newEnergy = energy + (5 * newLevel);
+      const today = new Date().toISOString().split('T')[0];
+      setEnergy(Math.min(newEnergy, maxEnergy));
+      saveEnergy({
+        energy: Math.min(newEnergy, maxEnergy),
+        maxEnergy,
+        lastRefreshDate: today,
+        streak,
+        lastPlayDate: today,
+      });
+      
       return true;
     } else {
       setGardenXP(newXP);
@@ -580,7 +596,7 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
       });
       return false;
     }
-  }, [gardenLevel, gardenXP, maxPlantSlots, saveGardenLevel, earnGems]);
+  }, [gardenLevel, gardenXP, maxPlantSlots, saveGardenLevel, earnGems, energy, maxEnergy, streak, saveEnergy]);
 
   return {
     isPremium,
