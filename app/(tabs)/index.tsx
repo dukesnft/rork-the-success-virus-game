@@ -7,7 +7,7 @@ import { useManifestations } from '@/contexts/ManifestationContext';
 import { usePremium } from '@/contexts/PremiumContext';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { useBackgrounds } from '@/contexts/BackgroundContext';
-import { useInventory } from '@/contexts/InventoryContext';
+
 import { useRankings } from '@/contexts/RankingContext';
 import { useAchievements } from '@/contexts/AchievementContext';
 import { useQuests } from '@/contexts/QuestContext';
@@ -343,7 +343,7 @@ export default function GardenScreen() {
   const [showAchievements, setShowAchievements] = useState(false);
   const [showQuests, setShowQuests] = useState(false);
   const [showCombo, setShowCombo] = useState(false);
-  const { getTotalSeedsCount } = useInventory();
+
   const { checkInStreak, updateSeedRankings } = useRankings();
 
   const handleNurture = useCallback((id: string) => {
@@ -485,23 +485,20 @@ export default function GardenScreen() {
           </View>
           <Text style={styles.subtitle}>Nurture your intentions into reality</Text>
           
-          <View style={styles.gardenLevelContainer}>
-            <View style={styles.levelBadge}>
-              <Trophy color="#FFD700" size={16} />
-              <Text style={styles.levelText}>Level {gardenLevel}</Text>
+          <View style={styles.compactLevelBar}>
+            <View style={styles.compactLevelBadge}>
+              <Trophy color="#FFD700" size={14} />
+              <Text style={styles.compactLevelText}>Lv.{gardenLevel}</Text>
             </View>
-            <View style={styles.xpBarContainer}>
-              <View style={styles.xpBar}>
-                <LinearGradient
-                  colors={['#9370DB', '#FF69B4']}
-                  style={[styles.xpFill, { width: `${(gardenXP / (gardenLevel * 100)) * 100}%` }]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                />
-              </View>
-              <Text style={styles.xpText}>{gardenXP}/{gardenLevel * 100} XP</Text>
+            <View style={styles.compactXpBar}>
+              <LinearGradient
+                colors={['#9370DB', '#FF69B4']}
+                style={[styles.xpFill, { width: `${(gardenXP / (gardenLevel * 100)) * 100}%` }]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              />
             </View>
-            <Text style={styles.plantSlotsText}>Slots: {manifestations.length}/{maxPlantSlots}</Text>
+            <Text style={styles.compactXpText}>{manifestations.length}/{maxPlantSlots}</Text>
           </View>
           
           <View style={styles.topStatsContainer}>
@@ -541,67 +538,18 @@ export default function GardenScreen() {
             <View style={styles.secondaryBar}>
               {isPremium && (
                 <View style={styles.premiumBadge}>
-                  <Text style={styles.premiumText}>👑 PREMIUM</Text>
+                  <Text style={styles.premiumText}>👑</Text>
                 </View>
               )}
               
               <Pressable 
-                style={styles.quickActionButton}
+                style={styles.iconButton}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   router.push('/shop');
                 }}
               >
                 <ShoppingBag color="#FFD700" size={18} />
-                <Text style={styles.quickActionText}>Shop</Text>
-              </Pressable>
-              
-              <Pressable 
-                style={styles.quickActionButton}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setShowQuests(true);
-                }}
-              >
-                <Target color="#FFD700" size={18} />
-                <Text style={styles.quickActionText}>Quests</Text>
-                {getCompletedCount() < getQuestsTotalCount() && (
-                  <View style={styles.quickActionBadge}>
-                    <Text style={styles.quickActionBadgeText}>{getCompletedCount()}/{getQuestsTotalCount()}</Text>
-                  </View>
-                )}
-              </Pressable>
-              
-              <Pressable 
-                style={styles.quickActionButton}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setShowAchievements(true);
-                }}
-              >
-                <Trophy color="#FFD700" size={18} />
-                <Text style={styles.quickActionText}>Achievements</Text>
-                {newUnlocks.length > 0 && (
-                  <View style={styles.quickActionBadge}>
-                    <Text style={styles.quickActionBadgeText}>!</Text>
-                  </View>
-                )}
-              </Pressable>
-              
-              <Pressable 
-                style={styles.quickActionButton}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setShowInventory(true);
-                }}
-              >
-                <Package color="#FFD700" size={18} />
-                <Text style={styles.quickActionText}>Seeds</Text>
-                {getTotalSeedsCount() > 0 && (
-                  <View style={styles.quickActionBadge}>
-                    <Text style={styles.quickActionBadgeText}>{getTotalSeedsCount()}</Text>
-                  </View>
-                )}
               </Pressable>
               
               <Pressable 
@@ -1490,18 +1438,17 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   premiumBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: 'rgba(255, 215, 0, 0.2)',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 215, 0, 0.5)',
   },
   premiumText: {
-    fontSize: 10,
-    fontWeight: '700' as const,
-    color: '#FFD700',
-    letterSpacing: 0.5,
+    fontSize: 16,
   },
   boostCounter: {
     flexDirection: 'row',
@@ -2199,87 +2146,43 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginLeft: 40,
   },
-  quickActionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
-  },
-  quickActionText: {
-    fontSize: 13,
-    fontWeight: '700' as const,
-    color: '#fff',
-    letterSpacing: 0.3,
-  },
-  quickActionBadge: {
-    position: 'absolute',
-    top: -6,
-    right: -6,
-    backgroundColor: '#FF69B4',
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 6,
-    borderWidth: 2,
-    borderColor: '#2d1b4e',
-  },
-  quickActionBadgeText: {
-    fontSize: 11,
-    fontWeight: '700' as const,
-    color: '#fff',
-  },
-  gardenLevelContainer: {
-    marginTop: 16,
+
+  compactLevelBar: {
+    marginTop: 12,
     backgroundColor: 'rgba(0, 0, 0, 0.25)',
-    borderRadius: 16,
-    padding: 12,
+    borderRadius: 12,
+    padding: 8,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  levelBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 8,
   },
-  levelText: {
-    fontSize: 16,
+  compactLevelBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  compactLevelText: {
+    fontSize: 13,
     fontWeight: '700' as const,
     color: '#FFD700',
   },
-  xpBarContainer: {
-    marginBottom: 8,
-  },
-  xpBar: {
-    height: 8,
+  compactXpBar: {
+    flex: 1,
+    height: 6,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 4,
+    borderRadius: 3,
     overflow: 'hidden',
-    marginBottom: 6,
   },
   xpFill: {
     height: '100%',
-    borderRadius: 4,
+    borderRadius: 3,
   },
-  xpText: {
-    fontSize: 12,
+  compactXpText: {
+    fontSize: 11,
     fontWeight: '600' as const,
     color: '#b8a9d9',
-    textAlign: 'center' as const,
-  },
-  plantSlotsText: {
-    fontSize: 12,
-    fontWeight: '600' as const,
-    color: '#b8a9d9',
-    textAlign: 'center' as const,
   },
   comboIndicator: {
     position: 'absolute',
