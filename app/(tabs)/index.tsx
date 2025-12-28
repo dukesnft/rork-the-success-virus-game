@@ -551,85 +551,94 @@ export default function GardenScreen() {
           </View>
           <Text style={styles.subtitle}>Nurture your intentions into reality</Text>
           
-          <View style={styles.statusBar}>
-            {isPremium && (
-              <View style={styles.premiumBadge}>
-                <Text style={styles.premiumText}>👑 PREMIUM</Text>
-              </View>
-            )}
-            <Pressable 
-              style={styles.energyCounter}
-              onPress={() => setShowEnergyPrompt(true)}
-            >
-              <Text style={styles.energyIcon}>💫</Text>
-              <Text style={styles.energyCount}>{energy}/{maxEnergy}</Text>
-            </Pressable>
-            {streak > 0 && (
-              <View style={styles.streakBadge}>
-                <Text style={styles.streakIcon}>🔥</Text>
-                <Text style={styles.streakCount}>{streak}</Text>
-              </View>
-            )}
-            <Pressable 
-              style={styles.boostCounter}
-              onPress={() => setShowBoostPrompt(true)}
-            >
-              <Text style={styles.boostIcon}>⚡</Text>
-              <Text style={styles.boostCount}>{energyBoosts}</Text>
-            </Pressable>
-            <Pressable 
-              style={styles.gemCounter}
-              onPress={() => router.push('/shop')}
-            >
-              <Gem color="#9370DB" size={16} />
-              <Text style={styles.gemCount}>{gems}</Text>
-            </Pressable>
-            <Pressable 
-              style={styles.backgroundButton}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setShowBackgroundStore(true);
-              }}
-            >
-              <Palette color="#b8a9d9" size={18} />
-            </Pressable>
-            <Pressable 
-              style={[styles.notificationButton, settings.enabled && styles.notificationButtonActive]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setShowNotificationSettings(true);
-              }}
-            >
-              <Bell color={settings.enabled ? '#FFD700' : '#b8a9d9'} size={18} />
-            </Pressable>
-          </View>
-
-          <View style={styles.quickActionsRow}>
-            <Pressable 
-              style={styles.quickActionButton}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push('/shop');
-              }}
-            >
-              <ShoppingBag color="#FFD700" size={20} />
-              <Text style={styles.quickActionText}>Shop</Text>
-            </Pressable>
-            <Pressable 
-              style={styles.quickActionButton}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setShowInventory(true);
-              }}
-            >
-              <Package color="#FFD700" size={20} />
-              <Text style={styles.quickActionText}>Inventory</Text>
-              {getTotalSeeds() > 0 && (
-                <View style={styles.quickActionBadge}>
-                  <Text style={styles.quickActionBadgeText}>{getTotalSeeds()}</Text>
+          <View style={styles.topStatsContainer}>
+            <View style={styles.statusBar}>
+              <Pressable 
+                style={styles.gemCounter}
+                onPress={() => router.push('/shop')}
+              >
+                <Gem color="#9370DB" size={18} />
+                <Text style={styles.gemCount}>{gems}</Text>
+              </Pressable>
+              
+              <Pressable 
+                style={styles.energyCounter}
+                onPress={() => setShowEnergyPrompt(true)}
+              >
+                <Text style={styles.energyIcon}>💫</Text>
+                <Text style={styles.energyCount}>{energy}/{maxEnergy}</Text>
+              </Pressable>
+              
+              {streak > 0 && (
+                <View style={styles.streakBadge}>
+                  <Text style={styles.streakIcon}>🔥</Text>
+                  <Text style={styles.streakCount}>{streak}</Text>
                 </View>
               )}
-            </Pressable>
+              
+              <Pressable 
+                style={styles.boostCounter}
+                onPress={() => setShowBoostPrompt(true)}
+              >
+                <Text style={styles.boostIcon}>⚡</Text>
+                <Text style={styles.boostCount}>{energyBoosts}</Text>
+              </Pressable>
+            </View>
+
+            <View style={styles.secondaryBar}>
+              {isPremium && (
+                <View style={styles.premiumBadge}>
+                  <Text style={styles.premiumText}>👑 PREMIUM</Text>
+                </View>
+              )}
+              
+              <Pressable 
+                style={styles.quickActionButton}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push('/shop');
+                }}
+              >
+                <ShoppingBag color="#FFD700" size={18} />
+                <Text style={styles.quickActionText}>Shop</Text>
+              </Pressable>
+              
+              <Pressable 
+                style={styles.quickActionButton}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setShowInventory(true);
+                }}
+              >
+                <Package color="#FFD700" size={18} />
+                <Text style={styles.quickActionText}>Seeds</Text>
+                {getTotalSeeds() > 0 && (
+                  <View style={styles.quickActionBadge}>
+                    <Text style={styles.quickActionBadgeText}>{getTotalSeeds()}</Text>
+                  </View>
+                )}
+              </Pressable>
+              
+              <Pressable 
+                style={styles.iconButton}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setShowBackgroundStore(true);
+                }}
+              >
+                <Palette color="#b8a9d9" size={18} />
+              </Pressable>
+              
+              <Pressable 
+                style={[styles.iconButton, settings.enabled && styles.iconButtonActive]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setShowNotificationSettings(true);
+                }}
+              >
+                <Bell color={settings.enabled ? '#FFD700' : '#b8a9d9'} size={18} />
+              </Pressable>
+            </View>
           </View>
         </View>
 
@@ -1308,12 +1317,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  topStatsContainer: {
+    marginTop: 16,
+    gap: 10,
+  },
   statusBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginTop: 16,
-    marginLeft: 40,
+    justifyContent: 'center',
+    gap: 10,
+    paddingHorizontal: 16,
+  },
+  secondaryBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
   },
   premiumBadge: {
     backgroundColor: 'rgba(255, 215, 0, 0.2)',
@@ -1351,20 +1371,25 @@ const styles = StyleSheet.create({
   gemCounter: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(147, 112, 219, 0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
+    backgroundColor: 'rgba(147, 112, 219, 0.25)',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 14,
     gap: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(147, 112, 219, 0.4)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(147, 112, 219, 0.5)',
+    shadowColor: '#9370DB',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
   gemCount: {
-    fontSize: 14,
-    fontWeight: '700' as const,
+    fontSize: 15,
+    fontWeight: '800' as const,
     color: '#9370DB',
   },
-  backgroundButton: {
+  iconButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
@@ -1373,6 +1398,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: 'rgba(184, 169, 217, 0.4)',
+  },
+  iconButtonActive: {
+    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+    borderColor: 'rgba(255, 215, 0, 0.4)',
   },
   modalOverlay: {
     ...StyleSheet.absoluteFillObject,

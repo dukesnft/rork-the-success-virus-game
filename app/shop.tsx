@@ -226,6 +226,8 @@ export default function ShopScreen() {
     purchaseAutoNurture,
     autoNurtureActive,
     purchaseItem,
+    spendGems,
+    refillEnergy,
   } = usePremium();
   
   const {
@@ -392,7 +394,220 @@ export default function ShopScreen() {
               </LinearGradient>
             </View>
 
-            <Text style={styles.sectionTitle}>💎 Gems</Text>
+            <Text style={styles.sectionTitle}>💎 Gem Store</Text>
+            <Text style={styles.sectionSubtitle}>Spend your gems on powerful items</Text>
+            
+            <Pressable
+              style={styles.gemStoreCard}
+              onPress={() => {
+                if (gems >= 100) {
+                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                  spendGems(100);
+                  addSeeds('rare', 3);
+                  Alert.alert('Success!', '3 Rare seeds added to your inventory!');
+                } else {
+                  Alert.alert('Not Enough Gems', 'You need 100 gems to purchase this item.');
+                }
+              }}
+            >
+              <LinearGradient
+                colors={['#4169E1', '#1E90FF']}
+                style={styles.gemStoreGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.gemStoreIcon}>
+                  <Sparkles color="#4169E1" size={32} />
+                </View>
+                <View style={styles.gemStoreInfo}>
+                  <Text style={styles.gemStoreTitle}>3 Rare Seeds</Text>
+                  <Text style={styles.gemStoreDescription}>Grow rare manifestations</Text>
+                </View>
+                <View style={styles.gemStorePriceBox}>
+                  <Gem color="#FFD700" size={20} />
+                  <Text style={styles.gemStorePrice}>100</Text>
+                </View>
+              </LinearGradient>
+            </Pressable>
+
+            <Pressable
+              style={styles.gemStoreCard}
+              onPress={() => {
+                if (gems >= 150) {
+                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                  spendGems(150);
+                  addSeeds('epic', 2);
+                  Alert.alert('Success!', '2 Epic seeds added to your inventory!');
+                } else {
+                  Alert.alert('Not Enough Gems', 'You need 150 gems to purchase this item.');
+                }
+              }}
+            >
+              <LinearGradient
+                colors={['#9370DB', '#8A2BE2']}
+                style={styles.gemStoreGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.gemStoreIcon}>
+                  <Sparkles color="#9370DB" size={32} />
+                </View>
+                <View style={styles.gemStoreInfo}>
+                  <Text style={styles.gemStoreTitle}>2 Epic Seeds</Text>
+                  <Text style={styles.gemStoreDescription}>Powerful manifestations</Text>
+                </View>
+                <View style={styles.gemStorePriceBox}>
+                  <Gem color="#FFD700" size={20} />
+                  <Text style={styles.gemStorePrice}>150</Text>
+                </View>
+              </LinearGradient>
+            </Pressable>
+
+            <Pressable
+              style={styles.gemStoreCard}
+              onPress={() => {
+                if (gems >= 300) {
+                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                  spendGems(300);
+                  addSeeds('legendary', 1);
+                  Alert.alert('Success!', '1 Legendary seed added to your inventory!');
+                } else {
+                  Alert.alert('Not Enough Gems', 'You need 300 gems to purchase this item.');
+                }
+              }}
+            >
+              <LinearGradient
+                colors={['#FFD700', '#FFA500']}
+                style={styles.gemStoreGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.gemStoreIcon}>
+                  <Sparkles color="#FFD700" size={32} />
+                </View>
+                <View style={styles.gemStoreInfo}>
+                  <Text style={styles.gemStoreTitle}>1 Legendary Seed</Text>
+                  <Text style={styles.gemStoreDescription}>The ultimate manifestation</Text>
+                </View>
+                <View style={styles.gemStorePriceBox}>
+                  <Gem color="#FFD700" size={20} />
+                  <Text style={styles.gemStorePrice}>300</Text>
+                </View>
+              </LinearGradient>
+            </Pressable>
+
+            <Pressable
+              style={styles.gemStoreCard}
+              onPress={() => {
+                if (gems >= 50) {
+                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                  spendGems(50);
+                  refillEnergy();
+                  Alert.alert('Success!', 'Energy fully refilled!');
+                } else {
+                  Alert.alert('Not Enough Gems', 'You need 50 gems to purchase this item.');
+                }
+              }}
+            >
+              <LinearGradient
+                colors={['#9370DB', '#FF69B4']}
+                style={styles.gemStoreGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.gemStoreIcon}>
+                  <Text style={styles.gemStoreIconEmoji}>💫</Text>
+                </View>
+                <View style={styles.gemStoreInfo}>
+                  <Text style={styles.gemStoreTitle}>Energy Refill</Text>
+                  <Text style={styles.gemStoreDescription}>Instant full energy restore</Text>
+                </View>
+                <View style={styles.gemStorePriceBox}>
+                  <Gem color="#FFD700" size={20} />
+                  <Text style={styles.gemStorePrice}>50</Text>
+                </View>
+              </LinearGradient>
+            </Pressable>
+
+            <Pressable
+              style={styles.gemStoreCard}
+              onPress={() => {
+                if (gems >= 75) {
+                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                  spendGems(75);
+                  purchaseGrowthBooster(10, 0);
+                  Alert.alert('Success!', '10 Growth boosters added!');
+                } else {
+                  Alert.alert('Not Enough Gems', 'You need 75 gems to purchase this item.');
+                }
+              }}
+            >
+              <LinearGradient
+                colors={['#FF69B4', '#FF1493']}
+                style={styles.gemStoreGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.gemStoreIcon}>
+                  <Rocket color="#FF69B4" size={32} />
+                </View>
+                <View style={styles.gemStoreInfo}>
+                  <Text style={styles.gemStoreTitle}>10 Growth Boosters</Text>
+                  <Text style={styles.gemStoreDescription}>Accelerate growth instantly</Text>
+                </View>
+                <View style={styles.gemStorePriceBox}>
+                  <Gem color="#FFD700" size={20} />
+                  <Text style={styles.gemStorePrice}>75</Text>
+                </View>
+              </LinearGradient>
+            </Pressable>
+
+            <Pressable
+              style={styles.gemStoreCard}
+              onPress={() => {
+                if (gems >= 200) {
+                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                  spendGems(200);
+                  addSeeds('common', 10);
+                  addSeeds('rare', 5);
+                  addSeeds('epic', 2);
+                  Alert.alert('Success!', 'Mega seed bundle added to your inventory!');
+                } else {
+                  Alert.alert('Not Enough Gems', 'You need 200 gems to purchase this item.');
+                }
+              }}
+            >
+              <LinearGradient
+                colors={['#32CD32', '#228B22']}
+                style={styles.gemStoreGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.gemStoreIcon}>
+                  <Star color="#FFD700" size={32} fill="#FFD700" />
+                </View>
+                <View style={styles.gemStoreInfo}>
+                  <Text style={styles.gemStoreTitle}>Mega Seed Bundle</Text>
+                  <Text style={styles.gemStoreDescription}>10 Common + 5 Rare + 2 Epic</Text>
+                </View>
+                <View style={styles.gemStorePriceBox}>
+                  <Gem color="#FFD700" size={20} />
+                  <Text style={styles.gemStorePrice}>200</Text>
+                </View>
+              </LinearGradient>
+            </Pressable>
+
+            <View style={styles.infoBox}>
+              <Text style={styles.infoTitle}>💎 Earn Gems Daily</Text>
+              <Text style={styles.infoText}>
+                • Daily login: +5 gems{"\n"}
+                • Complete manifestations: +10-50 gems{"\n"}
+                • Weekly streak bonus: +25 gems{"\n"}
+                • Share to community: +15 gems
+              </Text>
+            </View>
+
+            <Text style={styles.sectionTitle}>💰 Buy Gems</Text>
             <Text style={styles.sectionSubtitle}>Premium currency for special items</Text>
             
             <View style={styles.itemsGrid}>
@@ -897,5 +1112,61 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
     color: '#fff',
     opacity: 0.7,
+  },
+  gemStoreCard: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  gemStoreGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  gemStoreIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  gemStoreIconEmoji: {
+    fontSize: 32,
+  },
+  gemStoreInfo: {
+    flex: 1,
+  },
+  gemStoreTitle: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: '#fff',
+    marginBottom: 4,
+  },
+  gemStoreDescription: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+  gemStorePriceBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+  },
+  gemStorePrice: {
+    fontSize: 18,
+    fontWeight: '800' as const,
+    color: '#FFD700',
   },
 });
