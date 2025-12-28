@@ -583,32 +583,38 @@ export default function GardenScreen() {
           </View>
         )}
 
-        <View style={styles.gardenArea}>
-          <View style={styles.gardenGrid}>
-            {Array.from({ length: 8 }).map((_, i) => (
-              <View key={i} style={styles.gridLine} />
-            ))}
-          </View>
-          {manifestations.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyEmoji}>✨</Text>
-              <Text style={styles.emptyText}>Your garden awaits</Text>
-              <Text style={styles.emptySubtext}>Plant your first intention to begin</Text>
-            </View>
-          ) : (
-            <>
-              {manifestations.map((m) => (
-                <ManifestationPlant
-                  key={m.id}
-                  manifestation={m}
-                  onNurture={() => handleNurture(m.id)}
-                  onBoost={() => handleBoostRequest(m.id)}
-                  onPress={() => setSelectedManifestationId(m.id)}
-                />
+        <ScrollView 
+          style={styles.gardenArea}
+          contentContainerStyle={styles.gardenScrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.gardenInner}>
+            <View style={styles.gardenGrid}>
+              {Array.from({ length: 12 }).map((_, i) => (
+                <View key={i} style={styles.gridLine} />
               ))}
-            </>
-          )}
-        </View>
+            </View>
+            {manifestations.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyEmoji}>✨</Text>
+                <Text style={styles.emptyText}>Your garden awaits</Text>
+                <Text style={styles.emptySubtext}>Plant your first intention to begin</Text>
+              </View>
+            ) : (
+              <>
+                {manifestations.map((m) => (
+                  <ManifestationPlant
+                    key={m.id}
+                    manifestation={m}
+                    onNurture={() => handleNurture(m.id)}
+                    onBoost={() => handleBoostRequest(m.id)}
+                    onPress={() => setSelectedManifestationId(m.id)}
+                  />
+                ))}
+              </>
+            )}
+          </View>
+        </ScrollView>
 
         <Pressable
           style={styles.addButton}
@@ -1248,15 +1254,22 @@ const styles = StyleSheet.create({
   },
   gardenArea: {
     flex: 1,
-    position: 'relative',
     marginHorizontal: 24,
     marginBottom: 20,
     borderRadius: 24,
-    overflow: 'hidden',
     backgroundColor: 'rgba(255, 255, 255, 0.03)',
     borderWidth: 2,
     borderColor: 'rgba(255, 255, 255, 0.08)',
     zIndex: 1,
+  },
+  gardenScrollContent: {
+    flexGrow: 1,
+    minHeight: height * 0.5,
+  },
+  gardenInner: {
+    position: 'relative',
+    minHeight: height * 1.2,
+    width: '100%',
   },
   gardenGrid: {
     ...StyleSheet.absoluteFillObject,
@@ -1293,8 +1306,8 @@ const styles = StyleSheet.create({
   plantContainer: {
     position: 'absolute',
     alignItems: 'center',
-    width: 100,
-    height: 100,
+    width: 110,
+    height: 110,
     zIndex: 2,
   },
   plantGlow: {
