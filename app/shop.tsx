@@ -1,10 +1,14 @@
+import React from 'react';
 import { StyleSheet, View, Text, Pressable, ScrollView, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { X, Gem, Sparkles, Zap, Crown, Infinity, Rocket, Star } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { usePremium } from '@/contexts/PremiumContext';
+import { useInventory } from '@/contexts/InventoryContext';
+import { SeedRarity } from '@/types/inventory';
 
 interface ShopItem {
   id: string;
@@ -17,6 +21,7 @@ interface ShopItem {
   amount?: number;
   popular?: boolean;
   bestValue?: boolean;
+  rarity?: SeedRarity;
 }
 
 const SHOP_ITEMS: ShopItem[] = [
@@ -103,35 +108,60 @@ const SHOP_ITEMS: ShopItem[] = [
     amount: 100000,
   },
   {
-    id: 'seeds_small',
-    name: '5 Special Seeds',
-    description: 'Guaranteed rare manifestations',
-    price: 4.99,
+    id: 'seeds_common',
+    name: '10 Common Seeds',
+    description: 'Standard quality seeds',
+    price: 2.99,
     icon: Sparkles,
-    color: '#32CD32',
+    color: '#90EE90',
     type: 'seeds',
-    amount: 5,
+    amount: 10,
+    rarity: 'common',
   },
   {
-    id: 'seeds_medium',
-    name: '15 Special Seeds',
-    description: '+3 bonus seeds',
-    price: 11.99,
+    id: 'seeds_rare',
+    name: '5 Rare Seeds',
+    description: 'Higher quality manifestations',
+    price: 4.99,
     icon: Sparkles,
-    color: '#32CD32',
+    color: '#4169E1',
     type: 'seeds',
-    amount: 15,
+    amount: 5,
+    rarity: 'rare',
     popular: true,
   },
   {
-    id: 'seeds_large',
-    name: '50 Special Seeds',
-    description: '+15 bonus seeds',
-    price: 34.99,
+    id: 'seeds_epic',
+    name: '3 Epic Seeds',
+    description: 'Powerful manifestations',
+    price: 9.99,
+    icon: Sparkles,
+    color: '#9370DB',
+    type: 'seeds',
+    amount: 3,
+    rarity: 'epic',
+  },
+  {
+    id: 'seeds_legendary',
+    name: '1 Legendary Seed',
+    description: 'The most powerful seed',
+    price: 19.99,
     icon: Sparkles,
     color: '#FFD700',
     type: 'seeds',
-    amount: 50,
+    amount: 1,
+    rarity: 'legendary',
+    bestValue: true,
+  },
+  {
+    id: 'seeds_bundle',
+    name: 'Mixed Seed Bundle',
+    description: '5 Common, 3 Rare, 1 Epic',
+    price: 12.99,
+    icon: Sparkles,
+    color: '#32CD32',
+    type: 'seeds',
+    amount: 9,
   },
   {
     id: 'booster_small',
@@ -190,16 +220,52 @@ export default function ShopScreen() {
   const { 
     gems, 
     isPremium, 
-    specialSeeds,
     purchaseGems, 
-    purchaseSpecialSeeds, 
     purchaseGrowthBooster, 
     purchaseEnergyBoost,
     purchaseAutoNurture,
     autoNurtureActive,
-    claimFreeSeeds,
-    getFreeSeedsRemaining,
+    purchaseItem,
   } = usePremium();
+  
+  const {
+    addSeeds,
+    getTotalSeedsCount,
+  } = useInventory();
+
+  const [freeSeeds, setFreeSeeds] = React.useState({ claimed: 0, lastClaim: '' });
+
+  React.useEffect(() => {
+    const loadFreeSeeds = async () => {
+      const stored = await AsyncStorage.getItem('free_seeds_daily');
+      const today = new Date().toISOString().split('T')[0];
+      if (stored) {
+        const data = JSON.parse(stored);
+        if (data.lastClaim === today) {
+          setFreeSeeds(data);
+        } else {
+          setFreeSeeds({ claimed: 0, lastClaim: today });
+        }
+      } else {
+        setFreeSeeds({ claimed: 0, lastClaim: today });
+      }
+    };
+    loadFreeSeeds();
+  }, []);
+
+  const getFreeSeedsRemaining = () => {
+    const max = isPremium ? 5 : 3;
+    return Math.max(0, max - freeSeeds.claimed);
+  };
+
+  const claimFreeSeeds = async (amount: number) => {
+    const today = new Date().toISOString().split('T')[0];
+    const newClaimed = freeSeeds.claimed + amount;
+    const newData = { claimed: newClaimed, lastClaim: today };
+    setFreeSeeds(newData);
+    await AsyncStorage.setItem('free_seeds_daily', JSON.stringify(newData));
+    addSeeds('common', amount);
+  };
 
   const handlePurchase = (item: ShopItem) => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -210,8 +276,18 @@ export default function ShopScreen() {
         Alert.alert('Success!', `${item.amount} gems added to your account!`);
         break;
       case 'seeds':
-        purchaseSpecialSeeds(item.amount!, item.price);
-        Alert.alert('Success!', `${item.amount} special seeds added!`);
+        if (item.id === 'seeds_bundle') {
+          addSeeds('common', 5);
+          addSeeds('rare', 3);
+          addSeeds('epic', 1);
+          purchaseItem(item.price);
+          Alert.alert('Success!', 'Mixed seed bundle added to your inventory!');
+        } else if (item.rarity) {
+          addSeeds(item.rarity, item.amount!);
+          purchaseItem(item.price);
+          const rarityName = item.rarity.charAt(0).toUpperCase() + item.rarity.slice(1);
+          Alert.alert('Success!', `${item.amount} ${rarityName} seeds added to your inventory!`);
+        }
         break;
       case 'booster':
         purchaseGrowthBooster(item.amount!, item.price);
@@ -251,7 +327,7 @@ export default function ShopScreen() {
                 </View>
                 <View style={styles.seedsDisplay}>
                   <Sparkles color="#32CD32" size={20} />
-                  <Text style={styles.seedsText}>{specialSeeds}</Text>
+                  <Text style={styles.seedsText}>{getTotalSeedsCount()}</Text>
                 </View>
               </View>
             </View>

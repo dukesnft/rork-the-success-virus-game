@@ -31,20 +31,23 @@ export default function CommunityScreen() {
       case 'rare': return '#4169E1';
       case 'epic': return '#9370DB';
       case 'legendary': return '#FFD700';
+      default: return '#90EE90';
     }
   };
 
   const getRarityLabel = (rarity: SeedRarity) => {
+    if (!rarity) return 'Common';
     return rarity.charAt(0).toUpperCase() + rarity.slice(1);
   };
 
   const handleCopyToGarden = (manifestation: any) => {
-    const availableSeeds = getSeedsByRarity(manifestation.rarity);
+    const rarityToUse = manifestation.rarity || 'common';
+    const availableSeeds = getSeedsByRarity(rarityToUse);
     
     if (availableSeeds === 0) {
       Alert.alert(
         '🌱 Need Seeds!',
-        `You need a ${getRarityLabel(manifestation.rarity)} seed to plant this manifestation. Visit the Shop to get more seeds!`,
+        `You need a ${getRarityLabel(rarityToUse)} seed to plant this manifestation. Visit the Shop to get more seeds!`,
         [{ text: 'OK', style: 'default' }]
       );
       return;
@@ -52,21 +55,21 @@ export default function CommunityScreen() {
 
     Alert.alert(
       '🌱 Plant Manifestation?',
-      `This will use 1 ${getRarityLabel(manifestation.rarity)} seed. You have ${availableSeeds} ${getRarityLabel(manifestation.rarity)} seeds available.`,
+      `This will use 1 ${getRarityLabel(rarityToUse)} seed. You have ${availableSeeds} ${getRarityLabel(rarityToUse)} seeds available.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Plant',
           style: 'default',
           onPress: () => {
-            const seedWasUsed = consumeSeed(manifestation.rarity);
+            const seedWasUsed = consumeSeed(rarityToUse);
             if (seedWasUsed) {
               addManifestation({
                 intention: manifestation.intention,
                 category: manifestation.category,
                 color: manifestation.color,
                 position: { x: 0, y: 0 },
-                rarity: manifestation.rarity,
+                rarity: rarityToUse,
               });
               Alert.alert(
                 '✨ Planted!',
@@ -115,11 +118,11 @@ export default function CommunityScreen() {
                 <View
                   style={[
                     styles.rarityBadge,
-                    { backgroundColor: getRarityColor(manifestation.rarity) + '30' },
+                    { backgroundColor: getRarityColor(manifestation.rarity || 'common') + '30' },
                   ]}
                 >
-                  <Text style={[styles.rarityText, { color: getRarityColor(manifestation.rarity) }]}>
-                    {getRarityLabel(manifestation.rarity)}
+                  <Text style={[styles.rarityText, { color: getRarityColor(manifestation.rarity || 'common') }]}>
+                    {getRarityLabel(manifestation.rarity || 'common')}
                   </Text>
                 </View>
                 <View
