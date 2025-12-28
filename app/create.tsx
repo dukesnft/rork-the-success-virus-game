@@ -1,14 +1,12 @@
 import { useState } from 'react';
-import { StyleSheet, View, Text, TextInput, Pressable, ScrollView, Dimensions } from 'react-native';
+import { StyleSheet, View, Text, TextInput, Pressable, ScrollView, Dimensions, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { X, Sparkles } from 'lucide-react-native';
+import { X, Sparkles, ShoppingBag, Sprout } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useManifestations } from '@/contexts/ManifestationContext';
 import { usePremium } from '@/contexts/PremiumContext';
 import { CATEGORY_COLORS, AFFIRMATIONS } from '@/constants/manifestation';
-
-const FREE_MANIFESTATION_LIMIT = 3;
 
 const { width, height } = Dimensions.get('window');
 
@@ -24,32 +22,55 @@ const CATEGORIES: { key: Category; label: string; emoji: string }[] = [
 
 export default function CreateScreen() {
   const router = useRouter();
-  const { manifestations, addManifestation } = useManifestations();
-  const { isPremium } = usePremium();
+  const { addManifestation } = useManifestations();
+  const { specialSeeds, useSpecialSeed: consumeSpecialSeed } = usePremium();
   const [intention, setIntention] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<Category>('abundance');
 
   const handleCreate = () => {
-    if (!isPremium && manifestations.length >= FREE_MANIFESTATION_LIMIT) {
+    if (!intention.trim()) {
+      Alert.alert('Missing Intention', 'Please enter your intention before planting.');
+      return;
+    }
+
+    if (specialSeeds <= 0) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      router.push('/premium' as any);
+      Alert.alert(
+        'No Seeds Available',
+        'You need seeds to plant an intention. Visit the shop to get more seeds!',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Go to Shop', 
+            onPress: () => {
+              router.back();
+              setTimeout(() => router.push('/shop' as any), 100);
+            }
+          }
+        ]
+      );
       return;
     }
     
-    if (intention.trim()) {
-      const x = Math.random() * (width - 100) + 20;
-      const y = Math.random() * (height * 0.4) + height * 0.2;
-      
-      addManifestation({
-        intention: intention.trim(),
-        category: selectedCategory,
-        position: { x, y },
-        color: CATEGORY_COLORS[selectedCategory],
-      });
-      
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.back();
+    const seedConsumed = consumeSpecialSeed();
+    if (!seedConsumed) {
+      Alert.alert('Error', 'Failed to consume seed. Please try again.');
+      return;
     }
+    
+    const x = Math.random() * (width - 100) + 20;
+    const y = Math.random() * (height * 0.4) + height * 0.2;
+    
+    addManifestation({
+      intention: intention.trim(),
+      category: selectedCategory,
+      position: { x, y },
+      color: CATEGORY_COLORS[selectedCategory],
+    });
+    
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    Alert.alert('Success!', `Your intention has been planted! Seeds remaining: ${specialSeeds - 1}`);
+    router.back();
   };
 
   const randomAffirmation = AFFIRMATIONS[selectedCategory][
@@ -77,6 +98,32 @@ export default function CreateScreen() {
             <Sparkles color="#FFD700" size={40} />
             <Text style={styles.title}>Plant a New Intention</Text>
             <Text style={styles.subtitle}>Set your manifestation into motion</Text>
+            
+            <View style={styles.seedsAvailable}>
+              <LinearGradient
+                colors={['#32CD32', '#228B22']}
+                style={styles.seedsGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <Sprout color="#fff" size={24} />
+                <Text style={styles.seedsCount}>{specialSeeds}</Text>
+                <Text style={styles.seedsLabel}>seeds available</Text>
+              </LinearGradient>
+              {specialSeeds === 0 && (
+                <Pressable
+                  style={styles.shopButton}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    router.back();
+                    setTimeout(() => router.push('/shop' as any), 100);
+                  }}
+                >
+                  <ShoppingBag color="#FFD700" size={20} />
+                  <Text style={styles.shopButtonText}>Get Seeds</Text>
+                </Pressable>
+              )}
+            </View>
           </View>
 
           <View style={styles.section}>
@@ -127,26 +174,35 @@ export default function CreateScreen() {
             <Text style={styles.affirmation}>{randomAffirmation}</Text>
           </View>
 
-          {!isPremium && manifestations.length >= FREE_MANIFESTATION_LIMIT && (
+          {specialSeeds === 0 && (
             <View style={styles.limitWarning}>
-              <Text style={styles.limitText}>🔒 Free limit reached: {manifestations.length}/{FREE_MANIFESTATION_LIMIT}</Text>
-              <Text style={styles.limitSubtext}>Upgrade to Premium for unlimited manifestations</Text>
+              <Text style={styles.limitText}>🌱 No Seeds Available</Text>
+              <Text style={styles.limitSubtext}>You need seeds to plant intentions. Visit the shop to get free daily seeds or purchase more!</Text>
+            </View>
+          )}
+
+          {specialSeeds > 0 && (
+            <View style={styles.seedInfo}>
+              <Text style={styles.seedInfoTitle}>🌱 Seed Required</Text>
+              <Text style={styles.seedInfoText}>Planting this intention will use 1 seed from your inventory</Text>
             </View>
           )}
 
           <Pressable
-            style={[styles.createButton, !intention.trim() && styles.createButtonDisabled]}
+            style={[styles.createButton, (!intention.trim() || specialSeeds === 0) && styles.createButtonDisabled]}
             onPress={handleCreate}
-            disabled={!intention.trim()}
+            disabled={!intention.trim() || specialSeeds === 0}
           >
             <LinearGradient
-              colors={intention.trim() ? ['#9370DB', '#FF69B4'] : ['#4a4a4a', '#3a3a3a']}
+              colors={(intention.trim() && specialSeeds > 0) ? ['#9370DB', '#FF69B4'] : ['#4a4a4a', '#3a3a3a']}
               style={styles.createButtonGradient}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
             >
               <Sparkles color="#fff" size={24} />
-              <Text style={styles.createButtonText}>Plant Intention</Text>
+              <Text style={styles.createButtonText}>
+                {specialSeeds === 0 ? 'No Seeds Available' : 'Plant Intention (1 seed)'}
+              </Text>
             </LinearGradient>
           </Pressable>
         </ScrollView>
@@ -306,5 +362,69 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#FF69B4',
     textAlign: 'center' as const,
+  },
+  seedsAvailable: {
+    marginTop: 24,
+    width: '100%',
+  },
+  seedsGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  seedsCount: {
+    fontSize: 32,
+    fontWeight: '700' as const,
+    color: '#fff',
+  },
+  seedsLabel: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: '#fff',
+    opacity: 0.9,
+  },
+  shopButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    backgroundColor: 'rgba(255,215,0,0.2)',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: 'rgba(255,215,0,0.4)',
+  },
+  shopButtonText: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: '#FFD700',
+  },
+  seedInfo: {
+    marginHorizontal: 24,
+    backgroundColor: 'rgba(50,205,50,0.15)',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(50,205,50,0.3)',
+    marginBottom: 20,
+  },
+  seedInfoTitle: {
+    fontSize: 14,
+    fontWeight: '700' as const,
+    color: '#32CD32',
+    marginBottom: 6,
+  },
+  seedInfoText: {
+    fontSize: 13,
+    color: '#b8a9d9',
+    lineHeight: 18,
   },
 });
