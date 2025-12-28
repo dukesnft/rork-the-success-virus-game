@@ -1,6 +1,6 @@
 import { StyleSheet, View, Text, Pressable, Animated, Dimensions, ScrollView, Modal } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Sparkles, Plus, X, Trash2, Bell, Clock, Palette, Package } from 'lucide-react-native';
+import { Sparkles, Plus, X, Trash2, Bell, Clock, Palette, Package, Share2, ShoppingBag } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useManifestations } from '@/contexts/ManifestationContext';
 import { usePremium } from '@/contexts/PremiumContext';
@@ -8,6 +8,7 @@ import { useNotifications } from '@/contexts/NotificationContext';
 import { useBackgrounds } from '@/contexts/BackgroundContext';
 import { useInventory } from '@/contexts/InventoryContext';
 import { useRankings } from '@/contexts/RankingContext';
+import { useCommunity } from '@/contexts/CommunityContext';
 import InventoryScreen from '@/app/inventory';
 import RankingsScreen from '@/app/rankings';
 import { useEffect, useRef, useState, memo } from 'react';
@@ -410,6 +411,7 @@ ManifestationPlant.displayName = 'ManifestationPlant';
 export default function GardenScreen() {
   const router = useRouter();
   const { manifestations, nurtureManifestation, deleteManifestation, harvestManifestation } = useManifestations();
+  const { shareManifestation } = useCommunity();
   const { isPremium, energyBoosts, energy, maxEnergy, streak, consumeEnergyBoost, purchaseEnergyBoost, consumeEnergy, refillEnergy } = usePremium();
   const { settings, permissionStatus, requestPermissions, updateSettings, rescheduleAllNotifications } = useNotifications();
   const { selectedBackground } = useBackgrounds();
@@ -587,6 +589,16 @@ export default function GardenScreen() {
               style={styles.quickActionButton}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/shop');
+              }}
+            >
+              <ShoppingBag color="#FFD700" size={20} />
+              <Text style={styles.quickActionText}>Shop</Text>
+            </Pressable>
+            <Pressable 
+              style={styles.quickActionButton}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setShowInventory(true);
               }}
             >
@@ -719,24 +731,49 @@ export default function GardenScreen() {
                   </Pressable>
 
                   {selectedManifestation.stage === 'blooming' && (
-                    <Pressable
-                      style={styles.harvestButton}
-                      onPress={() => {
-                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                        harvestManifestation(selectedManifestation.id);
-                        setSelectedManifestation(null);
-                      }}
-                    >
-                      <LinearGradient
-                        colors={['#32CD32', '#228B22']}
-                        style={styles.nurtureButtonGradient}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
+                    <>
+                      <Pressable
+                        style={styles.shareButton}
+                        onPress={() => {
+                          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                          shareManifestation(
+                            selectedManifestation.intention,
+                            selectedManifestation.category,
+                            selectedManifestation.color
+                          );
+                          harvestManifestation(selectedManifestation.id);
+                          setSelectedManifestation(null);
+                        }}
                       >
-                        <Package color="#fff" size={20} />
-                        <Text style={styles.nurtureButtonText}>Harvest Bloomed Seed</Text>
-                      </LinearGradient>
-                    </Pressable>
+                        <LinearGradient
+                          colors={['#FF69B4', '#9370DB']}
+                          style={styles.nurtureButtonGradient}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 1 }}
+                        >
+                          <Share2 color="#fff" size={20} />
+                          <Text style={styles.nurtureButtonText}>Share to Community</Text>
+                        </LinearGradient>
+                      </Pressable>
+                      <Pressable
+                        style={styles.harvestButton}
+                        onPress={() => {
+                          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                          harvestManifestation(selectedManifestation.id);
+                          setSelectedManifestation(null);
+                        }}
+                      >
+                        <LinearGradient
+                          colors={['#32CD32', '#228B22']}
+                          style={styles.nurtureButtonGradient}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 1 }}
+                        >
+                          <Package color="#fff" size={20} />
+                          <Text style={styles.nurtureButtonText}>Harvest (Keep Private)</Text>
+                        </LinearGradient>
+                      </Pressable>
+                    </>
                   )}
 
                   <Pressable
@@ -1476,6 +1513,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700' as const,
     color: '#fff',
+  },
+  shareButton: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 12,
   },
   harvestButton: {
     borderRadius: 16,

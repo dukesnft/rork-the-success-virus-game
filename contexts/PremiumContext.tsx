@@ -6,6 +6,11 @@ import { useEffect, useState, useCallback } from 'react';
 const PREMIUM_STORAGE_KEY = 'premium_status';
 const ENERGY_BOOSTS_KEY = 'energy_boosts';
 const ENERGY_STORAGE_KEY = 'daily_energy';
+const GEMS_STORAGE_KEY = 'gems';
+const SPECIAL_SEEDS_KEY = 'special_seeds';
+const GROWTH_BOOSTERS_KEY = 'growth_boosters';
+const AUTO_NURTURE_KEY = 'auto_nurture';
+const PURCHASES_KEY = 'total_purchases';
 
 interface PremiumState {
   isPremium: boolean;
@@ -26,6 +31,11 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
   const [energy, setEnergy] = useState(0);
   const [maxEnergy, setMaxEnergy] = useState(10);
   const [streak, setStreak] = useState(0);
+  const [gems, setGems] = useState(0);
+  const [specialSeeds, setSpecialSeeds] = useState(0);
+  const [growthBoosters, setGrowthBoosters] = useState(0);
+  const [autoNurtureActive, setAutoNurtureActive] = useState(false);
+  const [totalSpent, setTotalSpent] = useState(0);
 
   const premiumQuery = useQuery({
     queryKey: ['premium'],
@@ -87,6 +97,46 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     }
   });
 
+  const gemsQuery = useQuery({
+    queryKey: ['gems'],
+    queryFn: async () => {
+      const stored = await AsyncStorage.getItem(GEMS_STORAGE_KEY);
+      return stored ? parseInt(stored) : 0;
+    }
+  });
+
+  const specialSeedsQuery = useQuery({
+    queryKey: ['specialSeeds'],
+    queryFn: async () => {
+      const stored = await AsyncStorage.getItem(SPECIAL_SEEDS_KEY);
+      return stored ? parseInt(stored) : 0;
+    }
+  });
+
+  const growthBoostersQuery = useQuery({
+    queryKey: ['growthBoosters'],
+    queryFn: async () => {
+      const stored = await AsyncStorage.getItem(GROWTH_BOOSTERS_KEY);
+      return stored ? parseInt(stored) : 0;
+    }
+  });
+
+  const autoNurtureQuery = useQuery({
+    queryKey: ['autoNurture'],
+    queryFn: async () => {
+      const stored = await AsyncStorage.getItem(AUTO_NURTURE_KEY);
+      return stored === 'true';
+    }
+  });
+
+  const purchasesQuery = useQuery({
+    queryKey: ['totalPurchases'],
+    queryFn: async () => {
+      const stored = await AsyncStorage.getItem(PURCHASES_KEY);
+      return stored ? parseFloat(stored) : 0;
+    }
+  });
+
   const { mutate: savePremium } = useMutation({
     mutationFn: async (data: PremiumState) => {
       await AsyncStorage.setItem(PREMIUM_STORAGE_KEY, JSON.stringify(data));
@@ -105,6 +155,41 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     mutationFn: async (data: EnergyState) => {
       await AsyncStorage.setItem(ENERGY_STORAGE_KEY, JSON.stringify(data));
       return data;
+    }
+  });
+
+  const { mutate: saveGems } = useMutation({
+    mutationFn: async (gems: number) => {
+      await AsyncStorage.setItem(GEMS_STORAGE_KEY, gems.toString());
+      return gems;
+    }
+  });
+
+  const { mutate: saveSpecialSeeds } = useMutation({
+    mutationFn: async (seeds: number) => {
+      await AsyncStorage.setItem(SPECIAL_SEEDS_KEY, seeds.toString());
+      return seeds;
+    }
+  });
+
+  const { mutate: saveGrowthBoosters } = useMutation({
+    mutationFn: async (boosters: number) => {
+      await AsyncStorage.setItem(GROWTH_BOOSTERS_KEY, boosters.toString());
+      return boosters;
+    }
+  });
+
+  const { mutate: saveAutoNurture } = useMutation({
+    mutationFn: async (active: boolean) => {
+      await AsyncStorage.setItem(AUTO_NURTURE_KEY, active.toString());
+      return active;
+    }
+  });
+
+  const { mutate: savePurchases } = useMutation({
+    mutationFn: async (amount: number) => {
+      await AsyncStorage.setItem(PURCHASES_KEY, amount.toString());
+      return amount;
     }
   });
 
@@ -140,6 +225,26 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
       }
     }
   }, [energyQuery.data, premiumQuery.data, saveEnergy]);
+
+  useEffect(() => {
+    if (gemsQuery.data !== undefined) setGems(gemsQuery.data);
+  }, [gemsQuery.data]);
+
+  useEffect(() => {
+    if (specialSeedsQuery.data !== undefined) setSpecialSeeds(specialSeedsQuery.data);
+  }, [specialSeedsQuery.data]);
+
+  useEffect(() => {
+    if (growthBoostersQuery.data !== undefined) setGrowthBoosters(growthBoostersQuery.data);
+  }, [growthBoostersQuery.data]);
+
+  useEffect(() => {
+    if (autoNurtureQuery.data !== undefined) setAutoNurtureActive(autoNurtureQuery.data);
+  }, [autoNurtureQuery.data]);
+
+  useEffect(() => {
+    if (purchasesQuery.data !== undefined) setTotalSpent(purchasesQuery.data);
+  }, [purchasesQuery.data]);
 
   const upgradeToPremium = useCallback((duration: 'month' | 'year') => {
     const now = Date.now();
@@ -198,17 +303,98 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     });
   }, [maxEnergy, streak, saveEnergy]);
 
+  const addGems = useCallback((amount: number) => {
+    const newGems = gems + amount;
+    setGems(newGems);
+    saveGems(newGems);
+  }, [gems, saveGems]);
+
+  const spendGems = useCallback((amount: number) => {
+    if (gems >= amount) {
+      const newGems = gems - amount;
+      setGems(newGems);
+      saveGems(newGems);
+      return true;
+    }
+    return false;
+  }, [gems, saveGems]);
+
+  const purchaseItem = useCallback((price: number) => {
+    const newTotal = totalSpent + price;
+    setTotalSpent(newTotal);
+    savePurchases(newTotal);
+  }, [totalSpent, savePurchases]);
+
+  const purchaseGems = useCallback((amount: number, price: number) => {
+    addGems(amount);
+    purchaseItem(price);
+  }, [addGems, purchaseItem]);
+
+  const purchaseSpecialSeeds = useCallback((amount: number, price: number) => {
+    const newSeeds = specialSeeds + amount;
+    setSpecialSeeds(newSeeds);
+    saveSpecialSeeds(newSeeds);
+    purchaseItem(price);
+  }, [specialSeeds, saveSpecialSeeds, purchaseItem]);
+
+  const useSpecialSeed = useCallback(() => {
+    if (specialSeeds > 0) {
+      const newSeeds = specialSeeds - 1;
+      setSpecialSeeds(newSeeds);
+      saveSpecialSeeds(newSeeds);
+      return true;
+    }
+    return false;
+  }, [specialSeeds, saveSpecialSeeds]);
+
+  const purchaseGrowthBooster = useCallback((amount: number, price: number) => {
+    const newBoosters = growthBoosters + amount;
+    setGrowthBoosters(newBoosters);
+    saveGrowthBoosters(newBoosters);
+    purchaseItem(price);
+  }, [growthBoosters, saveGrowthBoosters, purchaseItem]);
+
+  const useGrowthBooster = useCallback(() => {
+    if (growthBoosters > 0) {
+      const newBoosters = growthBoosters - 1;
+      setGrowthBoosters(newBoosters);
+      saveGrowthBoosters(newBoosters);
+      return true;
+    }
+    return false;
+  }, [growthBoosters, saveGrowthBoosters]);
+
+  const purchaseAutoNurture = useCallback((price: number) => {
+    setAutoNurtureActive(true);
+    saveAutoNurture(true);
+    purchaseItem(price);
+  }, [saveAutoNurture, purchaseItem]);
+
   return {
     isPremium,
     energyBoosts,
     energy,
     maxEnergy,
     streak,
+    gems,
+    specialSeeds,
+    growthBoosters,
+    autoNurtureActive,
+    totalSpent,
     isLoading: premiumQuery.isLoading || boostsQuery.isLoading || energyQuery.isLoading,
     upgradeToPremium,
     purchaseEnergyBoost,
     consumeEnergyBoost,
     consumeEnergy,
     refillEnergy,
+    addGems,
+    spendGems,
+    purchaseItem,
+    purchaseGems,
+    purchaseSpecialSeeds,
+    useSpecialSeed,
+    purchaseGrowthBooster,
+    useGrowthBooster,
+    purchaseAutoNurture,
   };
 });

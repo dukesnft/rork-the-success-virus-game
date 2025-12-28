@@ -3,10 +3,12 @@ import createContextHook from '@nkzw/create-context-hook';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useEffect, useState, useCallback } from 'react';
 import { SharedManifestation } from '@/types/community';
+import { Alert } from 'react-native';
 
 const STORAGE_KEY_SHARED = 'shared_manifestations';
 const STORAGE_KEY_USER_SHARED = 'user_shared_manifestations';
 const STORAGE_KEY_LIKED = 'liked_manifestations';
+const STORAGE_KEY_USERNAME = 'user_username';
 
 const generateMockSharedManifestations = (): SharedManifestation[] => {
   const names = [
@@ -87,6 +89,7 @@ export const [CommunityProvider, useCommunity] = createContextHook(() => {
   const [sharedManifestations, setSharedManifestations] = useState<SharedManifestation[]>([]);
   const [userSharedManifestations, setUserSharedManifestations] = useState<SharedManifestation[]>([]);
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
+  const [username, setUsername] = useState<string>('Dreamer');
 
   const sharedQuery = useQuery({
     queryKey: ['sharedManifestations'],
@@ -116,6 +119,14 @@ export const [CommunityProvider, useCommunity] = createContextHook(() => {
     }
   });
 
+  const usernameQuery = useQuery({
+    queryKey: ['username'],
+    queryFn: async () => {
+      const stored = await AsyncStorage.getItem(STORAGE_KEY_USERNAME);
+      return stored || 'Dreamer';
+    }
+  });
+
   const { mutate: saveSharedMutate } = useMutation({
     mutationFn: async (data: SharedManifestation[]) => {
       await AsyncStorage.setItem(STORAGE_KEY_SHARED, JSON.stringify(data));
@@ -137,6 +148,13 @@ export const [CommunityProvider, useCommunity] = createContextHook(() => {
     }
   });
 
+  const { mutate: saveUsernameMutate } = useMutation({
+    mutationFn: async (name: string) => {
+      await AsyncStorage.setItem(STORAGE_KEY_USERNAME, name);
+      return name;
+    }
+  });
+
   useEffect(() => {
     if (sharedQuery.data) {
       setSharedManifestations(sharedQuery.data);
@@ -155,8 +173,13 @@ export const [CommunityProvider, useCommunity] = createContextHook(() => {
     }
   }, [likedQuery.data]);
 
+  useEffect(() => {
+    if (usernameQuery.data) {
+      setUsername(usernameQuery.data);
+    }
+  }, [usernameQuery.data]);
+
   const shareManifestation = useCallback((
-    username: string,
     intention: string,
     category: 'abundance' | 'love' | 'health' | 'success' | 'peace',
     color: string
@@ -179,7 +202,14 @@ export const [CommunityProvider, useCommunity] = createContextHook(() => {
     const updatedUserShared = [newShared, ...userSharedManifestations];
     setUserSharedManifestations(updatedUserShared);
     saveUserSharedMutate(updatedUserShared);
-  }, [sharedManifestations, userSharedManifestations, saveSharedMutate, saveUserSharedMutate]);
+
+    Alert.alert('✨ Shared!', 'Your manifestation has been shared with the community!');
+  }, [username, sharedManifestations, userSharedManifestations, saveSharedMutate, saveUserSharedMutate]);
+
+  const updateUsername = useCallback((newName: string) => {
+    setUsername(newName);
+    saveUsernameMutate(newName);
+  }, [saveUsernameMutate]);
 
   const toggleLike = useCallback((id: string) => {
     const updatedShared = sharedManifestations.map(m => {
@@ -217,8 +247,10 @@ export const [CommunityProvider, useCommunity] = createContextHook(() => {
   return {
     sharedManifestations: getSharedManifestationsWithLikes(),
     userSharedManifestations,
+    username,
     isLoading: sharedQuery.isLoading,
     shareManifestation,
     toggleLike,
+    updateUsername,
   };
 });
