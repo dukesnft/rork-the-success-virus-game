@@ -743,7 +743,8 @@ export default function GardenScreen() {
                           shareManifestation(
                             selectedManifestation.intention,
                             selectedManifestation.category,
-                            selectedManifestation.color
+                            selectedManifestation.color,
+                            selectedManifestation.rarity
                           );
                           harvestManifestation(selectedManifestation.id);
                           setSelectedManifestationId(null);

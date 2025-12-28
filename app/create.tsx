@@ -66,6 +66,7 @@ export default function CreateScreen() {
       category: selectedCategory,
       position: { x, y },
       color: CATEGORY_COLORS[selectedCategory],
+      rarity: 'common',
     });
     
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

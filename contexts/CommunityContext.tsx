@@ -2,13 +2,21 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import createContextHook from '@nkzw/create-context-hook';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useEffect, useState, useCallback } from 'react';
-import { SharedManifestation } from '@/types/community';
+import { SharedManifestation, SeedRarity } from '@/types/community';
 import { Alert } from 'react-native';
 
 const STORAGE_KEY_SHARED = 'shared_manifestations';
 const STORAGE_KEY_USER_SHARED = 'user_shared_manifestations';
 const STORAGE_KEY_LIKED = 'liked_manifestations';
 const STORAGE_KEY_USERNAME = 'user_username';
+
+const getRandomRarity = (): SeedRarity => {
+  const rand = Math.random();
+  if (rand < 0.5) return 'common';
+  if (rand < 0.8) return 'rare';
+  if (rand < 0.95) return 'epic';
+  return 'legendary';
+};
 
 const generateMockSharedManifestations = (): SharedManifestation[] => {
   const names = [
@@ -77,6 +85,7 @@ const generateMockSharedManifestations = (): SharedManifestation[] => {
       likes: Math.floor(Math.random() * 200) + 5,
       sharedAt: Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000),
       likedByUser: false,
+      rarity: getRandomRarity(),
     });
   }
 
@@ -182,7 +191,8 @@ export const [CommunityProvider, useCommunity] = createContextHook(() => {
   const shareManifestation = useCallback((
     intention: string,
     category: 'abundance' | 'love' | 'health' | 'success' | 'peace',
-    color: string
+    color: string,
+    rarity: SeedRarity
   ) => {
     const newShared: SharedManifestation = {
       id: `user_${Date.now()}`,
@@ -193,6 +203,7 @@ export const [CommunityProvider, useCommunity] = createContextHook(() => {
       likes: 0,
       sharedAt: Date.now(),
       likedByUser: false,
+      rarity,
     };
 
     const updatedShared = [newShared, ...sharedManifestations];

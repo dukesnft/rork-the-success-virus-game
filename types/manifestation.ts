@@ -1,4 +1,5 @@
 export type GrowthStage = 'seed' | 'sprout' | 'growing' | 'blooming';
+export type SeedRarity = 'common' | 'rare' | 'epic' | 'legendary';
 
 export interface Manifestation {
   id: string;
@@ -11,4 +12,5 @@ export interface Manifestation {
   lastNurtured: number;
   position: { x: number; y: number };
   color: string;
+  rarity: SeedRarity;
 }

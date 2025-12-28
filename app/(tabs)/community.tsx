@@ -13,6 +13,8 @@ import { Heart, Copy, Trophy, Flame, Sparkles } from 'lucide-react-native';
 import { useCommunity } from '@/contexts/CommunityContext';
 import { useRankings } from '@/contexts/RankingContext';
 import { useManifestations } from '@/contexts/ManifestationContext';
+import { useInventory } from '@/contexts/InventoryContext';
+import { SeedRarity } from '@/types/community';
 
 export default function CommunityScreen() {
   const [activeTab, setActiveTab] = useState<'feed' | 'rankings'>('feed');
@@ -21,18 +23,62 @@ export default function CommunityScreen() {
   const { sharedManifestations, toggleLike } = useCommunity();
   const { seedRankings, streakRankings } = useRankings();
   const { addManifestation } = useManifestations();
+  const { useSeed: consumeSeed, getSeedsByRarity } = useInventory();
+
+  const getRarityColor = (rarity: SeedRarity) => {
+    switch (rarity) {
+      case 'common': return '#90EE90';
+      case 'rare': return '#4169E1';
+      case 'epic': return '#9370DB';
+      case 'legendary': return '#FFD700';
+    }
+  };
+
+  const getRarityLabel = (rarity: SeedRarity) => {
+    return rarity.charAt(0).toUpperCase() + rarity.slice(1);
+  };
 
   const handleCopyToGarden = (manifestation: any) => {
-    addManifestation({
-      intention: manifestation.intention,
-      category: manifestation.category,
-      color: manifestation.color,
-      position: { x: 0, y: 0 },
-    });
+    const availableSeeds = getSeedsByRarity(manifestation.rarity);
+    
+    if (availableSeeds === 0) {
+      Alert.alert(
+        '🌱 Need Seeds!',
+        `You need a ${getRarityLabel(manifestation.rarity)} seed to plant this manifestation. Visit the Shop to get more seeds!`,
+        [{ text: 'OK', style: 'default' }]
+      );
+      return;
+    }
+
     Alert.alert(
-      '🌱 Planted!',
-      `"${manifestation.intention}" has been planted in your garden!`,
-      [{ text: 'Great!', style: 'default' }]
+      '🌱 Plant Manifestation?',
+      `This will use 1 ${getRarityLabel(manifestation.rarity)} seed. You have ${availableSeeds} ${getRarityLabel(manifestation.rarity)} seeds available.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Plant',
+          style: 'default',
+          onPress: () => {
+            const seedWasUsed = consumeSeed(manifestation.rarity);
+            if (seedWasUsed) {
+              addManifestation({
+                intention: manifestation.intention,
+                category: manifestation.category,
+                color: manifestation.color,
+                position: { x: 0, y: 0 },
+                rarity: manifestation.rarity,
+              });
+              Alert.alert(
+                '✨ Planted!',
+                `"${manifestation.intention}" has been planted in your garden!`,
+                [{ text: 'Great!', style: 'default' }]
+              );
+            } else {
+              Alert.alert('Error', 'Failed to use seed. Please try again.');
+            }
+          },
+        },
+      ]
     );
   };
 
@@ -65,18 +111,30 @@ export default function CommunityScreen() {
                   </Text>
                 </View>
               </View>
-              <View
-                style={[
-                  styles.categoryBadge,
-                  { backgroundColor: manifestation.color + '30' },
-                ]}
-              >
+              <View style={styles.categoryBadgeContainer}>
                 <View
                   style={[
-                    styles.categoryDot,
-                    { backgroundColor: manifestation.color },
+                    styles.rarityBadge,
+                    { backgroundColor: getRarityColor(manifestation.rarity) + '30' },
                   ]}
-                />
+                >
+                  <Text style={[styles.rarityText, { color: getRarityColor(manifestation.rarity) }]}>
+                    {getRarityLabel(manifestation.rarity)}
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.categoryBadge,
+                    { backgroundColor: manifestation.color + '30' },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.categoryDot,
+                      { backgroundColor: manifestation.color },
+                    ]}
+                  />
+                </View>
               </View>
             </View>
 
@@ -404,6 +462,21 @@ const styles = StyleSheet.create({
   category: {
     fontSize: 12,
     color: '#b8a9d9',
+  },
+  categoryBadgeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  rarityBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  rarityText: {
+    fontSize: 11,
+    fontWeight: 'bold' as const,
+    textTransform: 'uppercase' as const,
   },
   categoryBadge: {
     width: 32,

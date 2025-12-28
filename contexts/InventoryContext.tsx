@@ -2,17 +2,27 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import createContextHook from '@nkzw/create-context-hook';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useEffect, useState, useCallback } from 'react';
-import { InventoryItem } from '@/types/inventory';
+import { InventoryItem, Seed, SeedRarity } from '@/types/inventory';
 
 const STORAGE_KEY = 'inventory';
+const SEEDS_STORAGE_KEY = 'seeds_inventory';
 
 export const [InventoryProvider, useInventory] = createContextHook(() => {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [seeds, setSeeds] = useState<Seed[]>([]);
 
   const inventoryQuery = useQuery({
     queryKey: ['inventory'],
     queryFn: async () => {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
+      return stored ? JSON.parse(stored) : [];
+    }
+  });
+
+  const seedsQuery = useQuery({
+    queryKey: ['seeds'],
+    queryFn: async () => {
+      const stored = await AsyncStorage.getItem(SEEDS_STORAGE_KEY);
       return stored ? JSON.parse(stored) : [];
     }
   });
@@ -24,13 +34,27 @@ export const [InventoryProvider, useInventory] = createContextHook(() => {
     }
   });
 
+  const saveSeedsMutation = useMutation({
+    mutationFn: async (data: Seed[]) => {
+      await AsyncStorage.setItem(SEEDS_STORAGE_KEY, JSON.stringify(data));
+      return data;
+    }
+  });
+
   const { mutate: saveMutate } = saveMutation;
+  const { mutate: saveSeedsMutate } = saveSeedsMutation;
 
   useEffect(() => {
     if (inventoryQuery.data) {
       setInventory(inventoryQuery.data);
     }
   }, [inventoryQuery.data]);
+
+  useEffect(() => {
+    if (seedsQuery.data) {
+      setSeeds(seedsQuery.data);
+    }
+  }, [seedsQuery.data]);
 
   const addToInventory = useCallback((item: Omit<InventoryItem, 'id' | 'collectedAt'>) => {
     const newItem: InventoryItem = {
@@ -66,14 +90,51 @@ export const [InventoryProvider, useInventory] = createContextHook(() => {
     return inventory.filter(item => item.stage === 'blooming').length;
   }, [inventory]);
 
+  const addSeeds = useCallback((rarity: SeedRarity, count: number = 1) => {
+    const newSeeds: Seed[] = [];
+    for (let i = 0; i < count; i++) {
+      newSeeds.push({
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        rarity,
+        acquiredAt: Date.now(),
+      });
+    }
+    const updated = [...seeds, ...newSeeds];
+    setSeeds(updated);
+    saveSeedsMutate(updated);
+  }, [seeds, saveSeedsMutate]);
+
+  const useSeed = useCallback((rarity: SeedRarity) => {
+    const seedIndex = seeds.findIndex(s => s.rarity === rarity);
+    if (seedIndex === -1) return false;
+    
+    const updated = seeds.filter((_, index) => index !== seedIndex);
+    setSeeds(updated);
+    saveSeedsMutate(updated);
+    return true;
+  }, [seeds, saveSeedsMutate]);
+
+  const getSeedsByRarity = useCallback((rarity: SeedRarity) => {
+    return seeds.filter(s => s.rarity === rarity).length;
+  }, [seeds]);
+
+  const getTotalSeedsCount = useCallback(() => {
+    return seeds.length;
+  }, [seeds]);
+
   return {
     inventory,
-    isLoading: inventoryQuery.isLoading,
+    seeds,
+    isLoading: inventoryQuery.isLoading || seedsQuery.isLoading,
     addToInventory,
     removeFromInventory,
     getInventoryByCategory,
     getInventoryByStage,
     getTotalSeeds,
     getBloomingSeeds,
+    addSeeds,
+    useSeed,
+    getSeedsByRarity,
+    getTotalSeedsCount,
   };
 });

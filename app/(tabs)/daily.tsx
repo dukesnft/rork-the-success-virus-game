@@ -91,6 +91,7 @@ export default function WeeklyManifestationsScreen() {
         x: Math.random() * (width - 80),
         y: Math.random() * 300 + 100,
       },
+      rarity: 'common',
     });
     setSelectedManifestation(text);
     setShowSuccessModal(true);

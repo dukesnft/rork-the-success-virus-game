@@ -1,3 +1,5 @@
+export type SeedRarity = 'common' | 'rare' | 'epic' | 'legendary';
+
 export interface InventoryItem {
   id: string;
   intention: string;
@@ -5,4 +7,10 @@ export interface InventoryItem {
   stage: 'sprout' | 'growing' | 'blooming';
   collectedAt: number;
   color: string;
+}
+
+export interface Seed {
+  id: string;
+  rarity: SeedRarity;
+  acquiredAt: number;
 }
