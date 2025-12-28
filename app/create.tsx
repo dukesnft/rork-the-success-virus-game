@@ -5,6 +5,7 @@ import { X, Sparkles, ShoppingBag, Sprout } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useManifestations } from '@/contexts/ManifestationContext';
+import { usePremium } from '@/contexts/PremiumContext';
 import { useInventory } from '@/contexts/InventoryContext';
 import { SeedRarity } from '@/types/inventory';
 import { CATEGORY_COLORS, AFFIRMATIONS } from '@/constants/manifestation';
@@ -23,7 +24,8 @@ const CATEGORIES: { key: Category; label: string; emoji: string }[] = [
 
 export default function CreateScreen() {
   const router = useRouter();
-  const { addManifestation } = useManifestations();
+  const { addManifestation, manifestations } = useManifestations();
+  const { maxPlantSlots } = usePremium();
   const { getTotalSeedsCount, getSeedsByRarity, useSeed: consumeSeed } = useInventory();
   const [intention, setIntention] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<Category>('abundance');
@@ -38,6 +40,15 @@ export default function CreateScreen() {
   const handleCreate = () => {
     if (!intention.trim()) {
       Alert.alert('Missing Intention', 'Please enter your intention before planting.');
+      return;
+    }
+
+    if (manifestations.length >= maxPlantSlots) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert(
+        'Garden Full',
+        `You've reached the maximum number of plants (${maxPlantSlots}). Level up your garden or harvest existing plants to make room!`
+      );
       return;
     }
 
@@ -252,27 +263,38 @@ export default function CreateScreen() {
             </View>
           )}
 
-          {getSeedsByRarity(selectedRarity) > 0 && (
+          {getSeedsByRarity(selectedRarity) > 0 && manifestations.length < maxPlantSlots && (
             <View style={styles.seedInfo}>
               <Text style={styles.seedInfoTitle}>🌱 {selectedRarity.charAt(0).toUpperCase() + selectedRarity.slice(1)} Seed Required</Text>
               <Text style={styles.seedInfoText}>Planting this intention will use 1 {selectedRarity} seed. Higher rarity seeds grow faster and earn more gems!</Text>
             </View>
           )}
 
+          {manifestations.length >= maxPlantSlots && (
+            <View style={styles.limitWarning}>
+              <Text style={styles.limitText}>🌿 Garden Full ({manifestations.length}/{maxPlantSlots})</Text>
+              <Text style={styles.limitSubtext}>Level up your garden or harvest existing plants to make room for new intentions!</Text>
+            </View>
+          )}
+
           <Pressable
-            style={[styles.createButton, (!intention.trim() || getSeedsByRarity(selectedRarity) === 0) && styles.createButtonDisabled]}
+            style={[styles.createButton, (!intention.trim() || getSeedsByRarity(selectedRarity) === 0 || manifestations.length >= maxPlantSlots) && styles.createButtonDisabled]}
             onPress={handleCreate}
-            disabled={!intention.trim() || getSeedsByRarity(selectedRarity) === 0}
+            disabled={!intention.trim() || getSeedsByRarity(selectedRarity) === 0 || manifestations.length >= maxPlantSlots}
           >
             <LinearGradient
-              colors={(intention.trim() && getSeedsByRarity(selectedRarity) > 0) ? ['#9370DB', '#FF69B4'] : ['#4a4a4a', '#3a3a3a']}
+              colors={(intention.trim() && getSeedsByRarity(selectedRarity) > 0 && manifestations.length < maxPlantSlots) ? ['#9370DB', '#FF69B4'] : ['#4a4a4a', '#3a3a3a']}
               style={styles.createButtonGradient}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
             >
               <Sparkles color="#fff" size={24} />
               <Text style={styles.createButtonText}>
-                {getSeedsByRarity(selectedRarity) === 0 ? `No ${selectedRarity} seeds` : `Plant with ${selectedRarity} seed`}
+                {manifestations.length >= maxPlantSlots 
+                  ? 'Garden full' 
+                  : getSeedsByRarity(selectedRarity) === 0 
+                    ? `No ${selectedRarity} seeds` 
+                    : `Plant with ${selectedRarity} seed`}
               </Text>
             </LinearGradient>
           </Pressable>

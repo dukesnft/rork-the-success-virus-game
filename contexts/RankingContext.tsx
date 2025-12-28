@@ -151,6 +151,7 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
   }, [streakRankingsQuery.data]);
 
   const updateStreakRankings = useCallback((currentStreak: number, longestStreak: number) => {
+    setSeedRankings(prevSeedRankings => prevSeedRankings);
     setStreakRankings(prevRankings => {
       const userRanking: StreakRanking = {
         id: 'user',
@@ -173,9 +174,9 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
   }, [userData.username, saveStreakRankingsMutate]);
 
   const checkInStreak = useCallback(() => {
+    const today = new Date().toDateString();
+    
     setUserData(prevData => {
-      const today = new Date().toDateString();
-      
       if (prevData.lastCheckIn === today) {
         return prevData;
       }
@@ -204,17 +205,21 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
       };
 
       saveUserDataMutate(updatedData);
-      updateStreakRankings(newStreak, newLongestStreak);
+      
+      setTimeout(() => {
+        updateStreakRankings(newStreak, newLongestStreak);
+      }, 0);
       
       return updatedData;
     });
   }, [saveUserDataMutate, updateStreakRankings]);
 
   const updateSeedRankings = useCallback(() => {
-    const totalSeeds = getTotalSeeds();
-    const bloomingSeeds = getBloomingSeeds();
-
+    setStreakRankings(prevStreakRankings => prevStreakRankings);
     setSeedRankings(prevRankings => {
+      const totalSeeds = getTotalSeeds();
+      const bloomingSeeds = getBloomingSeeds();
+      
       const userRanking: SeedRanking = {
         id: 'user',
         username: userData.username,

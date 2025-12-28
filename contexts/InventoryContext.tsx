@@ -91,28 +91,37 @@ export const [InventoryProvider, useInventory] = createContextHook(() => {
   }, [inventory]);
 
   const addSeeds = useCallback((rarity: SeedRarity, count: number = 1) => {
-    const newSeeds: Seed[] = [];
-    for (let i = 0; i < count; i++) {
-      newSeeds.push({
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-        rarity,
-        acquiredAt: Date.now(),
-      });
-    }
-    const updated = [...seeds, ...newSeeds];
-    setSeeds(updated);
-    saveSeedsMutate(updated);
-  }, [seeds, saveSeedsMutate]);
+    setSeeds(prev => {
+      const newSeeds: Seed[] = [];
+      for (let i = 0; i < count; i++) {
+        newSeeds.push({
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 9) + i,
+          rarity,
+          acquiredAt: Date.now(),
+        });
+      }
+      const updated = [...prev, ...newSeeds];
+      saveSeedsMutate(updated);
+      return updated;
+    });
+  }, [saveSeedsMutate]);
 
   const useSeed = useCallback((rarity: SeedRarity) => {
-    const seedIndex = seeds.findIndex(s => s.rarity === rarity);
-    if (seedIndex === -1) return false;
-    
-    const updated = seeds.filter((_, index) => index !== seedIndex);
-    setSeeds(updated);
-    saveSeedsMutate(updated);
-    return true;
-  }, [seeds, saveSeedsMutate]);
+    let consumed = false;
+    setSeeds(prev => {
+      const seedIndex = prev.findIndex(s => s.rarity === rarity);
+      if (seedIndex === -1) {
+        consumed = false;
+        return prev;
+      }
+      
+      const updated = prev.filter((_, index) => index !== seedIndex);
+      saveSeedsMutate(updated);
+      consumed = true;
+      return updated;
+    });
+    return consumed;
+  }, [saveSeedsMutate]);
 
   const getSeedsByRarity = useCallback((rarity: SeedRarity) => {
     return seeds.filter(s => s.rarity === rarity).length;

@@ -391,9 +391,16 @@ export default function GardenScreen() {
   };
 
   useEffect(() => {
-    if (streak > 0 && streak % 7 === 0) {
-      setShowStreakReward(true);
-    }
+    const checkStreakReward = async () => {
+      const lastRewardStreak = await AsyncStorage.getItem('last_streak_reward');
+      const lastReward = lastRewardStreak ? parseInt(lastRewardStreak) : 0;
+      
+      if (streak > 0 && streak % 7 === 0 && streak > lastReward) {
+        setShowStreakReward(true);
+        await AsyncStorage.setItem('last_streak_reward', streak.toString());
+      }
+    };
+    checkStreakReward();
   }, [streak]);
 
   useEffect(() => {
@@ -401,7 +408,7 @@ export default function GardenScreen() {
       const today = new Date().toISOString().split('T')[0];
       const stored = await AsyncStorage.getItem('daily_gems_claimed');
       if (stored !== today) {
-        earnGems(5, 'Daily login bonus');
+        earnGems(10, 'Daily login bonus');
         await AsyncStorage.setItem('daily_gems_claimed', today);
       }
     };

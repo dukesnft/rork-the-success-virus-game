@@ -289,7 +289,7 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
   }, [boostsQuery.data]);
 
   useEffect(() => {
-    if (energyQuery.data) {
+    if (energyQuery.data && premiumQuery.data !== undefined) {
       const isPremiumUser = premiumQuery.data?.isPremium || false;
       const baseMax = isPremiumUser ? 25 : 15;
       
@@ -299,11 +299,13 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
       
       if (energyQuery.data.maxEnergy !== baseMax) {
         const today = new Date().toISOString().split('T')[0];
+        const adjustedEnergy = Math.min(energyQuery.data.energy, baseMax);
         saveEnergy({
-          ...energyQuery.data,
+          energy: adjustedEnergy,
           maxEnergy: baseMax,
-          energy: Math.min(energyQuery.data.energy, baseMax),
           lastRefreshDate: today,
+          streak: energyQuery.data.streak,
+          lastPlayDate: energyQuery.data.lastPlayDate,
         });
       }
     }
@@ -519,34 +521,37 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
 
   const incrementCombo = useCallback(() => {
     const now = Date.now();
-    const timeSinceLastAction = now - (comboQuery.data?.lastActionTime || 0);
+    let newCount: number;
+    let newMultiplier: number;
     
-    let newCount = comboCount;
-    let newMultiplier = comboMultiplier;
-    
-    if (timeSinceLastAction < 5000) {
-      newCount = comboCount + 1;
-      newMultiplier = Math.min(1 + Math.floor(newCount / 3) * 0.5, 4);
+    setComboCount(prev => {
+      const timeSinceLastAction = now - (comboQuery.data?.lastActionTime || 0);
       
-      if (newCount % 10 === 0) {
-        earnGems(Math.floor(newCount / 2), `${newCount}x Combo Bonus!`);
+      if (timeSinceLastAction < 5000) {
+        newCount = prev + 1;
+        newMultiplier = Math.min(1 + Math.floor(newCount / 3) * 0.5, 4);
+        
+        if (newCount % 10 === 0) {
+          earnGems(Math.floor(newCount / 2), `${newCount}x Combo Bonus!`);
+        }
+      } else {
+        newCount = 1;
+        newMultiplier = 1;
       }
-    } else {
-      newCount = 1;
-      newMultiplier = 1;
-    }
-    
-    setComboCount(newCount);
-    setComboMultiplier(newMultiplier);
-    
-    saveCombo({
-      count: newCount,
-      multiplier: newMultiplier,
-      lastActionTime: now,
+      
+      setComboMultiplier(newMultiplier);
+      
+      saveCombo({
+        count: newCount,
+        multiplier: newMultiplier,
+        lastActionTime: now,
+      });
+      
+      return newCount;
     });
     
-    return newMultiplier;
-  }, [comboCount, comboMultiplier, comboQuery.data, saveCombo, earnGems]);
+    return newMultiplier!;
+  }, [comboQuery.data, earnGems, saveCombo]);
 
   const resetCombo = useCallback(() => {
     setComboCount(0);
@@ -555,48 +560,50 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
   }, [saveCombo]);
 
   const addGardenXP = useCallback((amount: number) => {
-    const xpNeeded = gardenLevel * 100;
-    const newXP = gardenXP + amount;
-    
-    if (newXP >= xpNeeded) {
-      const newLevel = gardenLevel + 1;
-      const newSlots = 6 + newLevel;
-      const remainingXP = newXP - xpNeeded;
+    setGardenXP(prev => {
+      const xpNeeded = gardenLevel * 100;
+      const newXP = prev + amount;
       
-      setGardenLevel(newLevel);
-      setGardenXP(remainingXP);
-      setMaxPlantSlots(newSlots);
-      
-      saveGardenLevel({
-        level: newLevel,
-        xp: remainingXP,
-        maxPlantSlots: newSlots,
-      });
-      
-      earnGems(25 * newLevel, `Reached Garden Level ${newLevel}`);
-      
-      const newEnergy = energy + (5 * newLevel);
-      const today = new Date().toISOString().split('T')[0];
-      setEnergy(Math.min(newEnergy, maxEnergy));
-      saveEnergy({
-        energy: Math.min(newEnergy, maxEnergy),
-        maxEnergy,
-        lastRefreshDate: today,
-        streak,
-        lastPlayDate: today,
-      });
-      
-      return true;
-    } else {
-      setGardenXP(newXP);
-      saveGardenLevel({
-        level: gardenLevel,
-        xp: newXP,
-        maxPlantSlots,
-      });
-      return false;
-    }
-  }, [gardenLevel, gardenXP, maxPlantSlots, saveGardenLevel, earnGems, energy, maxEnergy, streak, saveEnergy]);
+      if (newXP >= xpNeeded) {
+        const newLevel = gardenLevel + 1;
+        const newSlots = 6 + newLevel;
+        const remainingXP = newXP - xpNeeded;
+        
+        setGardenLevel(newLevel);
+        setMaxPlantSlots(newSlots);
+        
+        saveGardenLevel({
+          level: newLevel,
+          xp: remainingXP,
+          maxPlantSlots: newSlots,
+        });
+        
+        earnGems(25 * newLevel, `Reached Garden Level ${newLevel}`);
+        
+        setEnergy(prevEnergy => {
+          const today = new Date().toISOString().split('T')[0];
+          const bonusEnergy = Math.min(prevEnergy + (5 * newLevel), maxEnergy);
+          saveEnergy({
+            energy: bonusEnergy,
+            maxEnergy,
+            lastRefreshDate: today,
+            streak,
+            lastPlayDate: today,
+          });
+          return bonusEnergy;
+        });
+        
+        return remainingXP;
+      } else {
+        saveGardenLevel({
+          level: gardenLevel,
+          xp: newXP,
+          maxPlantSlots,
+        });
+        return newXP;
+      }
+    });
+  }, [gardenLevel, maxPlantSlots, earnGems, maxEnergy, streak, saveEnergy, saveGardenLevel]);
 
   return {
     isPremium,

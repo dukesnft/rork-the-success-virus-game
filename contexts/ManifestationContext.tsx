@@ -57,7 +57,7 @@ const generateSmartPosition = (existingManifestations: Manifestation[]): { x: nu
 
 export const [ManifestationProvider, useManifestations] = createContextHook(() => {
   const [manifestations, setManifestations] = useState<Manifestation[]>([]);
-  const { isPremium, earnGems } = usePremium();
+  const { isPremium, earnGems, maxPlantSlots } = usePremium();
   const { scheduleManifestationNotification, cancelManifestationNotification } = useNotifications();
   const { addToInventory } = useInventory();
 
@@ -85,98 +85,120 @@ export const [ManifestationProvider, useManifestations] = createContextHook(() =
   }, [manifestationsQuery.data]);
 
   const addManifestation = useCallback((manifestation: Omit<Manifestation, 'id' | 'stage' | 'energy' | 'maxEnergy' | 'createdAt' | 'lastNurtured'>) => {
-    const position = generateSmartPosition(manifestations);
-    
-    const newManifestation: Manifestation = {
-      ...manifestation,
-      id: Date.now().toString(),
-      stage: 'seed',
-      energy: 0,
-      maxEnergy: 100,
-      createdAt: Date.now(),
-      lastNurtured: Date.now(),
-      position,
-    };
-    
-    const updated = [...manifestations, newManifestation];
-    setManifestations(updated);
-    saveMutate(updated);
-    
-    scheduleManifestationNotification(
-      newManifestation.id,
-      newManifestation.intention,
-      newManifestation.category
-    );
-  }, [manifestations, saveMutate, scheduleManifestationNotification]);
+    setManifestations(prev => {
+      if (prev.length >= maxPlantSlots) {
+        console.warn('Maximum plant slots reached');
+        return prev;
+      }
+      
+      const position = generateSmartPosition(prev);
+      
+      const newManifestation: Manifestation = {
+        ...manifestation,
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        stage: 'seed',
+        energy: 0,
+        maxEnergy: 100,
+        createdAt: Date.now(),
+        lastNurtured: Date.now(),
+        position,
+      };
+      
+      const updated = [...prev, newManifestation];
+      saveMutate(updated);
+      
+      scheduleManifestationNotification(
+        newManifestation.id,
+        newManifestation.intention,
+        newManifestation.category
+      );
+      
+      return updated;
+    });
+  }, [maxPlantSlots, saveMutate, scheduleManifestationNotification]);
+
+  useEffect(() => {
+    if (manifestations.length > maxPlantSlots) {
+      console.warn(`Too many plants: ${manifestations.length}/${maxPlantSlots}`);
+    }
+  }, [manifestations.length, maxPlantSlots]);
 
   const nurtureManifestation = useCallback((id: string) => {
     const energyGain = isPremium ? 18 : 12;
-    const updated = manifestations.map(m => {
-      if (m.id === id) {
-        const newEnergy = Math.min(m.energy + energyGain, m.maxEnergy);
-        return {
-          ...m,
-          energy: newEnergy,
-          stage: getStageFromEnergy(newEnergy),
-          lastNurtured: Date.now(),
-        };
-      }
-      return m;
-    });
-    
-    setManifestations(updated);
-    saveMutate(updated);
-  }, [manifestations, saveMutate, isPremium]);
-
-  const deleteManifestation = useCallback((id: string) => {
-    const updated = manifestations.filter(m => m.id !== id);
-    setManifestations(updated);
-    saveMutate(updated);
-    cancelManifestationNotification(id);
-  }, [manifestations, saveMutate, cancelManifestationNotification]);
-
-  const harvestManifestation = useCallback((id: string) => {
-    const manifestation = manifestations.find(m => m.id === id);
-    
-    if (!manifestation) return;
-    
-    if (manifestation.stage === 'blooming') {
-      addToInventory({
-        intention: manifestation.intention,
-        category: manifestation.category,
-        stage: manifestation.stage,
-        color: manifestation.color,
+    setManifestations(prev => {
+      const updated = prev.map(m => {
+        if (m.id === id) {
+          const newEnergy = Math.min(m.energy + energyGain, m.maxEnergy);
+          return {
+            ...m,
+            energy: newEnergy,
+            stage: getStageFromEnergy(newEnergy),
+            lastNurtured: Date.now(),
+          };
+        }
+        return m;
       });
       
-      const gemReward = manifestation.rarity === 'legendary' ? 100 : 
-                        manifestation.rarity === 'epic' ? 60 : 
-                        manifestation.rarity === 'rare' ? 30 : 20;
-      earnGems(gemReward, `Harvested ${manifestation.rarity || 'common'} bloom`);
-    }
-    
-    const updated = manifestations.filter(m => m.id !== id);
-    setManifestations(updated);
-    saveMutate(updated);
-    cancelManifestationNotification(id);
-  }, [manifestations, saveMutate, cancelManifestationNotification, addToInventory, earnGems]);
+      saveMutate(updated);
+      return updated;
+    });
+  }, [saveMutate, isPremium]);
+
+  const deleteManifestation = useCallback((id: string) => {
+    setManifestations(prev => {
+      const updated = prev.filter(m => m.id !== id);
+      saveMutate(updated);
+      cancelManifestationNotification(id);
+      return updated;
+    });
+  }, [saveMutate, cancelManifestationNotification]);
+
+  const harvestManifestation = useCallback((id: string) => {
+    setManifestations(prev => {
+      const manifestation = prev.find(m => m.id === id);
+      
+      if (!manifestation) return prev;
+      
+      if (manifestation.stage === 'blooming') {
+        addToInventory({
+          intention: manifestation.intention,
+          category: manifestation.category,
+          stage: manifestation.stage,
+          color: manifestation.color,
+        });
+        
+        const gemReward = manifestation.rarity === 'legendary' ? 100 : 
+                          manifestation.rarity === 'epic' ? 60 : 
+                          manifestation.rarity === 'rare' ? 30 : 20;
+        earnGems(gemReward, `Harvested ${manifestation.rarity || 'common'} bloom`);
+      }
+      
+      const updated = prev.filter(m => m.id !== id);
+      saveMutate(updated);
+      cancelManifestationNotification(id);
+      return updated;
+    });
+  }, [saveMutate, cancelManifestationNotification, addToInventory, earnGems]);
 
   const instantGrowManifestation = useCallback((id: string) => {
-    const updated = manifestations.map(m => {
-      if (m.id === id && m.stage !== 'blooming') {
-        const newEnergy = Math.min(m.energy + 33, m.maxEnergy);
-        return {
-          ...m,
-          energy: newEnergy,
-          stage: getStageFromEnergy(newEnergy),
-          lastNurtured: Date.now(),
-        };
-      }
-      return m;
+    setManifestations(prev => {
+      const updated = prev.map(m => {
+        if (m.id === id && m.stage !== 'blooming') {
+          const newEnergy = Math.min(m.energy + 33, m.maxEnergy);
+          return {
+            ...m,
+            energy: newEnergy,
+            stage: getStageFromEnergy(newEnergy),
+            lastNurtured: Date.now(),
+          };
+        }
+        return m;
+      });
+      
+      saveMutate(updated);
+      return updated;
     });
-    
-    setManifestations(updated);
-    saveMutate(updated);
-  }, [manifestations, saveMutate]);
+  }, [saveMutate]);
 
   return {
     manifestations,

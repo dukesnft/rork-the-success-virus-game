@@ -296,9 +296,10 @@ export default function ShopScreen() {
         Alert.alert('Success!', `${item.amount} growth boosters added!`);
         break;
       case 'energy':
-        for (let i = 0; i < item.amount!; i++) {
+        for (let i = 0; i < (item.amount! - 1); i++) {
           purchaseEnergyBoost();
         }
+        purchaseEnergyBoost();
         Alert.alert('Success!', `${item.amount} energy refills added!`);
         break;
       case 'auto':
@@ -534,11 +535,10 @@ export default function ShopScreen() {
               onPress={() => {
                 if (gems >= 350) {
                   Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                  spendGems(350);
-                  for (let i = 0; i < 10; i++) {
+                  if (spendGems(350)) {
                     refillEnergy();
+                    Alert.alert('💫 Energy Refilled!', 'Full energy restored!');
                   }
-                  Alert.alert('💫 Energy Refilled!', '10 Energy refills added!');
                 } else {
                   Alert.alert('Not Enough Gems', 'You need 350 gems to purchase this item.');
                 }
@@ -554,8 +554,8 @@ export default function ShopScreen() {
                   <Zap color="#FFA500" size={32} />
                 </View>
                 <View style={styles.gemStoreInfo}>
-                  <Text style={styles.gemStoreTitle}>10 Energy Refills</Text>
-                  <Text style={styles.gemStoreDescription}>Never run out of energy</Text>
+                  <Text style={styles.gemStoreTitle}>Full Energy Refill</Text>
+                  <Text style={styles.gemStoreDescription}>Restore all your energy</Text>
                 </View>
                 <View style={styles.gemStorePriceBox}>
                   <Gem color="#FFD700" size={20} />
