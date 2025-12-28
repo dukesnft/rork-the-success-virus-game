@@ -468,11 +468,13 @@ export default function GardenScreen() {
 
   useEffect(() => {
     checkInStreak();
-  }, [checkInStreak]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     updateSeedRankings();
-  }, [updateSeedRankings]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handlePurchaseBoost = () => {
     purchaseEnergyBoost();

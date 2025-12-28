@@ -151,92 +151,100 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
   }, [streakRankingsQuery.data]);
 
   const updateStreakRankings = useCallback((currentStreak: number, longestStreak: number) => {
-    const userRanking: StreakRanking = {
-      id: 'user',
-      username: userData.username,
-      score: currentStreak,
-      rank: 0,
-      currentStreak,
-      longestStreak,
-    };
+    setStreakRankings(prevRankings => {
+      const userRanking: StreakRanking = {
+        id: 'user',
+        username: userData.username,
+        score: currentStreak,
+        rank: 0,
+        currentStreak,
+        longestStreak,
+      };
 
-    const otherRankings = streakRankings.filter(r => r.id !== 'user');
-    const allRankings: StreakRanking[] = [...otherRankings, userRanking];
-    
-    allRankings.sort((a, b) => b.score - a.score);
-    allRankings.forEach((r, i) => r.rank = i + 1);
+      const otherRankings = prevRankings.filter(r => r.id !== 'user');
+      const allRankings: StreakRanking[] = [...otherRankings, userRanking];
+      
+      allRankings.sort((a, b) => b.score - a.score);
+      allRankings.forEach((r, i) => r.rank = i + 1);
 
-    setStreakRankings(allRankings);
-    saveStreakRankingsMutate(allRankings);
-  }, [userData, streakRankings, saveStreakRankingsMutate]);
+      saveStreakRankingsMutate(allRankings);
+      return allRankings;
+    });
+  }, [userData.username, saveStreakRankingsMutate]);
 
   const checkInStreak = useCallback(() => {
-    const today = new Date().toDateString();
-    
-    if (userData.lastCheckIn === today) {
-      return;
-    }
+    setUserData(prevData => {
+      const today = new Date().toDateString();
+      
+      if (prevData.lastCheckIn === today) {
+        return prevData;
+      }
 
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toDateString();
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toDateString();
 
-    let newStreak = userData.currentStreak;
-    
-    if (userData.lastCheckIn === yesterdayStr) {
-      newStreak = userData.currentStreak + 1;
-    } else if (userData.lastCheckIn === '') {
-      newStreak = 1;
-    } else {
-      newStreak = 1;
-    }
+      let newStreak = prevData.currentStreak;
+      
+      if (prevData.lastCheckIn === yesterdayStr) {
+        newStreak = prevData.currentStreak + 1;
+      } else if (prevData.lastCheckIn === '') {
+        newStreak = 1;
+      } else {
+        newStreak = 1;
+      }
 
-    const newLongestStreak = Math.max(newStreak, userData.longestStreak);
+      const newLongestStreak = Math.max(newStreak, prevData.longestStreak);
 
-    const updatedData = {
-      ...userData,
-      currentStreak: newStreak,
-      longestStreak: newLongestStreak,
-      lastCheckIn: today,
-    };
+      const updatedData = {
+        ...prevData,
+        currentStreak: newStreak,
+        longestStreak: newLongestStreak,
+        lastCheckIn: today,
+      };
 
-    setUserData(updatedData);
-    saveUserDataMutate(updatedData);
-
-    updateStreakRankings(newStreak, newLongestStreak);
-  }, [userData, saveUserDataMutate, updateStreakRankings]);
+      saveUserDataMutate(updatedData);
+      updateStreakRankings(newStreak, newLongestStreak);
+      
+      return updatedData;
+    });
+  }, [saveUserDataMutate, updateStreakRankings]);
 
   const updateSeedRankings = useCallback(() => {
     const totalSeeds = getTotalSeeds();
     const bloomingSeeds = getBloomingSeeds();
 
-    const userRanking: SeedRanking = {
-      id: 'user',
-      username: userData.username,
-      score: totalSeeds,
-      rank: 0,
-      totalSeeds,
-      bloomingSeeds,
-    };
+    setSeedRankings(prevRankings => {
+      const userRanking: SeedRanking = {
+        id: 'user',
+        username: userData.username,
+        score: totalSeeds,
+        rank: 0,
+        totalSeeds,
+        bloomingSeeds,
+      };
 
-    const otherRankings = seedRankings.filter(r => r.id !== 'user');
-    const allRankings: SeedRanking[] = [...otherRankings, userRanking];
-    
-    allRankings.sort((a, b) => b.score - a.score);
-    allRankings.forEach((r, i) => r.rank = i + 1);
+      const otherRankings = prevRankings.filter(r => r.id !== 'user');
+      const allRankings: SeedRanking[] = [...otherRankings, userRanking];
+      
+      allRankings.sort((a, b) => b.score - a.score);
+      allRankings.forEach((r, i) => r.rank = i + 1);
 
-    setSeedRankings(allRankings);
-    saveSeedRankingsMutate(allRankings);
-  }, [getTotalSeeds, getBloomingSeeds, userData, seedRankings, saveSeedRankingsMutate]);
+      saveSeedRankingsMutate(allRankings);
+      return allRankings;
+    });
+  }, [getTotalSeeds, getBloomingSeeds, userData.username, saveSeedRankingsMutate]);
 
   const setUsername = useCallback((username: string) => {
-    const updatedData = {
-      ...userData,
-      username,
-    };
-    setUserData(updatedData);
-    saveUserDataMutate(updatedData);
-  }, [userData, saveUserDataMutate]);
+    setUserData(prevData => {
+      const updatedData = {
+        ...prevData,
+        username,
+      };
+      saveUserDataMutate(updatedData);
+      return updatedData;
+    });
+  }, [saveUserDataMutate]);
 
   const getUserSeedRank = useCallback(() => {
     const userRanking = seedRankings.find(r => r.id === 'user');
