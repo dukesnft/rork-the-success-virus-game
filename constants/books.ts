@@ -192,21 +192,6 @@ export const AVAILABLE_BOOKS: Book[] = [
     ],
   },
   {
-    id: 'spiritual-awakening',
-    title: 'The Spiritual Awakening Guide',
-    author: '@thesuccess.virus',
-    description: 'Unlock your spiritual potential and connect with your higher self. A transformative journey into consciousness and enlightenment.',
-    coverUrl: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=600&fit=crop',
-    price: 22.2,
-    isPurchased: false,
-    readingProgress: 0,
-    category: 'spirituality',
-    pages: [
-      { id: '1', content: 'The Spiritual Awakening Guide\n\nWelcome, seeker. You have been called to this moment for a reason. Your spiritual awakening is not an accident—it is your soul\'s invitation to remember who you truly are.', pageNumber: 1 },
-      { id: '2', content: 'Chapter 1: Awakening to Your Truth\n\nYou are not just a physical being having a spiritual experience. You are a spiritual being having a physical experience.\n\nWhen you realize this fundamental truth, everything changes.', pageNumber: 2 },
-    ],
-  },
-  {
     id: 'manifesting-your-magic',
     title: 'Manifesting Your Magic: A Guide to Energetic Alignment and Abundant Living',
     author: '@thesuccess.virus',
