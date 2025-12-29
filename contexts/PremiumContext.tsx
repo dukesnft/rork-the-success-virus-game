@@ -14,6 +14,8 @@ const PURCHASES_KEY = 'total_purchases';
 const FREE_SEEDS_KEY = 'free_seeds_claimed';
 const COMBO_KEY = 'combo_data';
 const GARDEN_LEVEL_KEY = 'garden_level';
+const COMEBACK_BONUS_KEY = 'comeback_bonus';
+const MILESTONES_KEY = 'milestones';
 
 interface FreeSeedsState {
   claimedToday: number;
@@ -30,6 +32,21 @@ interface GardenLevel {
   level: number;
   xp: number;
   maxPlantSlots: number;
+}
+
+interface ComebackBonus {
+  lastLogin: string;
+  consecutiveDays: number;
+  bonusClaimed: boolean;
+}
+
+interface Milestone {
+  id: string;
+  type: 'blooms' | 'level' | 'streak' | 'gems' | 'nurtures';
+  target: number;
+  reward: { gems?: number; energy?: number; seeds?: number };
+  claimed: boolean;
+  progress: number;
 }
 
 interface PremiumState {
@@ -62,6 +79,8 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
   const [gardenLevel, setGardenLevel] = useState(1);
   const [gardenXP, setGardenXP] = useState(0);
   const [maxPlantSlots, setMaxPlantSlots] = useState(6);
+  const [hasComebackBonus, setHasComebackBonus] = useState(false);
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
 
   const premiumQuery = useQuery({
     queryKey: ['premium'],
@@ -199,6 +218,50 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     }
   });
 
+  const comebackQuery = useQuery({
+    queryKey: ['comeback'],
+    queryFn: async () => {
+      const stored = await AsyncStorage.getItem(COMEBACK_BONUS_KEY);
+      const today = new Date().toISOString().split('T')[0];
+      
+      if (!stored) {
+        return { lastLogin: today, consecutiveDays: 1, bonusClaimed: false };
+      }
+      
+      const data: ComebackBonus = JSON.parse(stored);
+      const daysDiff = Math.floor((new Date(today).getTime() - new Date(data.lastLogin).getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (daysDiff >= 3 && data.lastLogin !== today) {
+        return { lastLogin: today, consecutiveDays: daysDiff, bonusClaimed: false };
+      }
+      
+      if (data.lastLogin !== today) {
+        return { ...data, lastLogin: today, bonusClaimed: false };
+      }
+      
+      return data;
+    }
+  });
+
+  const milestonesQuery = useQuery({
+    queryKey: ['milestones'],
+    queryFn: async () => {
+      const stored = await AsyncStorage.getItem(MILESTONES_KEY);
+      if (!stored) {
+        return [
+          { id: 'blooms_10', type: 'blooms', target: 10, reward: { gems: 100, seeds: 2 }, claimed: false, progress: 0 },
+          { id: 'blooms_50', type: 'blooms', target: 50, reward: { gems: 500, seeds: 5 }, claimed: false, progress: 0 },
+          { id: 'blooms_100', type: 'blooms', target: 100, reward: { gems: 1000, seeds: 10 }, claimed: false, progress: 0 },
+          { id: 'level_10', type: 'level', target: 10, reward: { gems: 200, energy: 10 }, claimed: false, progress: 0 },
+          { id: 'level_25', type: 'level', target: 25, reward: { gems: 750, energy: 25 }, claimed: false, progress: 0 },
+          { id: 'streak_30', type: 'streak', target: 30, reward: { gems: 500, seeds: 3 }, claimed: false, progress: 0 },
+          { id: 'streak_100', type: 'streak', target: 100, reward: { gems: 2000, seeds: 15 }, claimed: false, progress: 0 },
+        ] as Milestone[];
+      }
+      return JSON.parse(stored);
+    }
+  });
+
   const { mutate: savePremium } = useMutation({
     mutationFn: async (data: PremiumState) => {
       await AsyncStorage.setItem(PREMIUM_STORAGE_KEY, JSON.stringify(data));
@@ -272,6 +335,20 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
   const { mutate: saveGardenLevel } = useMutation({
     mutationFn: async (data: GardenLevel) => {
       await AsyncStorage.setItem(GARDEN_LEVEL_KEY, JSON.stringify(data));
+      return data;
+    }
+  });
+
+  const { mutate: saveComeback } = useMutation({
+    mutationFn: async (data: ComebackBonus) => {
+      await AsyncStorage.setItem(COMEBACK_BONUS_KEY, JSON.stringify(data));
+      return data;
+    }
+  });
+
+  const { mutate: saveMilestones } = useMutation({
+    mutationFn: async (data: Milestone[]) => {
+      await AsyncStorage.setItem(MILESTONES_KEY, JSON.stringify(data));
       return data;
     }
   });
@@ -359,6 +436,18 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
       setMaxPlantSlots(gardenLevelQuery.data.maxPlantSlots);
     }
   }, [gardenLevelQuery.data]);
+
+  useEffect(() => {
+    if (comebackQuery.data) {
+      setHasComebackBonus(comebackQuery.data.consecutiveDays >= 3 && !comebackQuery.data.bonusClaimed);
+    }
+  }, [comebackQuery.data]);
+
+  useEffect(() => {
+    if (milestonesQuery.data) {
+      setMilestones(milestonesQuery.data);
+    }
+  }, [milestonesQuery.data]);
 
   const upgradeToPremium = useCallback((duration: 'month' | 'year') => {
     const now = Date.now();
@@ -559,6 +648,19 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     saveCombo({ count: 0, multiplier: 1, lastActionTime: 0 });
   }, [saveCombo]);
 
+  const updateMilestoneProgress = useCallback((type: Milestone['type'], value: number) => {
+    setMilestones(prev => {
+      const updated = prev.map(m => {
+        if (m.type === type && !m.claimed) {
+          return { ...m, progress: value };
+        }
+        return m;
+      });
+      saveMilestones(updated);
+      return updated;
+    });
+  }, [saveMilestones]);
+
   const addGardenXP = useCallback((amount: number) => {
     setGardenXP(prev => {
       const xpNeeded = gardenLevel * 100;
@@ -593,6 +695,8 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
           return bonusEnergy;
         });
         
+        updateMilestoneProgress('level', newLevel);
+        
         return remainingXP;
       } else {
         saveGardenLevel({
@@ -603,7 +707,94 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
         return newXP;
       }
     });
-  }, [gardenLevel, maxPlantSlots, earnGems, maxEnergy, streak, saveEnergy, saveGardenLevel]);
+  }, [gardenLevel, maxPlantSlots, earnGems, maxEnergy, streak, saveEnergy, saveGardenLevel, updateMilestoneProgress]);
+
+  const claimComebackBonus = useCallback(() => {
+    if (!comebackQuery.data || comebackQuery.data.bonusClaimed) return;
+    
+    const days = comebackQuery.data.consecutiveDays;
+    const bonusEnergy = Math.min(5 + days, 15);
+    const bonusGems = days * 10;
+    const bonusSeeds = Math.floor(days / 3);
+    
+    setEnergy(prev => {
+      const today = new Date().toISOString().split('T')[0];
+      const newEnergy = Math.min(prev + bonusEnergy, maxEnergy);
+      saveEnergy({
+        energy: newEnergy,
+        maxEnergy,
+        lastRefreshDate: today,
+        streak,
+        lastPlayDate: today,
+      });
+      return newEnergy;
+    });
+    
+    earnGems(bonusGems, `Welcome back! ${days} day bonus`);
+    
+    if (bonusSeeds > 0) {
+      setSpecialSeeds(prev => {
+        const newSeeds = prev + bonusSeeds;
+        saveSpecialSeeds(newSeeds);
+        return newSeeds;
+      });
+    }
+    
+    saveComeback({
+      ...comebackQuery.data,
+      bonusClaimed: true,
+    });
+    
+    setHasComebackBonus(false);
+    
+    return { energy: bonusEnergy, gems: bonusGems, seeds: bonusSeeds };
+  }, [comebackQuery.data, maxEnergy, streak, earnGems, saveEnergy, saveComeback, saveSpecialSeeds]);
+
+  const claimMilestone = useCallback((milestoneId: string) => {
+    const milestone = milestones.find(m => m.id === milestoneId);
+    if (!milestone || milestone.claimed || milestone.progress < milestone.target) return false;
+    
+    if (milestone.reward.gems) {
+      earnGems(milestone.reward.gems, `Milestone: ${milestoneId}`);
+    }
+    
+    if (milestone.reward.energy) {
+      setEnergy(prev => {
+        const today = new Date().toISOString().split('T')[0];
+        const newEnergy = Math.min(prev + milestone.reward.energy!, maxEnergy);
+        saveEnergy({
+          energy: newEnergy,
+          maxEnergy,
+          lastRefreshDate: today,
+          streak,
+          lastPlayDate: today,
+        });
+        return newEnergy;
+      });
+    }
+    
+    if (milestone.reward.seeds) {
+      setSpecialSeeds(prev => {
+        const newSeeds = prev + milestone.reward.seeds!;
+        saveSpecialSeeds(newSeeds);
+        return newSeeds;
+      });
+    }
+    
+    setMilestones(prev => {
+      const updated = prev.map(m => 
+        m.id === milestoneId ? { ...m, claimed: true } : m
+      );
+      saveMilestones(updated);
+      return updated;
+    });
+    
+    return true;
+  }, [milestones, earnGems, maxEnergy, streak, saveEnergy, saveSpecialSeeds, saveMilestones]);
+
+  const getUnclaimedMilestones = useCallback(() => {
+    return milestones.filter(m => !m.claimed && m.progress >= m.target);
+  }, [milestones]);
 
   return {
     isPremium,
@@ -622,6 +813,8 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     gardenLevel,
     gardenXP,
     maxPlantSlots,
+    hasComebackBonus,
+    milestones,
     isLoading: premiumQuery.isLoading || boostsQuery.isLoading || energyQuery.isLoading,
     upgradeToPremium,
     purchaseEnergyBoost,
@@ -644,5 +837,9 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     incrementCombo,
     resetCombo,
     addGardenXP,
+    claimComebackBonus,
+    updateMilestoneProgress,
+    claimMilestone,
+    getUnclaimedMilestones,
   };
 });

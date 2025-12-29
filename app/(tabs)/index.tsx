@@ -344,6 +344,10 @@ export default function GardenScreen() {
   const [showAchievements, setShowAchievements] = useState(false);
   const [showQuests, setShowQuests] = useState(false);
   const [showCombo, setShowCombo] = useState(false);
+  const [showLevelUp, setShowLevelUp] = useState(false);
+  const [previousLevel, setPreviousLevel] = useState(gardenLevel);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [manifestationToDelete, setManifestationToDelete] = useState<string | null>(null);
 
   const handleNurture = useCallback((id: string) => {
     if (energy >= 1) {
@@ -368,6 +372,31 @@ export default function GardenScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
   }, [energy, consumeEnergy, nurtureManifestation, incrementCombo, addGardenXP, progressQuest, incrementAchievement]);
+
+  const handleNurtureAll = useCallback(() => {
+    const plantsToNurture = manifestations.filter(m => m.stage !== 'blooming');
+    const energyNeeded = plantsToNurture.length;
+    
+    if (energy >= energyNeeded && energyNeeded > 0) {
+      for (let i = 0; i < energyNeeded; i++) {
+        const success = consumeEnergy(1);
+        if (success && plantsToNurture[i]) {
+          const multiplier = incrementCombo();
+          nurtureManifestation(plantsToNurture[i].id);
+          addGardenXP(5 * multiplier);
+          progressQuest('nurture', 1);
+          incrementAchievement('nurture_100', 1);
+          incrementAchievement('energy_efficient', 1);
+        }
+      }
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } else if (energyNeeded === 0) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    } else {
+      setShowEnergyPrompt(true);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    }
+  }, [manifestations, energy, consumeEnergy, nurtureManifestation, incrementCombo, addGardenXP, progressQuest, incrementAchievement]);
 
   const handleBoostRequest = useCallback((id: string) => {
     if (energyBoosts > 0) {
@@ -423,6 +452,16 @@ export default function GardenScreen() {
     updateBloomedRankings();
     updateLegendaryRankings();
   }, [updateBloomedRankings, updateLegendaryRankings]);
+
+  useEffect(() => {
+    if (gardenLevel > previousLevel) {
+      setShowLevelUp(true);
+      setPreviousLevel(gardenLevel);
+      const reward = gardenLevel * 10;
+      earnGems(reward, `Level ${gardenLevel} Reward`);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+  }, [gardenLevel, previousLevel, earnGems]);
 
   const handlePurchaseBoost = () => {
     purchaseEnergyBoost();
@@ -504,15 +543,21 @@ export default function GardenScreen() {
             <View style={styles.statusBar}>
               <Pressable 
                 style={styles.gemCounter}
-                onPress={() => router.push('/shop')}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push('/shop');
+                }}
               >
-                <Gem color="#9370DB" size={18} />
+                <Gem color="#9370DB" size={20} />
                 <Text style={styles.gemCount}>{gems}</Text>
               </Pressable>
               
               <Pressable 
                 style={styles.energyCounter}
-                onPress={() => setShowEnergyPrompt(true)}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setShowEnergyPrompt(true);
+                }}
               >
                 <Text style={styles.energyIcon}>💫</Text>
                 <Text style={styles.energyCount}>{energy}/{maxEnergy}</Text>
@@ -527,7 +572,10 @@ export default function GardenScreen() {
               
               <Pressable 
                 style={styles.boostCounter}
-                onPress={() => setShowBoostPrompt(true)}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setShowBoostPrompt(true);
+                }}
               >
                 <Text style={styles.boostIcon}>⚡</Text>
                 <Text style={styles.boostCount}>{energyBoosts}</Text>
@@ -615,22 +663,44 @@ export default function GardenScreen() {
           </View>
         </ScrollView>
 
-        <Pressable
-          style={styles.addButton}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            router.push('/create');
-          }}
-        >
-          <LinearGradient
-            colors={['#9370DB', '#FF69B4']}
-            style={styles.addButtonGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
+        <View style={styles.floatingButtons}>
+          {manifestations.length > 0 && manifestations.some(m => m.stage !== 'blooming') && (
+            <Pressable
+              style={styles.nurtureAllButton}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                handleNurtureAll();
+              }}
+            >
+              <LinearGradient
+                colors={['#32CD32', '#228B22']}
+                style={styles.nurtureAllGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <Sparkles color="#fff" size={20} />
+                <Text style={styles.nurtureAllText}>All</Text>
+              </LinearGradient>
+            </Pressable>
+          )}
+          
+          <Pressable
+            style={styles.addButton}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              router.push('/create');
+            }}
           >
-            <Plus color="#fff" size={32} strokeWidth={3} />
-          </LinearGradient>
-        </Pressable>
+            <LinearGradient
+              colors={['#9370DB', '#FF69B4']}
+              style={styles.addButtonGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <Plus color="#fff" size={32} strokeWidth={3} />
+            </LinearGradient>
+          </Pressable>
+        </View>
 
         {selectedManifestationId && (() => {
           const selectedManifestation = manifestations.find(m => m.id === selectedManifestationId);
@@ -765,7 +835,8 @@ export default function GardenScreen() {
                     style={styles.deleteButton}
                     onPress={() => {
                       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-                      deleteManifestation(selectedManifestation.id);
+                      setManifestationToDelete(selectedManifestation.id);
+                      setShowDeleteConfirm(true);
                       setSelectedManifestationId(null);
                     }}
                   >
@@ -1179,6 +1250,62 @@ export default function GardenScreen() {
           </Modal>
         )}
 
+        {showDeleteConfirm && manifestationToDelete && (
+          <Modal visible={true} transparent animationType="fade" onRequestClose={() => setShowDeleteConfirm(false)}>
+            <View style={styles.modalOverlay}>
+              <Pressable style={styles.modalBackdrop} onPress={() => setShowDeleteConfirm(false)} />
+              <View style={styles.boostModal}>
+                <Text style={styles.boostModalTitle}>Release Manifestation?</Text>
+                <Text style={styles.boostModalText}>
+                  Are you sure you want to release this manifestation? This action cannot be undone.
+                </Text>
+                <Pressable
+                  style={styles.boostButton}
+                  onPress={() => {
+                    deleteManifestation(manifestationToDelete);
+                    setShowDeleteConfirm(false);
+                    setManifestationToDelete(null);
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                  }}
+                >
+                  <LinearGradient colors={['#ff4444', '#cc0000']} style={styles.boostButtonGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                    <Text style={styles.boostButtonText}>Yes, Release</Text>
+                  </LinearGradient>
+                </Pressable>
+                <Pressable style={styles.cancelButton} onPress={() => setShowDeleteConfirm(false)}>
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </Pressable>
+              </View>
+            </View>
+          </Modal>
+        )}
+
+        {showLevelUp && (
+          <Modal visible={true} transparent animationType="fade" onRequestClose={() => setShowLevelUp(false)}>
+            <View style={styles.modalOverlay}>
+              <Pressable style={styles.modalBackdrop} onPress={() => setShowLevelUp(false)} />
+              <View style={styles.streakModal}>
+                <Text style={styles.streakModalEmoji}>🎉</Text>
+                <Text style={styles.boostModalTitle}>Level {gardenLevel}!</Text>
+                <Text style={styles.boostModalText}>
+                  Congratulations! Your garden has reached level {gardenLevel}!
+                </Text>
+                <View style={styles.rewardBox}>
+                  <Text style={styles.rewardText}>Reward: +{gardenLevel * 10} gems</Text>
+                </View>
+                <Pressable style={styles.boostButton} onPress={() => {
+                  setShowLevelUp(false);
+                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                }}>
+                  <LinearGradient colors={['#FFD700', '#FFA500']} style={styles.boostButtonGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+                    <Text style={styles.boostButtonText}>Awesome!</Text>
+                  </LinearGradient>
+                </Pressable>
+              </View>
+            </View>
+          </Modal>
+        )}
+
         {newUnlocks.length > 0 && (
           <Modal visible={true} transparent animationType="fade" onRequestClose={clearNewUnlocks}>
             <View style={styles.modalOverlay}>
@@ -1241,15 +1368,16 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   title: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: '800' as const,
     color: '#fff',
-    letterSpacing: 0.3,
+    letterSpacing: 0.5,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#b8a9d9',
-    marginLeft: 36,
+    marginLeft: 38,
+    marginTop: 2,
   },
   gardenArea: {
     flex: 1,
@@ -1402,17 +1530,41 @@ const styles = StyleSheet.create({
   quickNurtureIcon: {
     fontSize: 16,
   },
-  addButton: {
+  floatingButtons: {
     position: 'absolute',
     bottom: 105,
     right: 20,
+    gap: 12,
+    zIndex: 10,
+  },
+  addButton: {
     borderRadius: 32,
     shadowColor: '#9370DB',
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.4,
     shadowRadius: 10,
     elevation: 10,
-    zIndex: 10,
+  },
+  nurtureAllButton: {
+    borderRadius: 28,
+    shadowColor: '#32CD32',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  nurtureAllGradient: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 2,
+  },
+  nurtureAllText: {
+    fontSize: 10,
+    fontWeight: '700' as const,
+    color: '#fff',
   },
   addButtonGradient: {
     width: 64,
@@ -1487,25 +1639,25 @@ const styles = StyleSheet.create({
   gemCounter: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(147, 112, 219, 0.35)',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 16,
-    gap: 7,
+    backgroundColor: 'rgba(147, 112, 219, 0.4)',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 18,
+    gap: 8,
     borderWidth: 2,
-    borderColor: 'rgba(147, 112, 219, 0.65)',
+    borderColor: 'rgba(147, 112, 219, 0.7)',
     shadowColor: '#9370DB',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.35,
-    shadowRadius: 5,
-    elevation: 3,
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 4,
   },
   gemCount: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '800' as const,
-    color: '#E0D4FF',
-    letterSpacing: 0.4,
-    minWidth: 30,
+    color: '#E8DEFF',
+    letterSpacing: 0.5,
+    minWidth: 35,
     textAlign: 'center' as const,
   },
   iconButton: {
