@@ -166,37 +166,37 @@ export const [InventoryProvider, useInventory] = createContextHook(() => {
       
       if (dominantRarity === 'legendary') {
         if (dominantCount === 5) {
-          if (rand < 15) return 'legendary';
-          if (rand < 75) return 'epic';
+          if (rand < 70) return 'legendary';
+          if (rand < 95) return 'epic';
           return 'rare';
         } else if (dominantCount >= 3) {
-          if (rand < 8) return 'legendary';
-          if (rand < 65) return 'epic';
+          if (rand < 50) return 'legendary';
+          if (rand < 85) return 'epic';
           return 'rare';
         } else {
-          if (rand < 3) return 'legendary';
-          if (rand < 50) return 'epic';
+          if (rand < 25) return 'legendary';
+          if (rand < 70) return 'epic';
           return 'rare';
         }
       }
       
       if (dominantRarity === 'epic') {
-        if (rand < 65) return 'epic';
-        if (rand < 90) return 'rare';
-        if (rand < 98.5) return 'common';
+        if (rand < 70) return 'epic';
+        if (rand < 92) return 'rare';
+        if (rand < 99) return 'common';
         return 'legendary';
       }
       
       if (dominantRarity === 'rare') {
         if (rand < 70) return 'rare';
-        if (rand < 95) return 'common';
-        if (rand < 99.5) return 'epic';
+        if (rand < 94) return 'common';
+        if (rand < 99.2) return 'epic';
         return 'legendary';
       }
       
-      if (rand < 75) return 'common';
-      if (rand < 94) return 'rare';
-      if (rand < 99.8) return 'epic';
+      if (rand < 70) return 'common';
+      if (rand < 92) return 'rare';
+      if (rand < 99.5) return 'epic';
       return 'legendary';
     };
 

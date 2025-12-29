@@ -807,9 +807,15 @@ export default function ManifestationsScreen() {
                 </ScrollView>
 
                 <View style={styles.burningFooter}>
-                  <Text style={styles.burningChanceText}>
-                    70% chance to get same rarity • Higher rarities increase legendary chance
-                  </Text>
+                  <View style={styles.chanceInfoBox}>
+                    <Text style={styles.burningChanceTitle}>🎲 Burning Mechanics</Text>
+                    <Text style={styles.burningChanceText}>
+                      • 5 Legendary blooms = 70% Legendary seed{"\n"}
+                      • 3-4 Legendary blooms = 50% Legendary seed{"\n"}
+                      • 1-2 Legendary blooms = 25% Legendary seed{"\n"}
+                      • Same for other rarities!
+                    </Text>
+                  </View>
                   <Pressable
                     style={[
                       styles.confirmBurnButton,
@@ -1462,11 +1468,24 @@ const styles = StyleSheet.create({
     borderTopColor: 'rgba(255, 107, 53, 0.3)',
     backgroundColor: 'rgba(255, 107, 53, 0.08)',
   },
+  chanceInfoBox: {
+    backgroundColor: 'rgba(255, 107, 53, 0.2)',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 107, 53, 0.4)',
+  },
+  burningChanceTitle: {
+    fontSize: 14,
+    fontWeight: '700' as const,
+    color: '#fff',
+    marginBottom: 8,
+    textAlign: 'center' as const,
+  },
   burningChanceText: {
     fontSize: 12,
     color: '#FFB088',
-    textAlign: 'center' as const,
-    marginBottom: 12,
     lineHeight: 18,
   },
   confirmBurnButton: {

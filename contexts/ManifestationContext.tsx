@@ -170,19 +170,19 @@ export const [ManifestationProvider, useManifestations] = createContextHook(() =
         });
         
         const isLegendary = manifestation.rarity === 'legendary';
-        const gemReward = manifestation.rarity === 'legendary' ? 350 : 
+        const gemReward = manifestation.rarity === 'legendary' ? 200 : 
                           manifestation.rarity === 'epic' ? 80 : 
                           manifestation.rarity === 'rare' ? 35 : 20;
         earnGems(gemReward, `Harvested ${manifestation.rarity || 'common'} bloom`);
         
         if (isLegendary) {
-          earnGems(200, '🌟 Legendary Bloom Bonus!');
+          earnGems(100, '🌟 Legendary Bloom Bonus!');
           const bonusRoll = Math.random();
-          if (bonusRoll < 0.5) {
-            earnGems(300, '🎰 Legendary Jackpot!');
+          if (bonusRoll < 0.3) {
+            earnGems(150, '🎰 Legendary Jackpot!');
           }
-          if (bonusRoll < 0.1) {
-            earnGems(500, '💎 Ultra Rare Legendary Bonus!');
+          if (bonusRoll < 0.05) {
+            earnGems(250, '💎 Ultra Rare Legendary Bonus!');
           }
         }
       }
