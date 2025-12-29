@@ -14,6 +14,7 @@ import { JournalProvider } from "@/contexts/JournalContext";
 import { InventoryProvider } from "@/contexts/InventoryContext";
 import { RankingProvider } from "@/contexts/RankingContext";
 import { CommunityProvider } from "@/contexts/CommunityContext";
+import { ProfileProvider } from "@/contexts/ProfileContext";
 import { AchievementProvider } from "@/contexts/AchievementContext";
 import { QuestProvider } from "@/contexts/QuestContext";
 
@@ -31,6 +32,7 @@ function RootLayoutNav() {
       <Stack.Screen name="shop" options={{ presentation: "modal", headerShown: false }} />
       <Stack.Screen name="inventory" options={{ presentation: "modal", headerShown: false }} />
       <Stack.Screen name="rankings" options={{ presentation: "modal", headerShown: false }} />
+      <Stack.Screen name="profile" options={{ presentation: "modal", headerShown: false }} />
     </Stack>
   );
 }
@@ -49,7 +51,8 @@ export default function RootLayout() {
               <InventoryProvider>
                 <RankingProvider>
                   <CommunityProvider>
-                <ManifestationProvider>
+                    <ProfileProvider>
+                      <ManifestationProvider>
                   <DailyManifestationProvider>
                     <BookProvider>
                       <BackgroundProvider>
@@ -61,7 +64,8 @@ export default function RootLayout() {
                       </BackgroundProvider>
                     </BookProvider>
                   </DailyManifestationProvider>
-                </ManifestationProvider>
+                      </ManifestationProvider>
+                    </ProfileProvider>
                   </CommunityProvider>
                 </RankingProvider>
               </InventoryProvider>

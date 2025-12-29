@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
+import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Heart, Copy, Trophy, Flame, Sparkles } from 'lucide-react-native';
@@ -101,7 +102,10 @@ export default function CommunityScreen() {
             style={styles.cardGradient}
           >
             <View style={styles.cardHeader}>
-              <View style={styles.userInfo}>
+              <TouchableOpacity
+                style={styles.userInfo}
+                onPress={() => router.push({ pathname: '/profile', params: { username: manifestation.username } })}
+              >
                 <View style={styles.avatar}>
                   <Text style={styles.avatarText}>
                     {manifestation.username.charAt(0).toUpperCase()}
@@ -113,7 +117,7 @@ export default function CommunityScreen() {
                     {manifestation.category.charAt(0).toUpperCase() + manifestation.category.slice(1)}
                   </Text>
                 </View>
-              </View>
+              </TouchableOpacity>
               <View style={styles.categoryBadgeContainer}>
                 <View
                   style={[
