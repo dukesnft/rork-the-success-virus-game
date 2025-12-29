@@ -3,6 +3,7 @@ export interface RankingEntry {
   username: string;
   score: number;
   rank: number;
+  totalSpent: number;
 }
 
 export interface SeedRanking extends RankingEntry {

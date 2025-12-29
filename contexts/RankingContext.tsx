@@ -4,6 +4,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useEffect, useState, useCallback } from 'react';
 import { SeedRanking, StreakRanking } from '@/types/ranking';
 import { useInventory } from '@/contexts/InventoryContext';
+import { usePremium } from '@/contexts/PremiumContext';
 
 const STORAGE_KEY_USER = 'user_ranking_data';
 const STORAGE_KEY_SEED = 'seed_rankings';
@@ -28,7 +29,21 @@ const generateMockRankings = (userScore: number, userStreak: number): { seedRank
   const streakRankings: StreakRanking[] = [];
 
   for (let i = 0; i < 20; i++) {
-    const totalSeeds = Math.floor(Math.random() * 150) + 10;
+    let totalSpent = 0;
+    
+    if (i === 0) {
+      totalSpent = 750 + Math.floor(Math.random() * 500);
+    } else if (i === 1) {
+      totalSpent = 550 + Math.floor(Math.random() * 200);
+    } else if (i === 2) {
+      totalSpent = 350 + Math.floor(Math.random() * 150);
+    } else if (i < 10) {
+      totalSpent = Math.floor(Math.random() * 300) + 100;
+    } else {
+      totalSpent = Math.floor(Math.random() * 100);
+    }
+    
+    const totalSeeds = Math.floor(Math.random() * 150) + 10 + Math.floor(totalSpent / 2);
     const bloomingSeeds = Math.floor(totalSeeds * (Math.random() * 0.5 + 0.2));
     
     seedRankings.push({
@@ -38,9 +53,10 @@ const generateMockRankings = (userScore: number, userStreak: number): { seedRank
       rank: i + 1,
       totalSeeds,
       bloomingSeeds,
+      totalSpent,
     });
 
-    const currentStreak = Math.floor(Math.random() * 100) + 1;
+    const currentStreak = Math.floor(Math.random() * 100) + 1 + Math.floor(totalSpent / 10);
     const longestStreak = currentStreak + Math.floor(Math.random() * 50);
     
     streakRankings.push({
@@ -50,6 +66,7 @@ const generateMockRankings = (userScore: number, userStreak: number): { seedRank
       rank: i + 1,
       currentStreak,
       longestStreak,
+      totalSpent,
     });
   }
 
@@ -73,6 +90,7 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
   });
 
   const { getTotalSeeds, getBloomingSeeds } = useInventory();
+  const { totalSpent } = usePremium();
 
   const userDataQuery = useQuery({
     queryKey: ['userRankingData'],
@@ -160,18 +178,56 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
         rank: 0,
         currentStreak,
         longestStreak,
+        totalSpent,
       };
 
       const otherRankings = prevRankings.filter(r => r.id !== 'user');
       const allRankings: StreakRanking[] = [...otherRankings, userRanking];
       
       allRankings.sort((a, b) => b.score - a.score);
-      allRankings.forEach((r, i) => r.rank = i + 1);
+      
+      const finalRankings: StreakRanking[] = [];
+      let currentRank = 1;
+      
+      for (let i = 0; i < allRankings.length; i++) {
+        const item = allRankings[i];
+        
+        if (currentRank === 1 && item.totalSpent < 700) {
+          item.rank = 999;
+        } else if (currentRank === 2 && item.totalSpent < 500) {
+          item.rank = 999;
+        } else if (currentRank === 3 && item.totalSpent < 300) {
+          item.rank = 999;
+        } else {
+          item.rank = currentRank;
+          currentRank++;
+        }
+        
+        finalRankings.push(item);
+      }
+      
+      finalRankings.sort((a, b) => {
+        if (a.rank === 999 && b.rank === 999) return b.score - a.score;
+        if (a.rank === 999) return 1;
+        if (b.rank === 999) return -1;
+        return a.rank - b.rank;
+      });
+      
+      let adjustedRank = 1;
+      finalRankings.forEach(item => {
+        if (item.rank !== 999) {
+          item.rank = adjustedRank;
+          adjustedRank++;
+        } else {
+          item.rank = adjustedRank;
+          adjustedRank++;
+        }
+      });
 
-      saveStreakRankingsMutate(allRankings);
-      return allRankings;
+      saveStreakRankingsMutate(finalRankings);
+      return finalRankings;
     });
-  }, [userData.username, saveStreakRankingsMutate]);
+  }, [userData.username, totalSpent, saveStreakRankingsMutate]);
 
   const checkInStreak = useCallback(() => {
     const today = new Date().toDateString();
@@ -227,18 +283,56 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
         rank: 0,
         totalSeeds,
         bloomingSeeds,
+        totalSpent,
       };
 
       const otherRankings = prevRankings.filter(r => r.id !== 'user');
       const allRankings: SeedRanking[] = [...otherRankings, userRanking];
       
       allRankings.sort((a, b) => b.score - a.score);
-      allRankings.forEach((r, i) => r.rank = i + 1);
+      
+      const finalRankings: SeedRanking[] = [];
+      let currentRank = 1;
+      
+      for (let i = 0; i < allRankings.length; i++) {
+        const item = allRankings[i];
+        
+        if (currentRank === 1 && item.totalSpent < 700) {
+          item.rank = 999;
+        } else if (currentRank === 2 && item.totalSpent < 500) {
+          item.rank = 999;
+        } else if (currentRank === 3 && item.totalSpent < 300) {
+          item.rank = 999;
+        } else {
+          item.rank = currentRank;
+          currentRank++;
+        }
+        
+        finalRankings.push(item);
+      }
+      
+      finalRankings.sort((a, b) => {
+        if (a.rank === 999 && b.rank === 999) return b.score - a.score;
+        if (a.rank === 999) return 1;
+        if (b.rank === 999) return -1;
+        return a.rank - b.rank;
+      });
+      
+      let adjustedRank = 1;
+      finalRankings.forEach(item => {
+        if (item.rank !== 999) {
+          item.rank = adjustedRank;
+          adjustedRank++;
+        } else {
+          item.rank = adjustedRank;
+          adjustedRank++;
+        }
+      });
 
-      saveSeedRankingsMutate(allRankings);
-      return allRankings;
+      saveSeedRankingsMutate(finalRankings);
+      return finalRankings;
     });
-  }, [getTotalSeeds, getBloomingSeeds, userData.username, saveSeedRankingsMutate]);
+  }, [getTotalSeeds, getBloomingSeeds, userData.username, totalSpent, saveSeedRankingsMutate]);
 
   const setUsername = useCallback((username: string) => {
     setUserData(prevData => {

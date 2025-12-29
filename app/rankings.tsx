@@ -16,13 +16,15 @@ const RankingItem = memo(function RankingItem({
   username, 
   score, 
   isUser,
-  subtitle 
+  subtitle,
+  totalSpent 
 }: { 
   rank: number; 
   username: string; 
   score: number; 
   isUser: boolean;
   subtitle?: string;
+  totalSpent: number;
 }) {
   const getRankColor = (rank: number): string => {
     if (rank === 1) return '#FFD700';
@@ -38,6 +40,20 @@ const RankingItem = memo(function RankingItem({
     return `#${rank}`;
   };
 
+  const meetsSpendRequirement = () => {
+    if (rank === 1) return totalSpent >= 700;
+    if (rank === 2) return totalSpent >= 500;
+    if (rank === 3) return totalSpent >= 300;
+    return true;
+  };
+
+  const getSpendRequirement = () => {
+    if (rank === 1) return 700;
+    if (rank === 2) return 500;
+    if (rank === 3) return 300;
+    return 0;
+  };
+
   return (
     <View style={[styles.rankingItem, isUser && styles.rankingItemUser]}>
       <Text style={[styles.rankNumber, { color: getRankColor(rank) }]}>
@@ -48,6 +64,11 @@ const RankingItem = memo(function RankingItem({
           {username} {isUser && '👑'}
         </Text>
         {subtitle && <Text style={styles.rankSubtitle}>{subtitle}</Text>}
+        {rank <= 3 && (
+          <Text style={[styles.spendBadge, meetsSpendRequirement() ? styles.spendMet : styles.spendNotMet]}>
+            ${totalSpent.toFixed(0)} / ${getSpendRequirement()} spent
+          </Text>
+        )}
       </View>
       <Text style={[styles.rankScore, isUser && styles.rankScoreUser]}>{score}</Text>
     </View>
@@ -226,6 +247,7 @@ export default function RankingsScreen({ visible, onClose }: RankingsScreenProps
                         score={ranking.score}
                         isUser={isUser}
                         subtitle={subtitle}
+                        totalSpent={ranking.totalSpent}
                       />
                     );
                   })}
@@ -411,6 +433,17 @@ const styles = StyleSheet.create({
   rankSubtitle: {
     fontSize: 12,
     color: '#b8a9d9',
+  },
+  spendBadge: {
+    fontSize: 11,
+    fontWeight: '600' as const,
+    marginTop: 4,
+  },
+  spendMet: {
+    color: '#4ade80',
+  },
+  spendNotMet: {
+    color: '#f87171',
   },
   rankScore: {
     fontSize: 20,
