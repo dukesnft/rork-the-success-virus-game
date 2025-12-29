@@ -4,11 +4,12 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useEffect, useState, useCallback } from 'react';
 import { DailyQuest, QuestType } from '@/types/quest';
 import * as Haptics from 'expo-haptics';
+import { getEasternTime } from '@/utils/dateUtils';
 
 const STORAGE_KEY = 'daily_quests';
 
 const generateDailyQuests = (): DailyQuest[] => {
-  const tomorrow = new Date();
+  const tomorrow = getEasternTime();
   tomorrow.setDate(tomorrow.getDate() + 1);
   tomorrow.setHours(0, 0, 0, 0);
   const expiresAt = tomorrow.getTime();

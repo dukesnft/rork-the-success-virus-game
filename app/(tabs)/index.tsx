@@ -1,5 +1,6 @@
 import { StyleSheet, View, Text, Pressable, Animated, Dimensions, ScrollView, Modal } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getEasternDateString } from '@/utils/dateUtils';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Sparkles, Plus, X, Trash2, Bell, Clock, Palette, Package, Share2, ShoppingBag, Gem, Trophy, Target, Zap } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
@@ -433,7 +434,7 @@ export default function GardenScreen() {
 
   useEffect(() => {
     const checkDailyGems = async () => {
-      const today = new Date().toISOString().split('T')[0];
+      const today = getEasternDateString();
       const stored = await AsyncStorage.getItem('daily_gems_claimed');
       if (stored !== today) {
         earnGems(10, 'Daily login bonus');

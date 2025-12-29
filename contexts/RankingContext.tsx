@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { BloomedRanking, LegendaryRanking, StreakRanking } from '@/types/ranking';
 import { useInventory } from '@/contexts/InventoryContext';
 import { usePremium } from '@/contexts/PremiumContext';
+import { getEasternTime } from '@/utils/dateUtils';
 
 const STORAGE_KEY_USER = 'user_ranking_data';
 const STORAGE_KEY_BLOOMED = 'bloomed_rankings';
@@ -239,14 +240,14 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
   }, [userData.username, totalSpent, level, saveStreakRankingsMutate]);
 
   const checkInStreak = useCallback(() => {
-    const today = new Date().toDateString();
+    const today = getEasternTime().toDateString();
     
     setUserData(prevData => {
       if (prevData.lastCheckIn === today) {
         return prevData;
       }
 
-      const yesterday = new Date();
+      const yesterday = getEasternTime();
       yesterday.setDate(yesterday.getDate() - 1);
       const yesterdayStr = yesterday.toDateString();
 

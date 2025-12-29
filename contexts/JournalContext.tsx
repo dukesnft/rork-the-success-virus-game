@@ -3,6 +3,7 @@ import createContextHook from '@nkzw/create-context-hook';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useEffect, useState, useCallback } from 'react';
 import { JournalEntry } from '@/types/journal';
+import { getEasternDateString } from '@/utils/dateUtils';
 
 const STORAGE_KEY = 'journal_entries';
 
@@ -59,7 +60,7 @@ export const [JournalProvider, useJournal] = createContextHook(() => {
   }, [entries, saveMutate]);
 
   const getTodayEntry = useCallback(() => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getEasternDateString();
     return entries.find(entry => entry.date === today);
   }, [entries]);
 

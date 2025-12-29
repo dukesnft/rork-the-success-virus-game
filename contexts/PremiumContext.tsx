@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import createContextHook from '@nkzw/create-context-hook';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useEffect, useState, useCallback } from 'react';
+import { getEasternDateString, getEasternTime } from '@/utils/dateUtils';
 
 const PREMIUM_STORAGE_KEY = 'premium_status';
 const ENERGY_BOOSTS_KEY = 'energy_boosts';
@@ -108,7 +109,7 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     queryKey: ['dailyEnergy'],
     queryFn: async () => {
       const stored = await AsyncStorage.getItem(ENERGY_STORAGE_KEY);
-      const today = new Date().toISOString().split('T')[0];
+      const today = getEasternDateString();
       
       if (!stored) {
         return {
@@ -123,7 +124,7 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
       const data: EnergyState = JSON.parse(stored);
       
       if (data.lastRefreshDate !== today) {
-        const yesterday = new Date();
+        const yesterday = getEasternTime();
         yesterday.setDate(yesterday.getDate() - 1);
         const yesterdayStr = yesterday.toISOString().split('T')[0];
         
@@ -186,7 +187,7 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     queryKey: ['freeSeeds'],
     queryFn: async () => {
       const stored = await AsyncStorage.getItem(FREE_SEEDS_KEY);
-      const today = new Date().toISOString().split('T')[0];
+      const today = getEasternDateString();
       
       if (!stored) {
         return { claimedToday: 0, lastClaimDate: today };
@@ -222,7 +223,7 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     queryKey: ['comeback'],
     queryFn: async () => {
       const stored = await AsyncStorage.getItem(COMEBACK_BONUS_KEY);
-      const today = new Date().toISOString().split('T')[0];
+      const today = getEasternDateString();
       
       if (!stored) {
         return { lastLogin: today, consecutiveDays: 1, bonusClaimed: false };
@@ -375,7 +376,7 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
       setStreak(energyQuery.data.streak);
       
       if (energyQuery.data.maxEnergy !== baseMax) {
-        const today = new Date().toISOString().split('T')[0];
+        const today = getEasternDateString();
         const adjustedEnergy = Math.min(energyQuery.data.energy, baseMax);
         saveEnergy({
           energy: adjustedEnergy,
@@ -479,7 +480,7 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
   const consumeEnergy = useCallback((amount: number = 1) => {
     if (energy >= amount) {
       const newEnergy = energy - amount;
-      const today = new Date().toISOString().split('T')[0];
+      const today = getEasternDateString();
       
       setEnergy(newEnergy);
       saveEnergy({
@@ -683,7 +684,7 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
         earnGems(25 * newLevel, `Reached Garden Level ${newLevel}`);
         
         setEnergy(prevEnergy => {
-          const today = new Date().toISOString().split('T')[0];
+          const today = getEasternDateString();
           const bonusEnergy = Math.min(prevEnergy + (5 * newLevel), maxEnergy);
           saveEnergy({
             energy: bonusEnergy,
@@ -718,7 +719,7 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     const bonusSeeds = Math.floor(days / 3);
     
     setEnergy(prev => {
-      const today = new Date().toISOString().split('T')[0];
+      const today = getEasternDateString();
       const newEnergy = Math.min(prev + bonusEnergy, maxEnergy);
       saveEnergy({
         energy: newEnergy,
@@ -760,7 +761,7 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     
     if (milestone.reward.energy) {
       setEnergy(prev => {
-        const today = new Date().toISOString().split('T')[0];
+        const today = getEasternDateString();
         const newEnergy = Math.min(prev + milestone.reward.energy!, maxEnergy);
         saveEnergy({
           energy: newEnergy,

@@ -5,6 +5,7 @@ import { useJournal } from '@/contexts/JournalContext';
 import { Frown, Meh, Heart, Sparkles, Plus, X, ChevronDown, ChevronUp } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { JournalEntry } from '@/types/journal';
+import { getEasternDateString, formatEasternDate } from '@/utils/dateUtils';
 
 const MOODS = [
   { value: 'amazing' as const, icon: Sparkles, label: 'Amazing', color: '#FFD700' },
@@ -16,7 +17,7 @@ const MOODS = [
 
 export default function JournalScreen() {
   const { entries, addEntry, updateEntry, deleteEntry, getTodayEntry } = useJournal();
-  const today = new Date().toISOString().split('T')[0];
+  const today = getEasternDateString();
   const todayEntry = getTodayEntry();
 
   const [mood, setMood] = useState<JournalEntry['mood']>('neutral');
@@ -70,7 +71,7 @@ export default function JournalScreen() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    return formatEasternDate(date);
   };
 
   const renderHistoryEntry = (entry: JournalEntry) => {

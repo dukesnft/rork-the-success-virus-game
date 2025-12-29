@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Friend, FriendRequest, Gift, Guild, WeeklyChallenge, GlobalEvent } from '@/types/social';
 import { Alert } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { getEasternTime } from '@/utils/dateUtils';
 
 const FRIENDS_KEY = 'friends';
 const FRIEND_REQUESTS_KEY = 'friend_requests';
@@ -30,7 +31,7 @@ const generateMockFriends = (): Friend[] => {
 };
 
 const generateWeeklyChallenges = (): WeeklyChallenge[] => {
-  const nextWeek = new Date();
+  const nextWeek = getEasternTime();
   nextWeek.setDate(nextWeek.getDate() + 7);
   const expiresAt = nextWeek.getTime();
 

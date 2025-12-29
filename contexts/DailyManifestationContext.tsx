@@ -5,12 +5,12 @@ import { useEffect, useState, useCallback } from 'react';
 import { DailyManifestation, DailyManifestationState } from '@/types/dailyManifestation';
 import { usePremium } from '@/contexts/PremiumContext';
 import { useManifestations } from '@/contexts/ManifestationContext';
+import { getStartOfWeek } from '@/utils/dateUtils';
 
 const STORAGE_KEY = 'daily_manifestations';
 
 const getToday = (): string => {
-  const today = new Date();
-  return today.toISOString().split('T')[0];
+  return getStartOfWeek();
 };
 
 const MANIFESTATION_TEMPLATES = [

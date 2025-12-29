@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, View, Text, Pressable, ScrollView, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getEasternDateString } from '@/utils/dateUtils';
 import { LinearGradient } from 'expo-linear-gradient';
 import { X, Gem, Sparkles, Zap, Crown, Infinity, Rocket, Star } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
@@ -266,7 +267,7 @@ export default function ShopScreen() {
   React.useEffect(() => {
     const loadFreeSeeds = async () => {
       const stored = await AsyncStorage.getItem('free_seeds_daily');
-      const today = new Date().toISOString().split('T')[0];
+      const today = getEasternDateString();
       if (stored) {
         const data = JSON.parse(stored);
         if (data.lastClaim === today) {
@@ -287,7 +288,7 @@ export default function ShopScreen() {
   };
 
   const claimFreeSeeds = async (amount: number) => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getEasternDateString();
     const newClaimed = freeSeeds.claimed + amount;
     const newData = { claimed: newClaimed, lastClaim: today };
     setFreeSeeds(newData);
