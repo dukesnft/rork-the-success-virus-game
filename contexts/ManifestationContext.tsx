@@ -129,7 +129,7 @@ export const [ManifestationProvider, useManifestations] = createContextHook(() =
       const updated = prev.map(m => {
         if (m.id === id) {
           const isLegendary = m.rarity === 'legendary';
-          const energyGain = isLegendary ? Math.floor(baseEnergyGain * 1.5) : baseEnergyGain;
+          const energyGain = isLegendary ? Math.floor(baseEnergyGain * 2.5) : baseEnergyGain;
           const newEnergy = Math.min(m.energy + energyGain, m.maxEnergy);
           return {
             ...m,
@@ -170,16 +170,19 @@ export const [ManifestationProvider, useManifestations] = createContextHook(() =
         });
         
         const isLegendary = manifestation.rarity === 'legendary';
-        const gemReward = manifestation.rarity === 'legendary' ? 200 : 
-                          manifestation.rarity === 'epic' ? 60 : 
-                          manifestation.rarity === 'rare' ? 30 : 20;
+        const gemReward = manifestation.rarity === 'legendary' ? 350 : 
+                          manifestation.rarity === 'epic' ? 80 : 
+                          manifestation.rarity === 'rare' ? 35 : 20;
         earnGems(gemReward, `Harvested ${manifestation.rarity || 'common'} bloom`);
         
         if (isLegendary) {
-          earnGems(100, 'Legendary Bloom Bonus!');
+          earnGems(200, '🌟 Legendary Bloom Bonus!');
           const bonusRoll = Math.random();
-          if (bonusRoll < 0.25) {
-            earnGems(150, '🎰 Legendary Jackpot!');
+          if (bonusRoll < 0.5) {
+            earnGems(300, '🎰 Legendary Jackpot!');
+          }
+          if (bonusRoll < 0.1) {
+            earnGems(500, '💎 Ultra Rare Legendary Bonus!');
           }
         }
       }

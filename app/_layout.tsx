@@ -17,6 +17,7 @@ import { CommunityProvider } from "@/contexts/CommunityContext";
 import { ProfileProvider } from "@/contexts/ProfileContext";
 import { AchievementProvider } from "@/contexts/AchievementContext";
 import { QuestProvider } from "@/contexts/QuestContext";
+import { SocialProvider } from "@/contexts/SocialContext";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -49,10 +50,11 @@ export default function RootLayout() {
           <QuestProvider>
             <NotificationProvider>
               <InventoryProvider>
-                <RankingProvider>
-                  <CommunityProvider>
-                    <ProfileProvider>
-                      <ManifestationProvider>
+                <SocialProvider>
+                  <RankingProvider>
+                    <CommunityProvider>
+                      <ProfileProvider>
+                        <ManifestationProvider>
                   <DailyManifestationProvider>
                     <BookProvider>
                       <BackgroundProvider>
@@ -64,10 +66,11 @@ export default function RootLayout() {
                       </BackgroundProvider>
                     </BookProvider>
                   </DailyManifestationProvider>
-                      </ManifestationProvider>
-                    </ProfileProvider>
-                  </CommunityProvider>
-                </RankingProvider>
+                        </ManifestationProvider>
+                      </ProfileProvider>
+                    </CommunityProvider>
+                  </RankingProvider>
+                </SocialProvider>
               </InventoryProvider>
             </NotificationProvider>
           </QuestProvider>

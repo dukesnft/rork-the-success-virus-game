@@ -169,8 +169,8 @@ const SHOP_ITEMS: ShopItem[] = [
   {
     id: 'seeds_legendary',
     name: '1 Legendary Seed',
-    description: 'The most powerful seed',
-    price: 19.99,
+    description: '⚠️ ULTRA RARE - Most powerful seed',
+    price: 49.99,
     icon: Sparkles,
     color: '#FFD700',
     type: 'seeds',
@@ -535,13 +535,13 @@ export default function ShopScreen() {
             <Pressable
               style={styles.gemStoreCard}
               onPress={() => {
-                if (gems >= 3600) {
+                if (gems >= 9000) {
                   Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                  spendGems(3600);
+                  spendGems(9000);
                   addSeeds('legendary', 1);
-                  Alert.alert('👑 Legendary!', '1 Legendary seed added to your inventory!');
+                  Alert.alert('👑 Legendary!', '1 Ultra Rare Legendary seed added to your inventory!');
                 } else {
-                  Alert.alert('Not Enough Gems', 'You need 3,600 gems to purchase this item.');
+                  Alert.alert('Not Enough Gems', 'You need 9,000 gems to purchase this item.');
                 }
               }}
             >
@@ -560,7 +560,7 @@ export default function ShopScreen() {
                 </View>
                 <View style={styles.gemStorePriceBox}>
                   <Gem color="#FFD700" size={20} />
-                  <Text style={styles.gemStorePrice}>3,600</Text>
+                  <Text style={styles.gemStorePrice}>9,000</Text>
                 </View>
               </LinearGradient>
             </Pressable>
