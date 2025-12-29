@@ -17,12 +17,37 @@ interface ShopItem {
   price: number;
   icon: any;
   color: string;
-  type: 'gems' | 'seeds' | 'booster' | 'auto' | 'energy';
+  type: 'gems' | 'seeds' | 'booster' | 'auto' | 'energy' | 'premium';
   amount?: number;
   popular?: boolean;
   bestValue?: boolean;
   rarity?: SeedRarity;
+  duration?: 'month' | 'year';
 }
+
+const PREMIUM_ITEMS = [
+  {
+    id: 'premium_month',
+    name: '1 Month Premium',
+    description: '25% off all purchases + bonuses',
+    price: 9.99,
+    icon: Crown,
+    color: '#FFD700',
+    type: 'premium' as const,
+    duration: 'month' as const,
+  },
+  {
+    id: 'premium_year',
+    name: '1 Year Premium',
+    description: 'Best value! Save 50%',
+    price: 59.99,
+    icon: Crown,
+    color: '#FFD700',
+    type: 'premium' as const,
+    duration: 'year' as const,
+    bestValue: true,
+  },
+];
 
 const SHOP_ITEMS: ShopItem[] = [
   {
@@ -228,6 +253,7 @@ export default function ShopScreen() {
     purchaseItem,
     spendGems,
     refillEnergy,
+    upgradeToPremium,
   } = usePremium();
   
   const {
@@ -273,6 +299,15 @@ export default function ShopScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     
     switch (item.type) {
+      case 'premium':
+        if (isPremium) {
+          Alert.alert('Already Premium', 'You already have Premium access!');
+        } else {
+          upgradeToPremium(item.duration!);
+          purchaseItem(item.price);
+          Alert.alert('👑 Welcome to Premium!', 'Enjoy 25% off all purchases, extra daily seeds, and more!');
+        }
+        break;
       case 'gems':
         purchaseGems(item.amount!, item.price);
         Alert.alert('Success!', `${item.amount} gems added to your account!`);
@@ -631,6 +666,53 @@ export default function ShopScreen() {
                 </View>
               </LinearGradient>
             </Pressable>
+
+            {!isPremium && (
+              <>
+                <Text style={styles.sectionTitle}>👑 Premium Membership</Text>
+                <Text style={styles.sectionSubtitle}>Unlock exclusive benefits and save on all purchases</Text>
+                
+                <View style={styles.itemsGrid}>
+                  {PREMIUM_ITEMS.map(item => {
+                    const Icon = item.icon;
+                    
+                    return (
+                      <Pressable
+                        key={item.id}
+                        style={styles.itemCard}
+                        onPress={() => {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          handlePurchase(item);
+                        }}
+                      >
+                        <LinearGradient
+                          colors={['#FFD700', '#FFA500']}
+                          style={styles.itemGradient}
+                        >
+                          {item.bestValue && (
+                            <View style={styles.bestValueBadge}>
+                              <Text style={styles.bestValueText}>BEST VALUE</Text>
+                            </View>
+                          )}
+                          <View style={[styles.itemIconCircle, { backgroundColor: 'rgba(255,255,255,0.9)' }]}>
+                            <Icon color="#FFD700" size={32} />
+                          </View>
+                          <Text style={styles.itemName}>{item.name}</Text>
+                          <Text style={[styles.itemDescription, { color: '#1a0a2e' }]}>{item.description}</Text>
+                          <View style={styles.premiumBenefits}>
+                            <Text style={styles.premiumBenefitItem}>✓ 25% off all purchases</Text>
+                            <Text style={styles.premiumBenefitItem}>✓ +2 free daily seeds</Text>
+                            <Text style={styles.premiumBenefitItem}>✓ +10 max energy</Text>
+                            <Text style={styles.premiumBenefitItem}>✓ 50% faster nurturing</Text>
+                          </View>
+                          <Text style={[styles.itemPrice, { color: '#1a0a2e' }]}>${item.price.toFixed(2)}</Text>
+                        </LinearGradient>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </>
+            )}
 
             <View style={styles.infoBox}>
               <Text style={styles.infoTitle}>💎 Earn Gems Daily</Text>
@@ -1205,5 +1287,15 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '800' as const,
     color: '#FFD700',
+  },
+  premiumBenefits: {
+    marginTop: 12,
+    marginBottom: 12,
+    gap: 6,
+  },
+  premiumBenefitItem: {
+    fontSize: 13,
+    color: '#1a0a2e',
+    fontWeight: '600' as const,
   },
 });

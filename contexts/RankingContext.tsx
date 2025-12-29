@@ -110,7 +110,7 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
     lastCheckIn: '',
   });
 
-  const { getBloomingSeeds, getSeedsByRarity } = useInventory();
+  const { getBloomingSeeds, inventory } = useInventory();
   const { totalSpent, gardenLevel: level } = usePremium();
 
   const userDataQuery = useQuery({
@@ -306,7 +306,11 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
 
   const updateLegendaryRankings = useCallback(() => {
     setLegendaryRankings(prevRankings => {
-      const legendaryCount = getSeedsByRarity('legendary');
+      const legendaryCount = inventory.filter(item => {
+        const isLegendary = item.color.toLowerCase().includes('ffd700') || item.color.toLowerCase().includes('ffa500');
+        const isBloomedStage = item.stage === 'blooming';
+        return isLegendary && isBloomedStage;
+      }).length;
       
       const userRanking: LegendaryRanking = {
         id: 'user',
@@ -327,7 +331,7 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
       saveLegendaryRankingsMutate(allRankings);
       return allRankings;
     });
-  }, [getSeedsByRarity, userData.username, totalSpent, level, saveLegendaryRankingsMutate]);
+  }, [inventory, userData.username, totalSpent, level, saveLegendaryRankingsMutate]);
 
   const setUsername = useCallback((username: string) => {
     setUserData(prevData => {

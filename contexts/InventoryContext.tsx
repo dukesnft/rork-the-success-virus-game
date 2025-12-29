@@ -164,39 +164,42 @@ export const [InventoryProvider, useInventory] = createContextHook(() => {
     const calculateResultRarity = (): SeedRarity => {
       const rand = Math.random() * 100;
       
+      const hasAnyLegendary = bloomRarities.includes('legendary');
+      const legendaryBonus = hasAnyLegendary ? 10 : 0;
+      
       if (dominantRarity === 'legendary') {
         if (dominantCount === 5) {
-          if (rand < 70) return 'legendary';
-          if (rand < 95) return 'epic';
+          if (rand < 80) return 'legendary';
+          if (rand < 98) return 'epic';
           return 'rare';
         } else if (dominantCount >= 3) {
-          if (rand < 50) return 'legendary';
-          if (rand < 85) return 'epic';
+          if (rand < 60) return 'legendary';
+          if (rand < 90) return 'epic';
           return 'rare';
         } else {
-          if (rand < 25) return 'legendary';
-          if (rand < 70) return 'epic';
+          if (rand < 35) return 'legendary';
+          if (rand < 75) return 'epic';
           return 'rare';
         }
       }
       
       if (dominantRarity === 'epic') {
         if (rand < 70) return 'epic';
-        if (rand < 90) return 'rare';
-        if (rand < 98) return 'legendary';
+        if (rand < 85) return 'rare';
+        if (rand < (95 + legendaryBonus)) return 'legendary';
         return 'common';
       }
       
       if (dominantRarity === 'rare') {
         if (rand < 70) return 'rare';
-        if (rand < 93) return 'common';
-        if (rand < 99) return 'epic';
+        if (rand < 90) return 'common';
+        if (rand < (97 + legendaryBonus)) return 'epic';
         return 'legendary';
       }
       
       if (rand < 70) return 'common';
-      if (rand < 95) return 'rare';
-      if (rand < 99.5) return 'epic';
+      if (rand < 92) return 'rare';
+      if (rand < (98 + legendaryBonus)) return 'epic';
       return 'legendary';
     };
 

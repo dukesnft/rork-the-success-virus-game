@@ -124,10 +124,12 @@ export const [ManifestationProvider, useManifestations] = createContextHook(() =
   }, [manifestations.length, maxPlantSlots]);
 
   const nurtureManifestation = useCallback((id: string) => {
-    const energyGain = isPremium ? 18 : 12;
+    const baseEnergyGain = isPremium ? 18 : 12;
     setManifestations(prev => {
       const updated = prev.map(m => {
         if (m.id === id) {
+          const isLegendary = m.rarity === 'legendary';
+          const energyGain = isLegendary ? Math.floor(baseEnergyGain * 1.5) : baseEnergyGain;
           const newEnergy = Math.min(m.energy + energyGain, m.maxEnergy);
           return {
             ...m,
@@ -167,10 +169,15 @@ export const [ManifestationProvider, useManifestations] = createContextHook(() =
           color: manifestation.color,
         });
         
-        const gemReward = manifestation.rarity === 'legendary' ? 100 : 
+        const isLegendary = manifestation.rarity === 'legendary';
+        const gemReward = manifestation.rarity === 'legendary' ? 150 : 
                           manifestation.rarity === 'epic' ? 60 : 
                           manifestation.rarity === 'rare' ? 30 : 20;
         earnGems(gemReward, `Harvested ${manifestation.rarity || 'common'} bloom`);
+        
+        if (isLegendary) {
+          earnGems(50, 'Legendary Bloom Bonus!');
+        }
       }
       
       const updated = prev.filter(m => m.id !== id);
