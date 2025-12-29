@@ -7,10 +7,11 @@ import {
   TouchableOpacity,
   Alert,
   Modal,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { X, Sparkles, Flame, Trophy, Plus, Check } from 'lucide-react-native';
+import { X, Sparkles, Flame, Trophy, Plus, Check, Edit2 } from 'lucide-react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCommunity } from '@/contexts/CommunityContext';
 import { useProfile } from '@/contexts/ProfileContext';
@@ -20,11 +21,13 @@ import { SeedRarity } from '@/types/manifestation';
 
 export default function ProfileScreen() {
   const { username: otherUsername } = useLocalSearchParams();
-  const { username: myUsername } = useCommunity();
-  const { topManifestations, addToTopManifestations, removeFromTopManifestations } = useProfile();
+  const { username: myUsername, updateUsername } = useCommunity();
+  const { topManifestations, addToTopManifestations, removeFromTopManifestations, lastUsernameChange, setLastUsernameChange } = useProfile();
   const { manifestations } = useManifestations();
   const { bloomedRankings, streakRankings } = useRankings();
   const [showManifestationPicker, setShowManifestationPicker] = useState(false);
+  const [showUsernameEdit, setShowUsernameEdit] = useState(false);
+  const [newUsername, setNewUsername] = useState('');
 
   const isOwnProfile = !otherUsername || otherUsername === myUsername;
   const displayUsername = isOwnProfile ? myUsername : (Array.isArray(otherUsername) ? otherUsername[0] : otherUsername);
@@ -87,6 +90,75 @@ export default function ProfileScreen() {
 
   const bloomedManifestations = manifestations.filter(m => m.stage === 'blooming');
 
+  const canChangeUsername = () => {
+    if (!lastUsernameChange) return true;
+    const monthsSinceChange = (Date.now() - lastUsernameChange) / (1000 * 60 * 60 * 24 * 30);
+    return monthsSinceChange >= 1;
+  };
+
+  const getDaysUntilNextChange = () => {
+    if (!lastUsernameChange) return 0;
+    const daysSinceChange = (Date.now() - lastUsernameChange) / (1000 * 60 * 60 * 24);
+    return Math.max(0, Math.ceil(30 - daysSinceChange));
+  };
+
+  const handleUsernameChange = () => {
+    if (!isOwnProfile) return;
+
+    if (!canChangeUsername()) {
+      Alert.alert(
+        'Username Change Locked',
+        `You can change your username again in ${getDaysUntilNextChange()} days.`,
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    setNewUsername(myUsername);
+    setShowUsernameEdit(true);
+  };
+
+  const confirmUsernameChange = () => {
+    const trimmed = newUsername.trim();
+    
+    if (!trimmed) {
+      Alert.alert('Invalid Name', 'Username cannot be empty.');
+      return;
+    }
+
+    if (trimmed.length < 3) {
+      Alert.alert('Invalid Name', 'Username must be at least 3 characters.');
+      return;
+    }
+
+    if (trimmed.length > 20) {
+      Alert.alert('Invalid Name', 'Username cannot exceed 20 characters.');
+      return;
+    }
+
+    if (!/^[a-zA-Z0-9_]+$/.test(trimmed)) {
+      Alert.alert('Invalid Name', 'Username can only contain letters, numbers, and underscores.');
+      return;
+    }
+
+    Alert.alert(
+      'Confirm Username Change',
+      `Change your username to "${trimmed}"? You won\'t be able to change it again for 30 days.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Confirm',
+          onPress: () => {
+            updateUsername(trimmed);
+            setLastUsernameChange(Date.now());
+            setShowUsernameEdit(false);
+            Alert.alert('Success', 'Your username has been updated!');
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <View style={styles.container}>
       <LinearGradient
@@ -115,7 +187,22 @@ export default function ProfileScreen() {
                   {displayUsername?.charAt(0).toUpperCase()}
                 </Text>
               </View>
-              <Text style={styles.username}>{displayUsername}</Text>
+              <View style={styles.usernameRow}>
+                <Text style={styles.username}>{displayUsername}</Text>
+                {isOwnProfile && (
+                  <TouchableOpacity
+                    style={styles.editUsernameButton}
+                    onPress={handleUsernameChange}
+                  >
+                    <Edit2 size={18} color="#FF69B4" />
+                  </TouchableOpacity>
+                )}
+              </View>
+              {isOwnProfile && !canChangeUsername() && (
+                <Text style={styles.usernameChangeInfo}>
+                  Next change available in {getDaysUntilNextChange()} days
+                </Text>
+              )}
             </View>
 
             <View style={styles.statsRow}>
@@ -333,6 +420,63 @@ export default function ProfileScreen() {
           </LinearGradient>
         </View>
       </Modal>
+
+      <Modal
+        visible={showUsernameEdit}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setShowUsernameEdit(false)}
+      >
+        <View style={styles.usernameModalOverlay}>
+          <View style={styles.usernameModalContainer}>
+            <LinearGradient
+              colors={['#2d1b4e', '#1a0a2e']}
+              style={styles.usernameModalGradient}
+            >
+              <Text style={styles.usernameModalTitle}>Change Username</Text>
+              <Text style={styles.usernameModalSubtitle}>
+                You can change your username once every 30 days
+              </Text>
+
+              <TextInput
+                style={styles.usernameInput}
+                value={newUsername}
+                onChangeText={setNewUsername}
+                placeholder="Enter new username"
+                placeholderTextColor="#666"
+                maxLength={20}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+
+              <Text style={styles.usernameRules}>
+                • 3-20 characters{`\n`}
+                • Letters, numbers, and underscores only
+              </Text>
+
+              <View style={styles.usernameModalButtons}>
+                <TouchableOpacity
+                  style={styles.usernameCancelButton}
+                  onPress={() => setShowUsernameEdit(false)}
+                >
+                  <Text style={styles.usernameCancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.usernameConfirmButton}
+                  onPress={confirmUsernameChange}
+                >
+                  <LinearGradient
+                    colors={['#FF69B4', '#9370DB']}
+                    style={styles.usernameConfirmGradient}
+                  >
+                    <Text style={styles.usernameConfirmText}>Confirm</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            </LinearGradient>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -395,10 +539,30 @@ const styles = StyleSheet.create({
     fontWeight: 'bold' as const,
     color: '#FF69B4',
   },
+  usernameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   username: {
     fontSize: 26,
     fontWeight: 'bold' as const,
     color: '#fff',
+  },
+  editUsernameButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,105,180,0.2)',
+    borderWidth: 2,
+    borderColor: '#FF69B4',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  usernameChangeInfo: {
+    fontSize: 12,
+    color: '#b8a9d9',
+    marginTop: 8,
   },
   statsRow: {
     flexDirection: 'row',
@@ -634,5 +798,86 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: 40,
+  },
+  usernameModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  usernameModalContainer: {
+    width: '100%',
+    maxWidth: 400,
+    borderRadius: 24,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: '#FF69B4',
+  },
+  usernameModalGradient: {
+    padding: 24,
+  },
+  usernameModalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold' as const,
+    color: '#fff',
+    marginBottom: 8,
+    textAlign: 'center' as const,
+  },
+  usernameModalSubtitle: {
+    fontSize: 14,
+    color: '#b8a9d9',
+    textAlign: 'center' as const,
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  usernameInput: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    color: '#fff',
+    borderWidth: 2,
+    borderColor: 'rgba(255,105,180,0.3)',
+    marginBottom: 16,
+  },
+  usernameRules: {
+    fontSize: 13,
+    color: '#b8a9d9',
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  usernameModalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  usernameCancelButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+  },
+  usernameCancelText: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: '#b8a9d9',
+  },
+  usernameConfirmButton: {
+    flex: 1,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  usernameConfirmGradient: {
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  usernameConfirmText: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: '#fff',
   },
 });

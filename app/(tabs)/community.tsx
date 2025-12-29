@@ -10,7 +10,7 @@ import {
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Heart, Copy, Trophy, Flame, Sparkles } from 'lucide-react-native';
+import { Heart, Copy, Trophy, Flame, Sparkles, User } from 'lucide-react-native';
 import { useCommunity } from '@/contexts/CommunityContext';
 import { useRankings } from '@/contexts/RankingContext';
 import { useManifestations } from '@/contexts/ManifestationContext';
@@ -331,8 +331,16 @@ export default function CommunityScreen() {
       >
         <SafeAreaView style={styles.safeArea} edges={['top']}>
           <View style={styles.header}>
-            <Text style={styles.title}>Community</Text>
-            <Text style={styles.subtitle}>Connect & Share Manifestations</Text>
+            <View style={styles.headerLeft}>
+              <Text style={styles.title}>Community</Text>
+              <Text style={styles.subtitle}>Connect & Share Manifestations</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.profileButton}
+              onPress={() => router.push('/profile')}
+            >
+              <User size={20} color="#FF69B4" />
+            </TouchableOpacity>
           </View>
 
           <View style={styles.tabBar}>
@@ -390,9 +398,30 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 24,
     paddingTop: 16,
     paddingBottom: 8,
+  },
+  headerLeft: {
+    flex: 1,
+  },
+  profileButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,105,180,0.2)',
+    borderWidth: 2,
+    borderColor: '#FF69B4',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#FF69B4',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
   title: {
     fontSize: 32,

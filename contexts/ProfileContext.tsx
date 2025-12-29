@@ -5,15 +5,25 @@ import { useEffect, useState, useCallback } from 'react';
 import { TopManifestation } from '@/types/profile';
 
 const STORAGE_KEY_TOP_MANIFESTATIONS = 'top_manifestations';
+const STORAGE_KEY_LAST_USERNAME_CHANGE = 'last_username_change';
 
 export const [ProfileProvider, useProfile] = createContextHook(() => {
   const [topManifestations, setTopManifestations] = useState<TopManifestation[]>([]);
+  const [lastUsernameChange, setLastUsernameChangeState] = useState<number | null>(null);
 
   const topManifestationsQuery = useQuery({
     queryKey: ['topManifestations'],
     queryFn: async () => {
       const stored = await AsyncStorage.getItem(STORAGE_KEY_TOP_MANIFESTATIONS);
       return stored ? JSON.parse(stored) : [];
+    }
+  });
+
+  const lastUsernameChangeQuery = useQuery({
+    queryKey: ['lastUsernameChange'],
+    queryFn: async () => {
+      const stored = await AsyncStorage.getItem(STORAGE_KEY_LAST_USERNAME_CHANGE);
+      return stored ? parseInt(stored, 10) : null;
     }
   });
 
@@ -24,11 +34,24 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
     }
   });
 
+  const { mutate: saveLastUsernameChange } = useMutation({
+    mutationFn: async (timestamp: number) => {
+      await AsyncStorage.setItem(STORAGE_KEY_LAST_USERNAME_CHANGE, timestamp.toString());
+      return timestamp;
+    }
+  });
+
   useEffect(() => {
     if (topManifestationsQuery.data) {
       setTopManifestations(topManifestationsQuery.data);
     }
   }, [topManifestationsQuery.data]);
+
+  useEffect(() => {
+    if (lastUsernameChangeQuery.data !== undefined) {
+      setLastUsernameChangeState(lastUsernameChangeQuery.data);
+    }
+  }, [lastUsernameChangeQuery.data]);
 
   const updateTopManifestations = useCallback((manifestations: TopManifestation[]) => {
     const limited = manifestations.slice(0, 3);
@@ -55,11 +78,18 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
     });
   }, [saveTopManifestations]);
 
+  const setLastUsernameChange = useCallback((timestamp: number) => {
+    setLastUsernameChangeState(timestamp);
+    saveLastUsernameChange(timestamp);
+  }, [saveLastUsernameChange]);
+
   return {
     topManifestations,
+    lastUsernameChange,
     isLoading: topManifestationsQuery.isLoading,
     updateTopManifestations,
     addToTopManifestations,
     removeFromTopManifestations,
+    setLastUsernameChange,
   };
 });
