@@ -15,7 +15,7 @@ import { X, Sparkles, Flame, Trophy, Plus, Check, Edit2 } from 'lucide-react-nat
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCommunity } from '@/contexts/CommunityContext';
 import { useProfile } from '@/contexts/ProfileContext';
-import { useManifestations } from '@/contexts/ManifestationContext';
+import { useInventory } from '@/contexts/InventoryContext';
 import { useRankings } from '@/contexts/RankingContext';
 import { SeedRarity } from '@/types/manifestation';
 
@@ -23,7 +23,7 @@ export default function ProfileScreen() {
   const { username: otherUsername } = useLocalSearchParams();
   const { username: myUsername, updateUsername } = useCommunity();
   const { topManifestations, addToTopManifestations, removeFromTopManifestations, lastUsernameChange, setLastUsernameChange } = useProfile();
-  const { manifestations } = useManifestations();
+  const { inventory } = useInventory();
   const { bloomedRankings, streakRankings } = useRankings();
   const [showManifestationPicker, setShowManifestationPicker] = useState(false);
   const [showUsernameEdit, setShowUsernameEdit] = useState(false);
@@ -60,6 +60,13 @@ export default function ProfileScreen() {
     return rarity.charAt(0).toUpperCase() + rarity.slice(1);
   };
 
+  const getRarityFromColor = (color: string): SeedRarity => {
+    if (color.toLowerCase().includes('ffd700') || color.toLowerCase().includes('ffa500')) return 'legendary';
+    if (color.toLowerCase().includes('9370db') || color.toLowerCase().includes('8a2be2')) return 'epic';
+    if (color.toLowerCase().includes('4169e1') || color.toLowerCase().includes('1e90ff')) return 'rare';
+    return 'common';
+  };
+
   const handleAddManifestation = (manifestation: any) => {
     if (topManifestations.length >= 3) {
       Alert.alert('Limit Reached', 'You can only showcase 3 manifestations. Remove one first.');
@@ -71,7 +78,7 @@ export default function ProfileScreen() {
       intention: manifestation.intention,
       category: manifestation.category,
       color: manifestation.color,
-      rarity: manifestation.rarity,
+      rarity: getRarityFromColor(manifestation.color),
     });
 
     setShowManifestationPicker(false);
@@ -88,7 +95,7 @@ export default function ProfileScreen() {
     );
   };
 
-  const bloomedManifestations = manifestations.filter(m => m.stage === 'blooming');
+  const bloomedManifestations = inventory.filter(item => item.stage === 'blooming');
 
   const canChangeUsername = () => {
     if (!lastUsernameChange) return true;
@@ -345,13 +352,13 @@ export default function ProfileScreen() {
                 showsVerticalScrollIndicator={false}
               >
                 <Text style={styles.modalSubtitle}>
-                  Choose from your bloomed manifestations
+                  Choose from your harvested bloomed manifestations
                 </Text>
 
                 {bloomedManifestations.length === 0 ? (
                   <View style={styles.emptyState}>
                     <Text style={styles.emptyText}>
-                      You don&apos;t have any bloomed manifestations yet. Keep nurturing your seeds!
+                      You haven&apos;t harvested any bloomed manifestations yet. Harvest blooms from your garden to add them here!
                     </Text>
                   </View>
                 ) : (
@@ -360,6 +367,7 @@ export default function ProfileScreen() {
                       const isSelected = topManifestations.some(
                         t => t.id === manifestation.id
                       );
+                      const itemRarity = getRarityFromColor(manifestation.color);
 
                       return (
                         <TouchableOpacity
@@ -369,7 +377,7 @@ export default function ProfileScreen() {
                           disabled={isSelected}
                         >
                           <LinearGradient
-                            colors={getRarityGradient(manifestation.rarity)}
+                            colors={getRarityGradient(itemRarity)}
                             style={[
                               styles.pickerGradient,
                               isSelected && styles.pickerGradientSelected,
@@ -381,17 +389,17 @@ export default function ProfileScreen() {
                                   styles.rarityBadge,
                                   {
                                     backgroundColor:
-                                      getRarityColor(manifestation.rarity) + '40',
+                                      getRarityColor(itemRarity) + '40',
                                   },
                                 ]}
                               >
                                 <Text
                                   style={[
                                     styles.rarityText,
-                                    { color: getRarityColor(manifestation.rarity) },
+                                    { color: getRarityColor(itemRarity) },
                                   ]}
                                 >
-                                  {getRarityLabel(manifestation.rarity)}
+                                  {getRarityLabel(itemRarity)}
                                 </Text>
                               </View>
                               <Text
