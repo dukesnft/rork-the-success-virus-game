@@ -1,11 +1,11 @@
-import { StyleSheet, View, Text, Pressable, ScrollView, Animated, Modal } from 'react-native';
+import { StyleSheet, View, Text, Pressable, ScrollView, Animated, Modal, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { List, Sparkles, Calendar, TrendingUp, Trophy, Target, Package, X } from 'lucide-react-native';
+import { List, Sparkles, Calendar, TrendingUp, Trophy, Target, Package, X, Flame, Check } from 'lucide-react-native';
 import { useManifestations } from '@/contexts/ManifestationContext';
 import { useAchievements } from '@/contexts/AchievementContext';
 import { useQuests } from '@/contexts/QuestContext';
 import { useInventory } from '@/contexts/InventoryContext';
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import * as Haptics from 'expo-haptics';
 import { Manifestation } from '@/types/manifestation';
 import InventoryScreen from '@/app/inventory';
@@ -118,11 +118,17 @@ export default function ManifestationsScreen() {
   const { manifestations } = useManifestations();
   const { achievements, getUnlockedCount, getTotalCount } = useAchievements();
   const { quests, getCompletedCount, getTotalCount: getQuestsTotalCount } = useQuests();
-  const { getTotalSeedsCount } = useInventory();
+  const { getTotalSeedsCount, inventory, burnBloomsForSeed } = useInventory();
   const [filter, setFilter] = useState<'all' | 'seed' | 'sprout' | 'growing' | 'blooming'>('all');
   const [showInventory, setShowInventory] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
   const [showQuests, setShowQuests] = useState(false);
+  const [showBurning, setShowBurning] = useState(false);
+  const [selectedBlooms, setSelectedBlooms] = useState<string[]>([]);
+
+  const harvestedBlooms = useMemo(() => {
+    return inventory.filter(item => item.stage === 'blooming');
+  }, [inventory]);
 
   const filteredManifestations = filter === 'all' 
     ? manifestations 
@@ -134,6 +140,60 @@ export default function ManifestationsScreen() {
     sprout: manifestations.filter(m => m.stage === 'sprout').length,
     growing: manifestations.filter(m => m.stage === 'growing').length,
     blooming: manifestations.filter(m => m.stage === 'blooming').length,
+  };
+
+  const getRarityFromColor = (color: string) => {
+    if (color.toLowerCase().includes('ffd700') || color.toLowerCase().includes('ffa500')) return 'legendary';
+    if (color.toLowerCase().includes('9370db') || color.toLowerCase().includes('8a2be2')) return 'epic';
+    if (color.toLowerCase().includes('4169e1') || color.toLowerCase().includes('1e90ff')) return 'rare';
+    return 'common';
+  };
+
+  const getRarityColor = (rarity: string) => {
+    switch (rarity) {
+      case 'legendary': return '#FFD700';
+      case 'epic': return '#9370DB';
+      case 'rare': return '#4169E1';
+      default: return '#98FB98';
+    }
+  };
+
+  const handleBurnBlooms = () => {
+    if (selectedBlooms.length !== 5) {
+      Alert.alert('Select 5 Blooms', 'You need to select exactly 5 blooming manifestations to burn.');
+      return;
+    }
+
+    const result = burnBloomsForSeed(selectedBlooms);
+    
+    if (result) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert(
+        '🔥 Burning Complete!',
+        `You received a ${result.toUpperCase()} seed!`,
+        [{ text: 'Amazing!', onPress: () => {} }]
+      );
+      setSelectedBlooms([]);
+      setShowBurning(false);
+    } else {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert('Error', 'Failed to burn blooms. Make sure all selected items are blooming.');
+    }
+  };
+
+  const toggleBloomSelection = (id: string) => {
+    setSelectedBlooms(prev => {
+      if (prev.includes(id)) {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        return prev.filter(bloomId => bloomId !== id);
+      } else if (prev.length < 5) {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        return [...prev, id];
+      } else {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        return prev;
+      }
+    });
   };
 
   const FilterButton = ({ 
@@ -297,6 +357,38 @@ export default function ManifestationsScreen() {
             <FilterButton label="Blooming" value="blooming" emoji="🌸" />
           </ScrollView>
 
+          {harvestedBlooms.length > 0 && (
+            <View style={styles.harvestedSection}>
+              <View style={styles.harvestedHeader}>
+                <View style={styles.harvestedTitleRow}>
+                  <Flame color="#FF6B35" size={24} />
+                  <Text style={styles.harvestedTitle}>Harvested Blooms</Text>
+                </View>
+                <Text style={styles.harvestedSubtitle}>
+                  Burn 5 blooms to create a new seed
+                </Text>
+              </View>
+
+              <Pressable
+                style={styles.burnButton}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setShowBurning(true);
+                }}
+              >
+                <LinearGradient
+                  colors={['#FF6B35', '#F7931E']}
+                  style={styles.burnButtonGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  <Flame color="#fff" size={20} />
+                  <Text style={styles.burnButtonText}>Burn Blooms ({harvestedBlooms.length})</Text>
+                </LinearGradient>
+              </Pressable>
+            </View>
+          )}
+
           <View style={styles.listContainer}>
             {filteredManifestations.length === 0 ? (
               <View style={styles.emptyState}>
@@ -434,6 +526,110 @@ export default function ManifestationsScreen() {
                     </View>
                   ))}
                 </ScrollView>
+              </View>
+            </View>
+          </Modal>
+        )}
+
+        {showBurning && (
+          <Modal visible={true} transparent animationType="slide" onRequestClose={() => setShowBurning(false)}>
+            <View style={styles.modalOverlay}>
+              <Pressable style={styles.modalBackdrop} onPress={() => {
+                setShowBurning(false);
+                setSelectedBlooms([]);
+              }} />
+              <View style={styles.burningModal}>
+                <View style={styles.burningHeader}>
+                  <View style={styles.burningTitleRow}>
+                    <Flame color="#FF6B35" size={32} />
+                    <Text style={styles.burningTitle}>Burn Blooms</Text>
+                  </View>
+                  <Pressable 
+                    style={styles.closeButton} 
+                    onPress={() => {
+                      setShowBurning(false);
+                      setSelectedBlooms([]);
+                    }}
+                  >
+                    <X color="#fff" size={24} />
+                  </Pressable>
+                </View>
+
+                <View style={styles.burningInfo}>
+                  <Text style={styles.burningInfoText}>
+                    Select 5 blooming manifestations to burn for a new seed
+                  </Text>
+                  <View style={styles.selectionCounter}>
+                    <Text style={styles.selectionCounterText}>
+                      {selectedBlooms.length}/5 Selected
+                    </Text>
+                  </View>
+                </View>
+
+                <ScrollView style={styles.burningScroll} showsVerticalScrollIndicator={false}>
+                  <View style={styles.bloomsGrid}>
+                    {harvestedBlooms.map((bloom) => {
+                      const isSelected = selectedBlooms.includes(bloom.id);
+                      const rarity = getRarityFromColor(bloom.color);
+                      return (
+                        <Pressable
+                          key={bloom.id}
+                          style={[styles.bloomCard, isSelected && styles.bloomCardSelected]}
+                          onPress={() => toggleBloomSelection(bloom.id)}
+                        >
+                          <LinearGradient
+                            colors={[
+                              bloom.color + '40',
+                              bloom.color + '20',
+                            ]}
+                            style={styles.bloomCardGradient}
+                          >
+                            {isSelected && (
+                              <View style={styles.selectedBadge}>
+                                <Check color="#fff" size={16} />
+                              </View>
+                            )}
+                            <Text style={styles.bloomEmoji}>🌸</Text>
+                            <Text style={styles.bloomIntention} numberOfLines={2}>
+                              {bloom.intention}
+                            </Text>
+                            <View style={[styles.rarityBadge, { backgroundColor: getRarityColor(rarity) }]}>
+                              <Text style={styles.rarityText}>{rarity}</Text>
+                            </View>
+                          </LinearGradient>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </ScrollView>
+
+                <View style={styles.burningFooter}>
+                  <Text style={styles.burningChanceText}>
+                    70% chance to get same rarity • Higher rarities increase legendary chance
+                  </Text>
+                  <Pressable
+                    style={[
+                      styles.confirmBurnButton,
+                      selectedBlooms.length !== 5 && styles.confirmBurnButtonDisabled,
+                    ]}
+                    onPress={handleBurnBlooms}
+                    disabled={selectedBlooms.length !== 5}
+                  >
+                    <LinearGradient
+                      colors={
+                        selectedBlooms.length === 5
+                          ? ['#FF6B35', '#F7931E']
+                          : ['#666', '#444']
+                      }
+                      style={styles.confirmBurnGradient}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                    >
+                      <Flame color="#fff" size={24} />
+                      <Text style={styles.confirmBurnText}>Burn & Create Seed</Text>
+                    </LinearGradient>
+                  </Pressable>
+                </View>
               </View>
             </View>
           </Modal>
@@ -888,5 +1084,211 @@ const styles = StyleSheet.create({
   questRewardSeparator: {
     fontSize: 13,
     color: '#b8a9d9',
+  },
+  harvestedSection: {
+    marginHorizontal: 24,
+    marginBottom: 24,
+    backgroundColor: 'rgba(255, 107, 53, 0.15)',
+    borderRadius: 24,
+    padding: 20,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 107, 53, 0.3)',
+  },
+  harvestedHeader: {
+    marginBottom: 16,
+  },
+  harvestedTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 8,
+  },
+  harvestedTitle: {
+    fontSize: 22,
+    fontWeight: '800' as const,
+    color: '#fff',
+  },
+  harvestedSubtitle: {
+    fontSize: 14,
+    color: '#FFB088',
+    marginLeft: 36,
+  },
+  burnButton: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#FF6B35',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  burnButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    gap: 10,
+  },
+  burnButtonText: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: '#fff',
+  },
+  burningModal: {
+    backgroundColor: '#1a0a2e',
+    borderRadius: 32,
+    width: '95%',
+    maxWidth: 440,
+    maxHeight: '85%',
+    borderWidth: 3,
+    borderColor: 'rgba(255, 107, 53, 0.5)',
+    zIndex: 1002,
+    overflow: 'hidden',
+  },
+  burningHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 24,
+    borderBottomWidth: 2,
+    borderBottomColor: 'rgba(255, 107, 53, 0.3)',
+    backgroundColor: 'rgba(255, 107, 53, 0.1)',
+  },
+  burningTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  burningTitle: {
+    fontSize: 26,
+    fontWeight: '800' as const,
+    color: '#fff',
+  },
+  burningInfo: {
+    padding: 20,
+    backgroundColor: 'rgba(255, 107, 53, 0.08)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  burningInfoText: {
+    fontSize: 14,
+    color: '#b8a9d9',
+    marginBottom: 12,
+    lineHeight: 20,
+  },
+  selectionCounter: {
+    backgroundColor: 'rgba(255, 107, 53, 0.3)',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+  },
+  selectionCounterText: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: '#fff',
+  },
+  burningScroll: {
+    flex: 1,
+    padding: 16,
+  },
+  bloomsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  bloomCard: {
+    width: '48%',
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  bloomCardSelected: {
+    borderColor: '#FF6B35',
+    borderWidth: 3,
+    shadowColor: '#FF6B35',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  bloomCardGradient: {
+    padding: 16,
+    alignItems: 'center',
+    minHeight: 140,
+    position: 'relative' as const,
+  },
+  selectedBadge: {
+    position: 'absolute' as const,
+    top: 8,
+    right: 8,
+    backgroundColor: '#FF6B35',
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bloomEmoji: {
+    fontSize: 40,
+    marginBottom: 8,
+  },
+  bloomIntention: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: '#fff',
+    textAlign: 'center' as const,
+    marginBottom: 8,
+  },
+  rarityBadge: {
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    marginTop: 4,
+  },
+  rarityText: {
+    fontSize: 11,
+    fontWeight: '700' as const,
+    color: '#fff',
+    textTransform: 'uppercase' as const,
+  },
+  burningFooter: {
+    padding: 20,
+    borderTopWidth: 2,
+    borderTopColor: 'rgba(255, 107, 53, 0.3)',
+    backgroundColor: 'rgba(255, 107, 53, 0.08)',
+  },
+  burningChanceText: {
+    fontSize: 12,
+    color: '#FFB088',
+    textAlign: 'center' as const,
+    marginBottom: 12,
+    lineHeight: 18,
+  },
+  confirmBurnButton: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#FF6B35',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  confirmBurnButtonDisabled: {
+    opacity: 0.5,
+    shadowOpacity: 0,
+  },
+  confirmBurnGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    gap: 10,
+  },
+  confirmBurnText: {
+    fontSize: 18,
+    fontWeight: '800' as const,
+    color: '#fff',
   },
 });
