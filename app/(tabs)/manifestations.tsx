@@ -1,6 +1,6 @@
 import { StyleSheet, View, Text, Pressable, ScrollView, Animated, Modal, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { List, Sparkles, Calendar, TrendingUp, Trophy, Target, Package, X, Flame, Check } from 'lucide-react-native';
+import { List, Sparkles, Calendar, TrendingUp, Trophy, Target, X, Flame, Check, Leaf, Flower2, Send as SeedIcon } from 'lucide-react-native';
 import { useManifestations } from '@/contexts/ManifestationContext';
 import { useAchievements } from '@/contexts/AchievementContext';
 import { useQuests } from '@/contexts/QuestContext';
@@ -8,7 +8,7 @@ import { useInventory } from '@/contexts/InventoryContext';
 import { useState, useRef, useMemo } from 'react';
 import * as Haptics from 'expo-haptics';
 import { Manifestation } from '@/types/manifestation';
-import InventoryScreen from '@/app/inventory';
+
 
 
 
@@ -118,9 +118,9 @@ export default function ManifestationsScreen() {
   const { manifestations } = useManifestations();
   const { achievements, getUnlockedCount, getTotalCount } = useAchievements();
   const { quests, getCompletedCount, getTotalCount: getQuestsTotalCount } = useQuests();
-  const { getTotalSeedsCount, inventory, burnBloomsForSeed } = useInventory();
+  const { getTotalSeedsCount, inventory, burnBloomsForSeed, getSeedsByRarity } = useInventory();
+  const [activeTab, setActiveTab] = useState<'active' | 'bloomed' | 'seeds'>('active');
   const [filter, setFilter] = useState<'all' | 'seed' | 'sprout' | 'growing' | 'blooming'>('all');
-  const [showInventory, setShowInventory] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
   const [showQuests, setShowQuests] = useState(false);
   const [showBurning, setShowBurning] = useState(false);
@@ -129,6 +129,15 @@ export default function ManifestationsScreen() {
   const harvestedBlooms = useMemo(() => {
     return inventory.filter(item => item.stage === 'blooming');
   }, [inventory]);
+
+  const seedsByRarity = useMemo(() => {
+    return {
+      legendary: getSeedsByRarity('legendary'),
+      epic: getSeedsByRarity('epic'),
+      rare: getSeedsByRarity('rare'),
+      common: getSeedsByRarity('common'),
+    };
+  }, [getSeedsByRarity]);
 
   const filteredManifestations = filter === 'all' 
     ? manifestations 
@@ -299,28 +308,43 @@ export default function ManifestationsScreen() {
                 <Text style={styles.quickAccessValue}>{getUnlockedCount()}/{getTotalCount()}</Text>
               </LinearGradient>
             </Pressable>
-            
-            <Pressable 
-              style={styles.quickAccessCard}
+          </View>
+
+          <View style={styles.tabsContainer}>
+            <Pressable
+              style={[styles.tab, activeTab === 'active' && styles.tabActive]}
               onPress={() => {
+                setActiveTab('active');
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setShowInventory(true);
               }}
             >
-              <LinearGradient
-                colors={['rgba(50, 205, 50, 0.3)', 'rgba(34, 139, 34, 0.3)']}
-                style={styles.quickAccessGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <Package color="#32CD32" size={24} />
-                <Text style={styles.quickAccessLabel}>Seeds</Text>
-                <Text style={styles.quickAccessValue}>{getTotalSeedsCount()}</Text>
-              </LinearGradient>
+              <Leaf color={activeTab === 'active' ? '#fff' : '#b8a9d9'} size={20} />
+              <Text style={[styles.tabText, activeTab === 'active' && styles.tabTextActive]}>Active</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.tab, activeTab === 'bloomed' && styles.tabActive]}
+              onPress={() => {
+                setActiveTab('bloomed');
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              }}
+            >
+              <Flower2 color={activeTab === 'bloomed' ? '#fff' : '#b8a9d9'} size={20} />
+              <Text style={[styles.tabText, activeTab === 'bloomed' && styles.tabTextActive]}>Bloomed ({inventory.length})</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.tab, activeTab === 'seeds' && styles.tabActive]}
+              onPress={() => {
+                setActiveTab('seeds');
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              }}
+            >
+              <SeedIcon color={activeTab === 'seeds' ? '#fff' : '#b8a9d9'} size={20} />
+              <Text style={[styles.tabText, activeTab === 'seeds' && styles.tabTextActive]}>Seeds ({getTotalSeedsCount()})</Text>
             </Pressable>
           </View>
 
-          <View style={styles.statsContainer}>
+          {activeTab === 'active' && (
+            <View style={styles.statsContainer}>
             <LinearGradient
               colors={['rgba(147, 112, 219, 0.2)', 'rgba(255, 105, 180, 0.2)']}
               style={styles.statsGradient}
@@ -343,76 +367,255 @@ export default function ManifestationsScreen() {
               </View>
             </LinearGradient>
           </View>
-
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            style={styles.filtersContainer}
-            contentContainerStyle={styles.filtersContent}
-          >
-            <FilterButton label="All" value="all" emoji="✨" />
-            <FilterButton label="Seeds" value="seed" emoji="🌰" />
-            <FilterButton label="Sprouts" value="sprout" emoji="🌱" />
-            <FilterButton label="Growing" value="growing" emoji="🌿" />
-            <FilterButton label="Blooming" value="blooming" emoji="🌸" />
-          </ScrollView>
-
-          {harvestedBlooms.length > 0 && (
-            <View style={styles.harvestedSection}>
-              <View style={styles.harvestedHeader}>
-                <View style={styles.harvestedTitleRow}>
-                  <Flame color="#FF6B35" size={24} />
-                  <Text style={styles.harvestedTitle}>Harvested Blooms</Text>
-                </View>
-                <Text style={styles.harvestedSubtitle}>
-                  Burn 5 blooms to create a new seed
-                </Text>
-              </View>
-
-              <Pressable
-                style={styles.burnButton}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setShowBurning(true);
-                }}
-              >
-                <LinearGradient
-                  colors={['#FF6B35', '#F7931E']}
-                  style={styles.burnButtonGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                >
-                  <Flame color="#fff" size={20} />
-                  <Text style={styles.burnButtonText}>Burn Blooms ({harvestedBlooms.length})</Text>
-                </LinearGradient>
-              </Pressable>
-            </View>
           )}
 
-          <View style={styles.listContainer}>
-            {filteredManifestations.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyEmoji}>🌙</Text>
-                <Text style={styles.emptyText}>
-                  {filter === 'all' 
-                    ? 'No manifestations planted yet' 
-                    : `No ${filter} manifestations`}
-                </Text>
-                <Text style={styles.emptySubtext}>
-                  {filter === 'all'
-                    ? 'Visit the Garden tab to plant your first intention'
-                    : 'Try a different filter'}
-                </Text>
-              </View>
-            ) : (
-              filteredManifestations.map((manifestation) => (
-                <ManifestationCard key={manifestation.id} manifestation={manifestation} />
-              ))
-            )}
-          </View>
-        </ScrollView>
+          {activeTab === 'active' && (
+            <>
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false}
+                style={styles.filtersContainer}
+                contentContainerStyle={styles.filtersContent}
+              >
+                <FilterButton label="All" value="all" emoji="✨" />
+                <FilterButton label="Seeds" value="seed" emoji="🌰" />
+                <FilterButton label="Sprouts" value="sprout" emoji="🌱" />
+                <FilterButton label="Growing" value="growing" emoji="🌿" />
+                <FilterButton label="Blooming" value="blooming" emoji="🌸" />
+              </ScrollView>
 
-        <InventoryScreen visible={showInventory} onClose={() => setShowInventory(false)} />
+              {harvestedBlooms.length > 0 && (
+                <View style={styles.harvestedSection}>
+                  <View style={styles.harvestedHeader}>
+                    <View style={styles.harvestedTitleRow}>
+                      <Flame color="#FF6B35" size={24} />
+                      <Text style={styles.harvestedTitle}>Harvested Blooms</Text>
+                    </View>
+                    <Text style={styles.harvestedSubtitle}>
+                      Burn 5 blooms to create a new seed
+                    </Text>
+                  </View>
+
+                  <Pressable
+                    style={styles.burnButton}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setShowBurning(true);
+                    }}
+                  >
+                    <LinearGradient
+                      colors={['#FF6B35', '#F7931E']}
+                      style={styles.burnButtonGradient}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                    >
+                      <Flame color="#fff" size={20} />
+                      <Text style={styles.burnButtonText}>Burn Blooms ({harvestedBlooms.length})</Text>
+                    </LinearGradient>
+                  </Pressable>
+                </View>
+              )}
+
+              <View style={styles.listContainer}>
+                {filteredManifestations.length === 0 ? (
+                  <View style={styles.emptyState}>
+                    <Text style={styles.emptyEmoji}>🌙</Text>
+                    <Text style={styles.emptyText}>
+                      {filter === 'all' 
+                        ? 'No manifestations planted yet' 
+                        : `No ${filter} manifestations`}
+                    </Text>
+                    <Text style={styles.emptySubtext}>
+                      {filter === 'all'
+                        ? 'Visit the Garden tab to plant your first intention'
+                        : 'Try a different filter'}
+                    </Text>
+                  </View>
+                ) : (
+                  filteredManifestations.map((manifestation) => (
+                    <ManifestationCard key={manifestation.id} manifestation={manifestation} />
+                  ))
+                )}
+              </View>
+            </>
+          )}
+
+          {activeTab === 'bloomed' && (
+            <ScrollView 
+              style={styles.scrollView}
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator={false}
+            >
+              {harvestedBlooms.length > 0 && (
+                <View style={styles.harvestedSection}>
+                  <View style={styles.harvestedHeader}>
+                    <View style={styles.harvestedTitleRow}>
+                      <Flame color="#FF6B35" size={24} />
+                      <Text style={styles.harvestedTitle}>Burn for Seeds</Text>
+                    </View>
+                    <Text style={styles.harvestedSubtitle}>
+                      Burn 5 blooms to create a new seed
+                    </Text>
+                  </View>
+
+                  <Pressable
+                    style={styles.burnButton}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setShowBurning(true);
+                    }}
+                  >
+                    <LinearGradient
+                      colors={['#FF6B35', '#F7931E']}
+                      style={styles.burnButtonGradient}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                    >
+                      <Flame color="#fff" size={20} />
+                      <Text style={styles.burnButtonText}>Open Burning Station ({harvestedBlooms.length})</Text>
+                    </LinearGradient>
+                  </Pressable>
+                </View>
+              )}
+
+              <View style={styles.listContainer}>
+                {inventory.length === 0 ? (
+                  <View style={styles.emptyState}>
+                    <Text style={styles.emptyEmoji}>🌸</Text>
+                    <Text style={styles.emptyText}>No bloomed manifestations yet</Text>
+                    <Text style={styles.emptySubtext}>
+                      Keep nurturing your active manifestations
+                    </Text>
+                  </View>
+                ) : (
+                  <View style={styles.bloomedGrid}>
+                    {inventory.map((bloom) => {
+                      const rarity = getRarityFromColor(bloom.color);
+                      return (
+                        <View key={bloom.id} style={styles.bloomedCard}>
+                          <LinearGradient
+                            colors={[bloom.color + '40', bloom.color + '20']}
+                            style={styles.bloomedCardGradient}
+                          >
+                            <Text style={styles.bloomedEmoji}>🌸</Text>
+                            <Text style={styles.bloomedIntention} numberOfLines={2}>
+                              {bloom.intention}
+                            </Text>
+                            <View style={styles.bloomedFooter}>
+                              <View style={[styles.rarityBadge, { backgroundColor: getRarityColor(rarity) }]}>
+                                <Text style={styles.rarityText}>{rarity}</Text>
+                              </View>
+                              <Text style={styles.bloomedCategory}>{bloom.category}</Text>
+                            </View>
+                          </LinearGradient>
+                        </View>
+                      );
+                    })}
+                  </View>
+                )}
+              </View>
+            </ScrollView>
+          )}
+
+          {activeTab === 'seeds' && (
+            <ScrollView 
+              style={styles.scrollView}
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.seedsInventoryContainer}>
+                <Text style={styles.seedsInventoryTitle}>Your Seeds Collection</Text>
+                <Text style={styles.seedsInventorySubtitle}>
+                  Total Seeds: {getTotalSeedsCount()}
+                </Text>
+
+                {getTotalSeedsCount() === 0 ? (
+                  <View style={styles.emptyState}>
+                    <Text style={styles.emptyEmoji}>🌰</Text>
+                    <Text style={styles.emptyText}>No seeds in inventory</Text>
+                    <Text style={styles.emptySubtext}>
+                      Earn seeds from the shop or burn bloomed manifestations
+                    </Text>
+                  </View>
+                ) : (
+                  <View style={styles.seedsGrid}>
+                    {seedsByRarity.legendary > 0 && (
+                      <View style={styles.seedCard}>
+                        <LinearGradient
+                          colors={['rgba(255, 215, 0, 0.3)', 'rgba(255, 165, 0, 0.2)']}
+                          style={styles.seedCardGradient}
+                        >
+                          <View style={styles.seedCardHeader}>
+                            <Sparkles color="#FFD700" size={32} />
+                            <View style={[styles.seedRarityBadge, { backgroundColor: '#FFD700' }]}>
+                              <Text style={styles.seedRarityText}>LEGENDARY</Text>
+                            </View>
+                          </View>
+                          <Text style={styles.seedCount}>{seedsByRarity.legendary}</Text>
+                          <Text style={styles.seedLabel}>Seeds</Text>
+                        </LinearGradient>
+                      </View>
+                    )}
+
+                    {seedsByRarity.epic > 0 && (
+                      <View style={styles.seedCard}>
+                        <LinearGradient
+                          colors={['rgba(147, 112, 219, 0.3)', 'rgba(138, 43, 226, 0.2)']}
+                          style={styles.seedCardGradient}
+                        >
+                          <View style={styles.seedCardHeader}>
+                            <Sparkles color="#9370DB" size={32} />
+                            <View style={[styles.seedRarityBadge, { backgroundColor: '#9370DB' }]}>
+                              <Text style={styles.seedRarityText}>EPIC</Text>
+                            </View>
+                          </View>
+                          <Text style={styles.seedCount}>{seedsByRarity.epic}</Text>
+                          <Text style={styles.seedLabel}>Seeds</Text>
+                        </LinearGradient>
+                      </View>
+                    )}
+
+                    {seedsByRarity.rare > 0 && (
+                      <View style={styles.seedCard}>
+                        <LinearGradient
+                          colors={['rgba(65, 105, 225, 0.3)', 'rgba(30, 144, 255, 0.2)']}
+                          style={styles.seedCardGradient}
+                        >
+                          <View style={styles.seedCardHeader}>
+                            <Sparkles color="#4169E1" size={32} />
+                            <View style={[styles.seedRarityBadge, { backgroundColor: '#4169E1' }]}>
+                              <Text style={styles.seedRarityText}>RARE</Text>
+                            </View>
+                          </View>
+                          <Text style={styles.seedCount}>{seedsByRarity.rare}</Text>
+                          <Text style={styles.seedLabel}>Seeds</Text>
+                        </LinearGradient>
+                      </View>
+                    )}
+
+                    {seedsByRarity.common > 0 && (
+                      <View style={styles.seedCard}>
+                        <LinearGradient
+                          colors={['rgba(152, 251, 152, 0.3)', 'rgba(144, 238, 144, 0.2)']}
+                          style={styles.seedCardGradient}
+                        >
+                          <View style={styles.seedCardHeader}>
+                            <Sparkles color="#98FB98" size={32} />
+                            <View style={[styles.seedRarityBadge, { backgroundColor: '#98FB98' }]}>
+                              <Text style={styles.seedRarityText}>COMMON</Text>
+                            </View>
+                          </View>
+                          <Text style={styles.seedCount}>{seedsByRarity.common}</Text>
+                          <Text style={styles.seedLabel}>Seeds</Text>
+                        </LinearGradient>
+                      </View>
+                    )}
+                  </View>
+                )}
+              </View>
+            </ScrollView>
+          )}
+        </ScrollView>
 
         {showAchievements && (
           <Modal visible={true} transparent animationType="fade" onRequestClose={() => setShowAchievements(false)}>
@@ -1290,5 +1493,131 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '800' as const,
     color: '#fff',
+  },
+  tabsContainer: {
+    flexDirection: 'row',
+    marginHorizontal: 24,
+    marginBottom: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 16,
+    padding: 4,
+    gap: 4,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    gap: 6,
+  },
+  tabActive: {
+    backgroundColor: 'rgba(255, 105, 180, 0.3)',
+  },
+  tabText: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: '#b8a9d9',
+  },
+  tabTextActive: {
+    color: '#fff',
+    fontWeight: '700' as const,
+  },
+  bloomedGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  bloomedCard: {
+    width: '48%',
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  bloomedCardGradient: {
+    padding: 16,
+    minHeight: 160,
+  },
+  bloomedEmoji: {
+    fontSize: 48,
+    marginBottom: 12,
+  },
+  bloomedIntention: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: '#fff',
+    marginBottom: 12,
+    minHeight: 40,
+  },
+  bloomedFooter: {
+    marginTop: 'auto',
+    gap: 8,
+  },
+  bloomedCategory: {
+    fontSize: 12,
+    color: '#b8a9d9',
+    fontWeight: '600' as const,
+    textTransform: 'capitalize' as const,
+  },
+  seedsInventoryContainer: {
+    paddingHorizontal: 24,
+  },
+  seedsInventoryTitle: {
+    fontSize: 28,
+    fontWeight: '800' as const,
+    color: '#fff',
+    marginBottom: 8,
+  },
+  seedsInventorySubtitle: {
+    fontSize: 16,
+    color: '#b8a9d9',
+    marginBottom: 24,
+  },
+  seedsGrid: {
+    gap: 16,
+  },
+  seedCard: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  seedCardGradient: {
+    padding: 24,
+  },
+  seedCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  seedRarityBadge: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+  },
+  seedRarityText: {
+    fontSize: 12,
+    fontWeight: '800' as const,
+    color: '#fff',
+  },
+  seedCount: {
+    fontSize: 48,
+    fontWeight: '800' as const,
+    color: '#fff',
+    marginBottom: 4,
+  },
+  seedLabel: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: '#b8a9d9',
   },
 });
