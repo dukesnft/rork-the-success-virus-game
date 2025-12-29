@@ -329,6 +329,7 @@ export default function GardenScreen() {
   const { quests, progressQuest, getCompletedCount, getTotalCount: getQuestsTotalCount } = useQuests();
   const { settings, permissionStatus, requestPermissions, updateSettings, rescheduleAllNotifications } = useNotifications();
   const { selectedBackground } = useBackgrounds();
+  const { checkInStreak, updateSeedRankings } = useRankings();
   const [stars] = useState(() => Array.from({ length: 8 }, (_, i) => i));
   const [showBoostPrompt, setShowBoostPrompt] = useState(false);
   const [showEnergyPrompt, setShowEnergyPrompt] = useState(false);
@@ -343,8 +344,6 @@ export default function GardenScreen() {
   const [showAchievements, setShowAchievements] = useState(false);
   const [showQuests, setShowQuests] = useState(false);
   const [showCombo, setShowCombo] = useState(false);
-
-  const { checkInStreak, updateSeedRankings } = useRankings();
 
   const handleNurture = useCallback((id: string) => {
     if (energy >= 1) {
