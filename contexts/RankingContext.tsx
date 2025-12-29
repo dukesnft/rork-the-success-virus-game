@@ -2,12 +2,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import createContextHook from '@nkzw/create-context-hook';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useEffect, useState, useCallback } from 'react';
-import { SeedRanking, StreakRanking } from '@/types/ranking';
+import { BloomedRanking, LegendaryRanking, StreakRanking } from '@/types/ranking';
 import { useInventory } from '@/contexts/InventoryContext';
 import { usePremium } from '@/contexts/PremiumContext';
 
 const STORAGE_KEY_USER = 'user_ranking_data';
-const STORAGE_KEY_SEED = 'seed_rankings';
+const STORAGE_KEY_BLOOMED = 'bloomed_rankings';
+const STORAGE_KEY_LEGENDARY = 'legendary_rankings';
 const STORAGE_KEY_STREAK = 'streak_rankings';
 
 interface UserRankingData {
@@ -17,7 +18,7 @@ interface UserRankingData {
   lastCheckIn: string;
 }
 
-const generateMockRankings = (userScore: number, userStreak: number): { seedRankings: SeedRanking[], streakRankings: StreakRanking[] } => {
+const generateMockRankings = (): { bloomedRankings: BloomedRanking[], legendaryRankings: LegendaryRanking[], streakRankings: StreakRanking[] } => {
   const names = [
     'CosmicDreamer', 'LunarLight', 'StellarSoul', 'MysticVibes', 'ZenMaster',
     'AuraGlow', 'ChakraWarrior', 'SpiritSeeker', 'ManifestKing', 'IntentionQueen',
@@ -25,39 +26,55 @@ const generateMockRankings = (userScore: number, userStreak: number): { seedRank
     'PeacefulJourney', 'AbundanceFlow', 'LoveLight', 'HealingEnergy', 'SuccessVibes'
   ];
 
-  const seedRankings: SeedRanking[] = [];
+  const bloomedRankings: BloomedRanking[] = [];
+  const legendaryRankings: LegendaryRanking[] = [];
   const streakRankings: StreakRanking[] = [];
 
   for (let i = 0; i < 20; i++) {
     let totalSpent = 0;
+    let level = 1;
     
     if (i === 0) {
-      totalSpent = 750 + Math.floor(Math.random() * 500);
+      totalSpent = 700 + Math.floor(Math.random() * 100);
+      level = 45 + Math.floor(Math.random() * 10);
     } else if (i === 1) {
-      totalSpent = 550 + Math.floor(Math.random() * 200);
+      totalSpent = 500 + Math.floor(Math.random() * 100);
+      level = 38 + Math.floor(Math.random() * 7);
     } else if (i === 2) {
-      totalSpent = 350 + Math.floor(Math.random() * 150);
+      totalSpent = 300 + Math.floor(Math.random() * 100);
+      level = 30 + Math.floor(Math.random() * 8);
     } else if (i < 10) {
       totalSpent = Math.floor(Math.random() * 300) + 100;
+      level = 20 + Math.floor(Math.random() * 10);
     } else {
       totalSpent = Math.floor(Math.random() * 100);
+      level = 5 + Math.floor(Math.random() * 15);
     }
     
-    const totalSeeds = Math.floor(Math.random() * 150) + 10 + Math.floor(totalSpent / 2);
-    const bloomingSeeds = Math.floor(totalSeeds * (Math.random() * 0.5 + 0.2));
+    const totalBloomed = Math.floor(Math.random() * 100) + 20 + Math.floor(totalSpent / 5);
+    const legendaryCount = Math.floor(Math.random() * 20) + 5 + Math.floor(totalSpent / 50);
+    const currentStreak = Math.floor(Math.random() * 80) + 10 + Math.floor(totalSpent / 10);
+    const longestStreak = currentStreak + Math.floor(Math.random() * 50);
     
-    seedRankings.push({
-      id: `seed_${i}`,
+    bloomedRankings.push({
+      id: `bloomed_${i}`,
       username: names[i],
-      score: totalSeeds,
+      score: totalBloomed,
       rank: i + 1,
-      totalSeeds,
-      bloomingSeeds,
+      totalBloomed,
       totalSpent,
+      level,
     });
 
-    const currentStreak = Math.floor(Math.random() * 100) + 1 + Math.floor(totalSpent / 10);
-    const longestStreak = currentStreak + Math.floor(Math.random() * 50);
+    legendaryRankings.push({
+      id: `legendary_${i}`,
+      username: names[i],
+      score: legendaryCount,
+      rank: i + 1,
+      legendaryCount,
+      totalSpent,
+      level,
+    });
     
     streakRankings.push({
       id: `streak_${i}`,
@@ -67,20 +84,24 @@ const generateMockRankings = (userScore: number, userStreak: number): { seedRank
       currentStreak,
       longestStreak,
       totalSpent,
+      level,
     });
   }
 
-  seedRankings.sort((a, b) => b.score - a.score);
+  bloomedRankings.sort((a, b) => b.score - a.score);
+  legendaryRankings.sort((a, b) => b.score - a.score);
   streakRankings.sort((a, b) => b.score - a.score);
 
-  seedRankings.forEach((r, i) => r.rank = i + 1);
+  bloomedRankings.forEach((r, i) => r.rank = i + 1);
+  legendaryRankings.forEach((r, i) => r.rank = i + 1);
   streakRankings.forEach((r, i) => r.rank = i + 1);
 
-  return { seedRankings, streakRankings };
+  return { bloomedRankings, legendaryRankings, streakRankings };
 };
 
 export const [RankingProvider, useRankings] = createContextHook(() => {
-  const [seedRankings, setSeedRankings] = useState<SeedRanking[]>([]);
+  const [bloomedRankings, setBloomedRankings] = useState<BloomedRanking[]>([]);
+  const [legendaryRankings, setLegendaryRankings] = useState<LegendaryRanking[]>([]);
   const [streakRankings, setStreakRankings] = useState<StreakRanking[]>([]);
   const [userData, setUserData] = useState<UserRankingData>({
     username: 'You',
@@ -89,8 +110,8 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
     lastCheckIn: '',
   });
 
-  const { getTotalSeeds, getBloomingSeeds } = useInventory();
-  const { totalSpent } = usePremium();
+  const { getBloomingSeeds, getSeedsByRarity } = useInventory();
+  const { totalSpent, gardenLevel: level } = usePremium();
 
   const userDataQuery = useQuery({
     queryKey: ['userRankingData'],
@@ -105,15 +126,27 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
     }
   });
 
-  const seedRankingsQuery = useQuery({
-    queryKey: ['seedRankings'],
+  const bloomedRankingsQuery = useQuery({
+    queryKey: ['bloomedRankings'],
     queryFn: async () => {
-      const stored = await AsyncStorage.getItem(STORAGE_KEY_SEED);
+      const stored = await AsyncStorage.getItem(STORAGE_KEY_BLOOMED);
       if (stored) {
         return JSON.parse(stored);
       }
-      const { seedRankings } = generateMockRankings(0, 0);
-      return seedRankings;
+      const { bloomedRankings } = generateMockRankings();
+      return bloomedRankings;
+    }
+  });
+
+  const legendaryRankingsQuery = useQuery({
+    queryKey: ['legendaryRankings'],
+    queryFn: async () => {
+      const stored = await AsyncStorage.getItem(STORAGE_KEY_LEGENDARY);
+      if (stored) {
+        return JSON.parse(stored);
+      }
+      const { legendaryRankings } = generateMockRankings();
+      return legendaryRankings;
     }
   });
 
@@ -124,7 +157,7 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
       if (stored) {
         return JSON.parse(stored);
       }
-      const { streakRankings } = generateMockRankings(0, 0);
+      const { streakRankings } = generateMockRankings();
       return streakRankings;
     }
   });
@@ -136,9 +169,16 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
     }
   });
 
-  const { mutate: saveSeedRankingsMutate } = useMutation({
-    mutationFn: async (data: SeedRanking[]) => {
-      await AsyncStorage.setItem(STORAGE_KEY_SEED, JSON.stringify(data));
+  const { mutate: saveBloomedRankingsMutate } = useMutation({
+    mutationFn: async (data: BloomedRanking[]) => {
+      await AsyncStorage.setItem(STORAGE_KEY_BLOOMED, JSON.stringify(data));
+      return data;
+    }
+  });
+
+  const { mutate: saveLegendaryRankingsMutate } = useMutation({
+    mutationFn: async (data: LegendaryRanking[]) => {
+      await AsyncStorage.setItem(STORAGE_KEY_LEGENDARY, JSON.stringify(data));
       return data;
     }
   });
@@ -157,10 +197,16 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
   }, [userDataQuery.data]);
 
   useEffect(() => {
-    if (seedRankingsQuery.data) {
-      setSeedRankings(seedRankingsQuery.data);
+    if (bloomedRankingsQuery.data) {
+      setBloomedRankings(bloomedRankingsQuery.data);
     }
-  }, [seedRankingsQuery.data]);
+  }, [bloomedRankingsQuery.data]);
+
+  useEffect(() => {
+    if (legendaryRankingsQuery.data) {
+      setLegendaryRankings(legendaryRankingsQuery.data);
+    }
+  }, [legendaryRankingsQuery.data]);
 
   useEffect(() => {
     if (streakRankingsQuery.data) {
@@ -169,7 +215,6 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
   }, [streakRankingsQuery.data]);
 
   const updateStreakRankings = useCallback((currentStreak: number, longestStreak: number) => {
-    setSeedRankings(prevSeedRankings => prevSeedRankings);
     setStreakRankings(prevRankings => {
       const userRanking: StreakRanking = {
         id: 'user',
@@ -179,55 +224,19 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
         currentStreak,
         longestStreak,
         totalSpent,
+        level,
       };
 
       const otherRankings = prevRankings.filter(r => r.id !== 'user');
       const allRankings: StreakRanking[] = [...otherRankings, userRanking];
       
       allRankings.sort((a, b) => b.score - a.score);
-      
-      const finalRankings: StreakRanking[] = [];
-      let currentRank = 1;
-      
-      for (let i = 0; i < allRankings.length; i++) {
-        const item = allRankings[i];
-        
-        if (currentRank === 1 && item.totalSpent < 700) {
-          item.rank = 999;
-        } else if (currentRank === 2 && item.totalSpent < 500) {
-          item.rank = 999;
-        } else if (currentRank === 3 && item.totalSpent < 300) {
-          item.rank = 999;
-        } else {
-          item.rank = currentRank;
-          currentRank++;
-        }
-        
-        finalRankings.push(item);
-      }
-      
-      finalRankings.sort((a, b) => {
-        if (a.rank === 999 && b.rank === 999) return b.score - a.score;
-        if (a.rank === 999) return 1;
-        if (b.rank === 999) return -1;
-        return a.rank - b.rank;
-      });
-      
-      let adjustedRank = 1;
-      finalRankings.forEach(item => {
-        if (item.rank !== 999) {
-          item.rank = adjustedRank;
-          adjustedRank++;
-        } else {
-          item.rank = adjustedRank;
-          adjustedRank++;
-        }
-      });
+      allRankings.forEach((r, i) => r.rank = i + 1);
 
-      saveStreakRankingsMutate(finalRankings);
-      return finalRankings;
+      saveStreakRankingsMutate(allRankings);
+      return allRankings;
     });
-  }, [userData.username, totalSpent, saveStreakRankingsMutate]);
+  }, [userData.username, totalSpent, level, saveStreakRankingsMutate]);
 
   const checkInStreak = useCallback(() => {
     const today = new Date().toDateString();
@@ -270,69 +279,55 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
     });
   }, [saveUserDataMutate, updateStreakRankings]);
 
-  const updateSeedRankings = useCallback(() => {
-    setStreakRankings(prevStreakRankings => prevStreakRankings);
-    setSeedRankings(prevRankings => {
-      const totalSeeds = getTotalSeeds();
-      const bloomingSeeds = getBloomingSeeds();
+  const updateBloomedRankings = useCallback(() => {
+    setBloomedRankings(prevRankings => {
+      const totalBloomed = getBloomingSeeds();
       
-      const userRanking: SeedRanking = {
+      const userRanking: BloomedRanking = {
         id: 'user',
         username: userData.username,
-        score: totalSeeds,
+        score: totalBloomed,
         rank: 0,
-        totalSeeds,
-        bloomingSeeds,
+        totalBloomed,
         totalSpent,
+        level,
       };
 
       const otherRankings = prevRankings.filter(r => r.id !== 'user');
-      const allRankings: SeedRanking[] = [...otherRankings, userRanking];
+      const allRankings: BloomedRanking[] = [...otherRankings, userRanking];
       
       allRankings.sort((a, b) => b.score - a.score);
-      
-      const finalRankings: SeedRanking[] = [];
-      let currentRank = 1;
-      
-      for (let i = 0; i < allRankings.length; i++) {
-        const item = allRankings[i];
-        
-        if (currentRank === 1 && item.totalSpent < 700) {
-          item.rank = 999;
-        } else if (currentRank === 2 && item.totalSpent < 500) {
-          item.rank = 999;
-        } else if (currentRank === 3 && item.totalSpent < 300) {
-          item.rank = 999;
-        } else {
-          item.rank = currentRank;
-          currentRank++;
-        }
-        
-        finalRankings.push(item);
-      }
-      
-      finalRankings.sort((a, b) => {
-        if (a.rank === 999 && b.rank === 999) return b.score - a.score;
-        if (a.rank === 999) return 1;
-        if (b.rank === 999) return -1;
-        return a.rank - b.rank;
-      });
-      
-      let adjustedRank = 1;
-      finalRankings.forEach(item => {
-        if (item.rank !== 999) {
-          item.rank = adjustedRank;
-          adjustedRank++;
-        } else {
-          item.rank = adjustedRank;
-          adjustedRank++;
-        }
-      });
+      allRankings.forEach((r, i) => r.rank = i + 1);
 
-      saveSeedRankingsMutate(finalRankings);
-      return finalRankings;
+      saveBloomedRankingsMutate(allRankings);
+      return allRankings;
     });
-  }, [getTotalSeeds, getBloomingSeeds, userData.username, totalSpent, saveSeedRankingsMutate]);
+  }, [getBloomingSeeds, userData.username, totalSpent, level, saveBloomedRankingsMutate]);
+
+  const updateLegendaryRankings = useCallback(() => {
+    setLegendaryRankings(prevRankings => {
+      const legendaryCount = getSeedsByRarity('legendary');
+      
+      const userRanking: LegendaryRanking = {
+        id: 'user',
+        username: userData.username,
+        score: legendaryCount,
+        rank: 0,
+        legendaryCount,
+        totalSpent,
+        level,
+      };
+
+      const otherRankings = prevRankings.filter(r => r.id !== 'user');
+      const allRankings: LegendaryRanking[] = [...otherRankings, userRanking];
+      
+      allRankings.sort((a, b) => b.score - a.score);
+      allRankings.forEach((r, i) => r.rank = i + 1);
+
+      saveLegendaryRankingsMutate(allRankings);
+      return allRankings;
+    });
+  }, [getSeedsByRarity, userData.username, totalSpent, level, saveLegendaryRankingsMutate]);
 
   const setUsername = useCallback((username: string) => {
     setUserData(prevData => {
@@ -345,10 +340,15 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
     });
   }, [saveUserDataMutate]);
 
-  const getUserSeedRank = useCallback(() => {
-    const userRanking = seedRankings.find(r => r.id === 'user');
+  const getUserBloomedRank = useCallback(() => {
+    const userRanking = bloomedRankings.find(r => r.id === 'user');
     return userRanking?.rank || 0;
-  }, [seedRankings]);
+  }, [bloomedRankings]);
+
+  const getUserLegendaryRank = useCallback(() => {
+    const userRanking = legendaryRankings.find(r => r.id === 'user');
+    return userRanking?.rank || 0;
+  }, [legendaryRankings]);
 
   const getUserStreakRank = useCallback(() => {
     const userRanking = streakRankings.find(r => r.id === 'user');
@@ -356,14 +356,17 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
   }, [streakRankings]);
 
   return {
-    seedRankings,
+    bloomedRankings,
+    legendaryRankings,
     streakRankings,
     userData,
-    isLoading: userDataQuery.isLoading || seedRankingsQuery.isLoading || streakRankingsQuery.isLoading,
+    isLoading: userDataQuery.isLoading || bloomedRankingsQuery.isLoading || legendaryRankingsQuery.isLoading || streakRankingsQuery.isLoading,
     checkInStreak,
-    updateSeedRankings,
+    updateBloomedRankings,
+    updateLegendaryRankings,
     setUsername,
-    getUserSeedRank,
+    getUserBloomedRank,
+    getUserLegendaryRank,
     getUserStreakRank,
   };
 });

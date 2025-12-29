@@ -4,11 +4,15 @@ export interface RankingEntry {
   score: number;
   rank: number;
   totalSpent: number;
+  level: number;
 }
 
-export interface SeedRanking extends RankingEntry {
-  totalSeeds: number;
-  bloomingSeeds: number;
+export interface BloomedRanking extends RankingEntry {
+  totalBloomed: number;
+}
+
+export interface LegendaryRanking extends RankingEntry {
+  legendaryCount: number;
 }
 
 export interface StreakRanking extends RankingEntry {

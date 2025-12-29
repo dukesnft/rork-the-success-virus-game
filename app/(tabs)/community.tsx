@@ -19,10 +19,10 @@ import { SeedRarity } from '@/types/community';
 
 export default function CommunityScreen() {
   const [activeTab, setActiveTab] = useState<'feed' | 'rankings'>('feed');
-  const [rankingType, setRankingType] = useState<'seeds' | 'streaks'>('seeds');
+  const [rankingType, setRankingType] = useState<'bloomed' | 'legendary' | 'streaks'>('bloomed');
   
   const { sharedManifestations, toggleLike } = useCommunity();
-  const { seedRankings, streakRankings } = useRankings();
+  const { bloomedRankings, legendaryRankings, streakRankings } = useRankings();
   const { addManifestation } = useManifestations();
   const { useSeed: consumeSeed, getSeedsByRarity } = useInventory();
 
@@ -186,7 +186,9 @@ export default function CommunityScreen() {
   );
 
   const renderRankingsTab = () => {
-    const rankings = rankingType === 'seeds' ? seedRankings : streakRankings;
+    const rankings = rankingType === 'bloomed' ? bloomedRankings : 
+                     rankingType === 'legendary' ? legendaryRankings : 
+                     streakRankings;
     
     return (
       <ScrollView style={styles.rankingsContainer} showsVerticalScrollIndicator={false}>
@@ -196,21 +198,41 @@ export default function CommunityScreen() {
             <TouchableOpacity
               style={[
                 styles.toggleButton,
-                rankingType === 'seeds' && styles.toggleButtonActive,
+                rankingType === 'bloomed' && styles.toggleButtonActive,
               ]}
-              onPress={() => setRankingType('seeds')}
+              onPress={() => setRankingType('bloomed')}
             >
               <Sparkles
                 size={16}
-                color={rankingType === 'seeds' ? '#fff' : '#b8a9d9'}
+                color={rankingType === 'bloomed' ? '#fff' : '#b8a9d9'}
               />
               <Text
                 style={[
                   styles.toggleText,
-                  rankingType === 'seeds' && styles.toggleTextActive,
+                  rankingType === 'bloomed' && styles.toggleTextActive,
                 ]}
               >
-                Seeds
+                Bloomed
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.toggleButton,
+                rankingType === 'legendary' && styles.toggleButtonActive,
+              ]}
+              onPress={() => setRankingType('legendary')}
+            >
+              <Trophy
+                size={16}
+                color={rankingType === 'legendary' ? '#fff' : '#b8a9d9'}
+              />
+              <Text
+                style={[
+                  styles.toggleText,
+                  rankingType === 'legendary' && styles.toggleTextActive,
+                ]}
+              >
+                Legendary
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -262,7 +284,7 @@ export default function CommunityScreen() {
                 <View style={styles.rankRight}>
                   <Text style={styles.rankScore}>{ranking.score}</Text>
                   <Text style={styles.rankLabel}>
-                    {rankingType === 'seeds' ? 'Seeds' : 'Days'}
+                    {rankingType === 'bloomed' ? 'Bloomed' : rankingType === 'legendary' ? 'Legendary' : 'Days'}
                   </Text>
                 </View>
               </LinearGradient>
@@ -288,7 +310,7 @@ export default function CommunityScreen() {
                 <View style={styles.rankRight}>
                   <Text style={styles.rankScore}>{ranking.score}</Text>
                   <Text style={styles.rankLabel}>
-                    {rankingType === 'seeds' ? 'Seeds' : 'Days'}
+                    {rankingType === 'bloomed' ? 'Bloomed' : rankingType === 'legendary' ? 'Legendary' : 'Days'}
                   </Text>
                 </View>
               </View>

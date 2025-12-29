@@ -329,7 +329,7 @@ export default function GardenScreen() {
   const { quests, progressQuest, getCompletedCount, getTotalCount: getQuestsTotalCount } = useQuests();
   const { settings, permissionStatus, requestPermissions, updateSettings, rescheduleAllNotifications } = useNotifications();
   const { selectedBackground } = useBackgrounds();
-  const { checkInStreak, updateSeedRankings } = useRankings();
+  const { checkInStreak, updateBloomedRankings, updateLegendaryRankings } = useRankings();
   const [stars] = useState(() => Array.from({ length: 8 }, (_, i) => i));
   const [showBoostPrompt, setShowBoostPrompt] = useState(false);
   const [showEnergyPrompt, setShowEnergyPrompt] = useState(false);
@@ -420,9 +420,9 @@ export default function GardenScreen() {
   }, []);
 
   useEffect(() => {
-    updateSeedRankings();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    updateBloomedRankings();
+    updateLegendaryRankings();
+  }, [updateBloomedRankings, updateLegendaryRankings]);
 
   const handlePurchaseBoost = () => {
     purchaseEnergyBoost();

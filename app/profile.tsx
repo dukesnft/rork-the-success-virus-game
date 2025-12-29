@@ -23,14 +23,14 @@ export default function ProfileScreen() {
   const { username: myUsername } = useCommunity();
   const { topManifestations, addToTopManifestations, removeFromTopManifestations } = useProfile();
   const { manifestations } = useManifestations();
-  const { seedRankings, streakRankings } = useRankings();
+  const { bloomedRankings, streakRankings } = useRankings();
   const [showManifestationPicker, setShowManifestationPicker] = useState(false);
 
   const isOwnProfile = !otherUsername || otherUsername === myUsername;
   const displayUsername = isOwnProfile ? myUsername : (Array.isArray(otherUsername) ? otherUsername[0] : otherUsername);
 
-  const userRanking = seedRankings.find(r => r.username === displayUsername);
-  const streakRanking = streakRankings.find(r => r.username === displayUsername);
+  const userRanking = bloomedRankings.find((r: any) => r.username === displayUsername);
+  const streakRanking = streakRankings.find((r: any) => r.username === displayUsername);
 
   const getRarityColor = (rarity: SeedRarity) => {
     switch (rarity) {

@@ -4,6 +4,7 @@ import { X, Trophy, Flame, Award, Edit2 } from 'lucide-react-native';
 import { useRankings } from '@/contexts/RankingContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useEffect, useRef, useState, memo } from 'react';
+import { usePremium } from '@/contexts/PremiumContext';
 import * as Haptics from 'expo-haptics';
 
 interface RankingsScreenProps {
@@ -17,14 +18,14 @@ const RankingItem = memo(function RankingItem({
   score, 
   isUser,
   subtitle,
-  totalSpent 
+  level 
 }: { 
   rank: number; 
   username: string; 
   score: number; 
   isUser: boolean;
   subtitle?: string;
-  totalSpent: number;
+  level: number;
 }) {
   const getRankColor = (rank: number): string => {
     if (rank === 1) return '#FFD700';
@@ -40,35 +41,21 @@ const RankingItem = memo(function RankingItem({
     return `#${rank}`;
   };
 
-  const meetsSpendRequirement = () => {
-    if (rank === 1) return totalSpent >= 700;
-    if (rank === 2) return totalSpent >= 500;
-    if (rank === 3) return totalSpent >= 300;
-    return true;
-  };
-
-  const getSpendRequirement = () => {
-    if (rank === 1) return 700;
-    if (rank === 2) return 500;
-    if (rank === 3) return 300;
-    return 0;
-  };
-
   return (
     <View style={[styles.rankingItem, isUser && styles.rankingItemUser]}>
       <Text style={[styles.rankNumber, { color: getRankColor(rank) }]}>
         {getRankIcon(rank)}
       </Text>
       <View style={styles.rankingInfo}>
-        <Text style={[styles.rankUsername, isUser && styles.rankUsernameUser]}>
-          {username} {isUser && '👑'}
-        </Text>
-        {subtitle && <Text style={styles.rankSubtitle}>{subtitle}</Text>}
-        {rank <= 3 && (
-          <Text style={[styles.spendBadge, meetsSpendRequirement() ? styles.spendMet : styles.spendNotMet]}>
-            ${totalSpent.toFixed(0)} / ${getSpendRequirement()} spent
+        <View style={styles.usernameRow}>
+          <Text style={[styles.rankUsername, isUser && styles.rankUsernameUser]}>
+            {username} {isUser && '👑'}
           </Text>
-        )}
+          <View style={styles.levelBadge}>
+            <Text style={styles.levelText}>Lv.{level}</Text>
+          </View>
+        </View>
+        {subtitle && <Text style={styles.rankSubtitle}>{subtitle}</Text>}
       </View>
       <Text style={[styles.rankScore, isUser && styles.rankScoreUser]}>{score}</Text>
     </View>
@@ -78,14 +65,17 @@ const RankingItem = memo(function RankingItem({
 export default function RankingsScreen({ visible, onClose }: RankingsScreenProps) {
   const insets = useSafeAreaInsets();
   const { 
-    seedRankings, 
+    bloomedRankings, 
+    legendaryRankings, 
     streakRankings, 
     userData, 
     setUsername,
-    getUserSeedRank,
+    getUserBloomedRank,
+    getUserLegendaryRank,
     getUserStreakRank 
   } = useRankings();
-  const [activeTab, setActiveTab] = useState<'seeds' | 'streaks'>('seeds');
+  const { gardenLevel: userLevel } = usePremium();
+  const [activeTab, setActiveTab] = useState<'bloomed' | 'legendary' | 'streaks'>('bloomed');
   const [editingUsername, setEditingUsername] = useState(false);
   const [tempUsername, setTempUsername] = useState(userData.username);
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -117,7 +107,7 @@ export default function RankingsScreen({ visible, onClose }: RankingsScreenProps
     onClose();
   };
 
-  const handleTabChange = (tab: 'seeds' | 'streaks') => {
+  const handleTabChange = (tab: 'bloomed' | 'legendary' | 'streaks') => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setActiveTab(tab);
   };
@@ -130,8 +120,14 @@ export default function RankingsScreen({ visible, onClose }: RankingsScreenProps
     }
   };
 
-  const currentRankings = activeTab === 'seeds' ? seedRankings : streakRankings;
-  const userRank = activeTab === 'seeds' ? getUserSeedRank() : getUserStreakRank();
+  const currentRankings = 
+    activeTab === 'bloomed' ? bloomedRankings : 
+    activeTab === 'legendary' ? legendaryRankings : 
+    streakRankings;
+  const userRank = 
+    activeTab === 'bloomed' ? getUserBloomedRank() : 
+    activeTab === 'legendary' ? getUserLegendaryRank() : 
+    getUserStreakRank();
 
   return (
     <Modal visible={visible} transparent animationType="fade">
@@ -190,21 +186,30 @@ export default function RankingsScreen({ visible, onClose }: RankingsScreenProps
 
             <View style={styles.tabsContainer}>
               <Pressable 
-                style={[styles.tab, activeTab === 'seeds' && styles.tabActive]}
-                onPress={() => handleTabChange('seeds')}
+                style={[styles.tab, activeTab === 'bloomed' && styles.tabActive]}
+                onPress={() => handleTabChange('bloomed')}
               >
-                <Award color={activeTab === 'seeds' ? '#FFD700' : '#b8a9d9'} size={24} />
-                <Text style={[styles.tabText, activeTab === 'seeds' && styles.tabTextActive]}>
-                  Seeds
+                <Award color={activeTab === 'bloomed' ? '#FFD700' : '#b8a9d9'} size={20} />
+                <Text style={[styles.tabText, activeTab === 'bloomed' && styles.tabTextActive]}>
+                  Bloomed
+                </Text>
+              </Pressable>
+              <Pressable 
+                style={[styles.tab, activeTab === 'legendary' && styles.tabActive]}
+                onPress={() => handleTabChange('legendary')}
+              >
+                <Trophy color={activeTab === 'legendary' ? '#FFD700' : '#b8a9d9'} size={20} />
+                <Text style={[styles.tabText, activeTab === 'legendary' && styles.tabTextActive]}>
+                  Legendary
                 </Text>
               </Pressable>
               <Pressable 
                 style={[styles.tab, activeTab === 'streaks' && styles.tabActive]}
                 onPress={() => handleTabChange('streaks')}
               >
-                <Flame color={activeTab === 'streaks' ? '#FFD700' : '#b8a9d9'} size={24} />
+                <Flame color={activeTab === 'streaks' ? '#FFD700' : '#b8a9d9'} size={20} />
                 <Text style={[styles.tabText, activeTab === 'streaks' && styles.tabTextActive]}>
-                  Streaks
+                  Streak
                 </Text>
               </Pressable>
             </View>
@@ -231,9 +236,12 @@ export default function RankingsScreen({ visible, onClose }: RankingsScreenProps
                     const isUser = ranking.id === 'user';
                     let subtitle = '';
                     
-                    if (activeTab === 'seeds') {
-                      const seedRanking = ranking as any;
-                      subtitle = `${seedRanking.bloomingSeeds} blooming`;
+                    if (activeTab === 'bloomed') {
+                      const bloomedRanking = ranking as any;
+                      subtitle = `${bloomedRanking.totalBloomed} blooms collected`;
+                    } else if (activeTab === 'legendary') {
+                      const legendaryRanking = ranking as any;
+                      subtitle = `${legendaryRanking.legendaryCount} legendary seeds`;
                     } else {
                       const streakRanking = ranking as any;
                       subtitle = `Longest: ${streakRanking.longestStreak} days`;
@@ -247,7 +255,7 @@ export default function RankingsScreen({ visible, onClose }: RankingsScreenProps
                         score={ranking.score}
                         isUser={isUser}
                         subtitle={subtitle}
-                        totalSpent={ranking.totalSpent}
+                        level={isUser ? userLevel : ranking.level}
                       />
                     );
                   })}
@@ -434,16 +442,23 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#b8a9d9',
   },
-  spendBadge: {
+  usernameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  levelBadge: {
+    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FFD700',
+  },
+  levelText: {
     fontSize: 11,
-    fontWeight: '600' as const,
-    marginTop: 4,
-  },
-  spendMet: {
-    color: '#4ade80',
-  },
-  spendNotMet: {
-    color: '#f87171',
+    fontWeight: '700' as const,
+    color: '#FFD700',
   },
   rankScore: {
     fontSize: 20,
