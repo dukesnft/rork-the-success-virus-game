@@ -131,6 +131,88 @@ export const [InventoryProvider, useInventory] = createContextHook(() => {
     return seeds.length;
   }, [seeds]);
 
+  const burnBloomsForSeed = useCallback((bloomIds: string[]) => {
+    if (bloomIds.length !== 5) {
+      console.warn('Must burn exactly 5 blooms');
+      return null;
+    }
+
+    const bloomsToBurn = bloomIds.map(id => inventory.find(item => item.id === id)).filter(Boolean) as InventoryItem[];
+    
+    if (bloomsToBurn.length !== 5 || !bloomsToBurn.every(b => b.stage === 'blooming')) {
+      console.warn('All items must be blooming stage');
+      return null;
+    }
+
+    const getRarityFromColor = (color: string): SeedRarity => {
+      if (color.toLowerCase().includes('ffd700') || color.toLowerCase().includes('ffa500')) return 'legendary';
+      if (color.toLowerCase().includes('9370db') || color.toLowerCase().includes('8a2be2')) return 'epic';
+      if (color.toLowerCase().includes('4169e1') || color.toLowerCase().includes('1e90ff')) return 'rare';
+      return 'common';
+    };
+
+    const bloomRarities = bloomsToBurn.map(b => getRarityFromColor(b.color));
+    
+    const rarityCounts = bloomRarities.reduce((acc, r) => {
+      acc[r] = (acc[r] || 0) + 1;
+      return acc;
+    }, {} as Record<SeedRarity, number>);
+
+    const dominantRarity = Object.entries(rarityCounts).sort(([,a], [,b]) => b - a)[0][0] as SeedRarity;
+    const dominantCount = rarityCounts[dominantRarity];
+
+    const calculateResultRarity = (): SeedRarity => {
+      const rand = Math.random() * 100;
+      
+      if (dominantRarity === 'legendary') {
+        if (dominantCount === 5) {
+          if (rand < 70) return 'legendary';
+          if (rand < 95) return 'epic';
+          return 'rare';
+        } else if (dominantCount >= 3) {
+          if (rand < 50) return 'legendary';
+          if (rand < 85) return 'epic';
+          return 'rare';
+        } else {
+          if (rand < 25) return 'legendary';
+          if (rand < 70) return 'epic';
+          return 'rare';
+        }
+      }
+      
+      if (dominantRarity === 'epic') {
+        if (rand < 70) return 'epic';
+        if (rand < 90) return 'rare';
+        if (rand < 98) return 'legendary';
+        return 'common';
+      }
+      
+      if (dominantRarity === 'rare') {
+        if (rand < 70) return 'rare';
+        if (rand < 93) return 'common';
+        if (rand < 99) return 'epic';
+        return 'legendary';
+      }
+      
+      if (rand < 70) return 'common';
+      if (rand < 95) return 'rare';
+      if (rand < 99.5) return 'epic';
+      return 'legendary';
+    };
+
+    const resultRarity = calculateResultRarity();
+    
+    setInventory(prev => {
+      const updated = prev.filter(item => !bloomIds.includes(item.id));
+      saveMutate(updated);
+      return updated;
+    });
+
+    addSeeds(resultRarity, 1);
+    
+    return resultRarity;
+  }, [inventory, saveMutate, addSeeds]);
+
   return {
     inventory,
     seeds,
@@ -145,5 +227,6 @@ export const [InventoryProvider, useInventory] = createContextHook(() => {
     useSeed,
     getSeedsByRarity,
     getTotalSeedsCount,
+    burnBloomsForSeed,
   };
 });
