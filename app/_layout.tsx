@@ -5,13 +5,13 @@ import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ManifestationProvider } from "@/contexts/ManifestationContext";
-import { PremiumProvider } from "@/contexts/PremiumContext";
-import { NotificationProvider } from "@/contexts/NotificationContext";
+import { PremiumProvider, usePremium } from "@/contexts/PremiumContext";
+import { NotificationProvider, useNotifications } from "@/contexts/NotificationContext";
 import { BookProvider } from "@/contexts/BookContext";
 import { DailyManifestationProvider } from "@/contexts/DailyManifestationContext";
 import { BackgroundProvider } from "@/contexts/BackgroundContext";
 import { JournalProvider } from "@/contexts/JournalContext";
-import { InventoryProvider } from "@/contexts/InventoryContext";
+import { InventoryProvider, useInventory } from "@/contexts/InventoryContext";
 import { RankingProvider } from "@/contexts/RankingContext";
 import { CommunityProvider } from "@/contexts/CommunityContext";
 import { ProfileProvider } from "@/contexts/ProfileContext";
@@ -24,17 +24,38 @@ SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
 
+function NotificationScheduler() {
+  const { inventory } = useInventory();
+  const { isPremium } = usePremium();
+  const { scheduleManifestationReminders, permissionStatus } = useNotifications();
+
+  useEffect(() => {
+    if (permissionStatus === 'granted' && inventory.length > 0) {
+      const bloomedCount = inventory.filter(item => item.stage === 'blooming').length;
+      if (bloomedCount > 0) {
+        console.log(`Scheduling reminders for ${bloomedCount} bloomed manifestations`);
+        scheduleManifestationReminders(inventory, isPremium);
+      }
+    }
+  }, [inventory, isPremium, scheduleManifestationReminders, permissionStatus]);
+
+  return null;
+}
+
 function RootLayoutNav() {
   return (
-    <Stack screenOptions={{ headerBackTitle: "Back" }}>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="create" options={{ presentation: "modal", headerShown: false }} />
-      <Stack.Screen name="premium" options={{ presentation: "modal", headerShown: false }} />
-      <Stack.Screen name="shop" options={{ presentation: "modal", headerShown: false }} />
-      <Stack.Screen name="inventory" options={{ presentation: "modal", headerShown: false }} />
-      <Stack.Screen name="rankings" options={{ presentation: "modal", headerShown: false }} />
-      <Stack.Screen name="profile" options={{ presentation: "modal", headerShown: false }} />
-    </Stack>
+    <>
+      <NotificationScheduler />
+      <Stack screenOptions={{ headerBackTitle: "Back" }}>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="create" options={{ presentation: "modal", headerShown: false }} />
+        <Stack.Screen name="premium" options={{ presentation: "modal", headerShown: false }} />
+        <Stack.Screen name="shop" options={{ presentation: "modal", headerShown: false }} />
+        <Stack.Screen name="inventory" options={{ presentation: "modal", headerShown: false }} />
+        <Stack.Screen name="rankings" options={{ presentation: "modal", headerShown: false }} />
+        <Stack.Screen name="profile" options={{ presentation: "modal", headerShown: false }} />
+      </Stack>
+    </>
   );
 }
 

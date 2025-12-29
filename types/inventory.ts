@@ -7,6 +7,7 @@ export interface InventoryItem {
   stage: 'sprout' | 'growing' | 'blooming';
   collectedAt: number;
   color: string;
+  rarity: SeedRarity;
 }
 
 export interface Seed {

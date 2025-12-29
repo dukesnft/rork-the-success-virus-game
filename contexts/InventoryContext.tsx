@@ -66,6 +66,8 @@ export const [InventoryProvider, useInventory] = createContextHook(() => {
     const updated = [...inventory, newItem];
     setInventory(updated);
     saveMutate(updated);
+    
+    console.log(`Added ${item.rarity} bloom to inventory: ${item.intention}`);
   }, [inventory, saveMutate]);
 
   const removeFromInventory = useCallback((id: string) => {

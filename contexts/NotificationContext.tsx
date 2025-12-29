@@ -4,18 +4,22 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useEffect, useState, useCallback } from 'react';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+import { InventoryItem } from '@/types/inventory';
 
 const NOTIFICATION_STORAGE_KEY = 'notification_settings';
 const SCHEDULED_NOTIFICATIONS_KEY = 'scheduled_notifications';
+const REMINDER_NOTIFICATIONS_KEY = 'reminder_notifications';
 
 interface NotificationSettings {
   enabled: boolean;
   dailyTime: { hour: number; minute: number };
+  remindersEnabled: boolean;
 }
 
 const DEFAULT_SETTINGS: NotificationSettings = {
   enabled: false,
   dailyTime: { hour: 9, minute: 0 },
+  remindersEnabled: true,
 };
 
 Notifications.setNotificationHandler({
@@ -176,6 +180,112 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
     }
   }, [settings, permissionStatus, cancelAllNotifications, scheduleManifestationNotification]);
 
+  const getRarityEmoji = (rarity: string): string => {
+    switch (rarity) {
+      case 'legendary': return '✨💫';
+      case 'epic': return '🌟';
+      case 'rare': return '⭐';
+      default: return '🌸';
+    }
+  };
+
+  const getRarityTitle = (rarity: string): string => {
+    switch (rarity) {
+      case 'legendary': return 'Legendary Manifestation Reminder';
+      case 'epic': return 'Epic Manifestation Reminder';
+      case 'rare': return 'Special Manifestation Reminder';
+      default: return 'Manifestation Reminder';
+    }
+  };
+
+  const scheduleManifestationReminders = useCallback(async (
+    inventory: InventoryItem[],
+    isPremium: boolean
+  ) => {
+    if (Platform.OS === 'web' || !settings.remindersEnabled || permissionStatus !== 'granted') {
+      console.log('Skipping reminders: web, disabled, or no permission');
+      return;
+    }
+
+    try {
+      const stored = await AsyncStorage.getItem(REMINDER_NOTIFICATIONS_KEY);
+      const existingIds = stored ? JSON.parse(stored) : [];
+      
+      for (const id of existingIds) {
+        await Notifications.cancelScheduledNotificationAsync(id);
+      }
+
+      const bloomedItems = inventory.filter(item => item.stage === 'blooming');
+      
+      if (bloomedItems.length === 0) {
+        console.log('No bloomed manifestations to schedule reminders for');
+        await AsyncStorage.setItem(REMINDER_NOTIFICATIONS_KEY, JSON.stringify([]));
+        return;
+      }
+
+      const maxReminders = isPremium ? 3 : 1;
+      const selectedItems = bloomedItems
+        .sort(() => Math.random() - 0.5)
+        .slice(0, Math.min(maxReminders, bloomedItems.length));
+
+      const newNotificationIds: string[] = [];
+
+      for (let i = 0; i < selectedItems.length; i++) {
+        const item = selectedItems[i];
+        const baseHour = 9;
+        const hourSpread = 12;
+        const randomHour = baseHour + Math.floor((hourSpread / maxReminders) * i) + Math.floor(Math.random() * 2);
+        const randomMinute = Math.floor(Math.random() * 60);
+
+        const emoji = getRarityEmoji(item.rarity);
+        const title = getRarityTitle(item.rarity);
+        
+        const notificationId = await Notifications.scheduleNotificationAsync({
+          content: {
+            title: `${emoji} ${title}`,
+            body: item.intention,
+            data: { itemId: item.id, rarity: item.rarity, category: item.category },
+            sound: true,
+          },
+          trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.DAILY,
+            hour: randomHour,
+            minute: randomMinute,
+            repeats: true,
+          } as Notifications.DailyTriggerInput,
+        });
+
+        newNotificationIds.push(notificationId);
+        console.log(`Scheduled ${item.rarity} reminder at ${randomHour}:${randomMinute.toString().padStart(2, '0')} - ${item.intention}`);
+      }
+
+      await AsyncStorage.setItem(REMINDER_NOTIFICATIONS_KEY, JSON.stringify(newNotificationIds));
+      console.log(`Scheduled ${newNotificationIds.length} manifestation reminders`);
+    } catch (error) {
+      console.error('Failed to schedule manifestation reminders:', error);
+    }
+  }, [settings, permissionStatus]);
+
+  const cancelManifestationReminders = useCallback(async () => {
+    if (Platform.OS === 'web') {
+      return;
+    }
+
+    try {
+      const stored = await AsyncStorage.getItem(REMINDER_NOTIFICATIONS_KEY);
+      const existingIds = stored ? JSON.parse(stored) : [];
+      
+      for (const id of existingIds) {
+        await Notifications.cancelScheduledNotificationAsync(id);
+      }
+
+      await AsyncStorage.setItem(REMINDER_NOTIFICATIONS_KEY, JSON.stringify([]));
+      console.log('Cancelled all manifestation reminders');
+    } catch (error) {
+      console.error('Failed to cancel manifestation reminders:', error);
+    }
+  }, []);
+
   return {
     settings,
     permissionStatus,
@@ -186,5 +296,7 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
     cancelManifestationNotification,
     cancelAllNotifications,
     rescheduleAllNotifications,
+    scheduleManifestationReminders,
+    cancelManifestationReminders,
   };
 });

@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import createContextHook from '@nkzw/create-context-hook';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useEffect, useState, useCallback } from 'react';
-import { Manifestation, GrowthStage } from '@/types/manifestation';
+import { Manifestation, GrowthStage, SeedRarity } from '@/types/manifestation';
 import { ENERGY_PER_STAGE } from '@/constants/manifestation';
 import { usePremium } from '@/contexts/PremiumContext';
 import { useNotifications } from '@/contexts/NotificationContext';
@@ -162,18 +162,31 @@ export const [ManifestationProvider, useManifestations] = createContextHook(() =
       if (!manifestation) return prev;
       
       if (manifestation.stage === 'blooming') {
+        const rarityUpgradeRoll = Math.random();
+        let harvestedRarity = manifestation.rarity;
+        
+        if (rarityUpgradeRoll < 0.1) {
+          const rarityOrder: SeedRarity[] = ['common', 'rare', 'epic', 'legendary'];
+          const currentIndex = rarityOrder.indexOf(manifestation.rarity);
+          if (currentIndex < rarityOrder.length - 1) {
+            harvestedRarity = rarityOrder[currentIndex + 1];
+            console.log(`✨ Rarity upgraded from ${manifestation.rarity} to ${harvestedRarity}!`);
+          }
+        }
+        
         addToInventory({
           intention: manifestation.intention,
           category: manifestation.category,
           stage: manifestation.stage,
           color: manifestation.color,
+          rarity: harvestedRarity,
         });
         
-        const isLegendary = manifestation.rarity === 'legendary';
-        const gemReward = manifestation.rarity === 'legendary' ? 200 : 
-                          manifestation.rarity === 'epic' ? 80 : 
-                          manifestation.rarity === 'rare' ? 35 : 20;
-        earnGems(gemReward, `Harvested ${manifestation.rarity || 'common'} bloom`);
+        const isLegendary = harvestedRarity === 'legendary';
+        const gemReward = harvestedRarity === 'legendary' ? 200 : 
+                          harvestedRarity === 'epic' ? 80 : 
+                          harvestedRarity === 'rare' ? 35 : 20;
+        earnGems(gemReward, `Harvested ${harvestedRarity} bloom`);
         
         if (isLegendary) {
           earnGems(100, '🌟 Legendary Bloom Bonus!');
