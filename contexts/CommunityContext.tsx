@@ -4,6 +4,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useEffect, useState, useCallback } from 'react';
 import { SharedManifestation, SeedRarity } from '@/types/community';
 import { Alert } from 'react-native';
+import { usePremium } from '@/contexts/PremiumContext';
 
 const STORAGE_KEY_SHARED = 'shared_manifestations';
 const STORAGE_KEY_USER_SHARED = 'user_shared_manifestations';
@@ -96,6 +97,7 @@ const generateMockSharedManifestations = (): SharedManifestation[] => {
 };
 
 export const [CommunityProvider, useCommunity] = createContextHook(() => {
+  const { gardenLevel } = usePremium();
   const [sharedManifestations, setSharedManifestations] = useState<SharedManifestation[]>([]);
   const [userSharedManifestations, setUserSharedManifestations] = useState<SharedManifestation[]>([]);
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
@@ -205,6 +207,7 @@ export const [CommunityProvider, useCommunity] = createContextHook(() => {
       sharedAt: Date.now(),
       likedByUser: false,
       rarity,
+      level: gardenLevel,
     };
 
     const updatedShared = [newShared, ...sharedManifestations];
@@ -216,7 +219,7 @@ export const [CommunityProvider, useCommunity] = createContextHook(() => {
     saveUserSharedMutate(updatedUserShared);
 
     Alert.alert('✨ Shared!', 'Your manifestation has been shared with the community!');
-  }, [username, sharedManifestations, userSharedManifestations, saveSharedMutate, saveUserSharedMutate]);
+  }, [username, gardenLevel, sharedManifestations, userSharedManifestations, saveSharedMutate, saveUserSharedMutate]);
 
   const updateUsername = useCallback((newName: string) => {
     setUsername(newName);

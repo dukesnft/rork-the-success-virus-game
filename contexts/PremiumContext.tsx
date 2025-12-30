@@ -662,9 +662,13 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     });
   }, [saveMilestones]);
 
+  const getXPNeeded = useCallback((level: number) => {
+    return Math.floor(100 * Math.pow(1.15, level - 1));
+  }, []);
+
   const addGardenXP = useCallback((amount: number) => {
     setGardenXP(prev => {
-      const xpNeeded = Math.floor(100 * Math.pow(1.15, gardenLevel - 1));
+      const xpNeeded = getXPNeeded(gardenLevel);
       const newXP = prev + amount;
       
       if (newXP >= xpNeeded) {
@@ -712,7 +716,7 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
         return newXP;
       }
     });
-  }, [gardenLevel, maxPlantSlots, earnGems, maxEnergy, streak, saveEnergy, saveGardenLevel, updateMilestoneProgress]);
+  }, [gardenLevel, maxPlantSlots, earnGems, maxEnergy, streak, saveEnergy, saveGardenLevel, updateMilestoneProgress, getXPNeeded]);
 
   const claimComebackBonus = useCallback(() => {
     if (!comebackQuery.data || comebackQuery.data.bonusClaimed) return;
@@ -820,6 +824,7 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     maxPlantSlots,
     hasComebackBonus,
     milestones,
+    getXPNeeded,
     isLoading: premiumQuery.isLoading || boostsQuery.isLoading || energyQuery.isLoading,
     upgradeToPremium,
     purchaseEnergyBoost,

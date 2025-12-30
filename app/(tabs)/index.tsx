@@ -346,7 +346,7 @@ export default function GardenScreen() {
   const router = useRouter();
   const { manifestations, nurtureManifestation, deleteManifestation, harvestManifestation } = useManifestations();
   const { shareManifestation } = useCommunity();
-  const { isPremium, energyBoosts, energy, maxEnergy, streak, gems, comboCount, comboMultiplier, gardenLevel, gardenXP, maxPlantSlots, consumeEnergyBoost, purchaseEnergyBoost, consumeEnergy, refillEnergy, earnGems, incrementCombo, addGardenXP } = usePremium();
+  const { isPremium, energyBoosts, energy, maxEnergy, streak, gems, comboCount, comboMultiplier, gardenLevel, gardenXP, maxPlantSlots, consumeEnergyBoost, purchaseEnergyBoost, consumeEnergy, refillEnergy, earnGems, incrementCombo, addGardenXP, getXPNeeded } = usePremium();
   const { achievements, newUnlocks, clearNewUnlocks, incrementAchievement, getUnlockedCount, getTotalCount } = useAchievements();
   const { quests, progressQuest, getCompletedCount, getTotalCount: getQuestsTotalCount } = useQuests();
   const { settings, permissionStatus, requestPermissions, updateSettings, rescheduleAllNotifications } = useNotifications();
@@ -553,7 +553,7 @@ export default function GardenScreen() {
             <View style={styles.compactXpBar}>
               <LinearGradient
                 colors={['#9370DB', '#FF69B4']}
-                style={[styles.xpFill, { width: `${(gardenXP / (gardenLevel * 100)) * 100}%` }]}
+                style={[styles.xpFill, { width: `${(gardenXP / getXPNeeded(gardenLevel)) * 100}%` }]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               />
