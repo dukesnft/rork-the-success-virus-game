@@ -182,7 +182,7 @@ const Star = memo(({ delay }: { delay: number }) => {
 
 Star.displayName = 'Star';
 
-const ManifestationPlant = memo(({ manifestation, onNurture, onBoost, onPress }: { manifestation: Manifestation; onNurture: () => void; onBoost: () => void; onPress: () => void }) => {
+const ManifestationPlant = memo(({ manifestation, onNurture, onBoost, onPress, gardenLevel }: { manifestation: Manifestation; onNurture: () => void; onBoost: () => void; onPress: () => void; gardenLevel: number }) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -311,6 +311,10 @@ const ManifestationPlant = memo(({ manifestation, onNurture, onBoost, onPress }:
       <View style={[styles.rarityBadge, { backgroundColor: rarityColor }]}>
         <Text style={styles.rarityBadgeText}>{manifestation.rarity[0].toUpperCase()}</Text>
       </View>
+      <View style={styles.plantLevelBadge}>
+        <Trophy color="#FFD700" size={10} />
+        <Text style={styles.plantLevelText}>{gardenLevel}</Text>
+      </View>
       <View style={styles.energyBarContainer}>
         <View style={[styles.energyBar, { borderColor: rarityColor }]}>
           <LinearGradient
@@ -346,7 +350,7 @@ export default function GardenScreen() {
   const router = useRouter();
   const { manifestations, nurtureManifestation, deleteManifestation, harvestManifestation } = useManifestations();
   const { shareManifestation } = useCommunity();
-  const { isPremium, energyBoosts, energy, maxEnergy, streak, gems, comboCount, comboMultiplier, gardenLevel, gardenXP, maxPlantSlots, consumeEnergyBoost, purchaseEnergyBoost, consumeEnergy, refillEnergy, earnGems, incrementCombo, addGardenXP, getXPNeeded } = usePremium();
+  const { isPremium, energyBoosts, energy, maxEnergy, streak, gems, comboCount, comboMultiplier, gardenLevel, gardenXP, consumeEnergyBoost, purchaseEnergyBoost, consumeEnergy, refillEnergy, earnGems, incrementCombo, addGardenXP, getXPNeeded } = usePremium();
   const { achievements, newUnlocks, clearNewUnlocks, incrementAchievement, getUnlockedCount, getTotalCount } = useAchievements();
   const { quests, progressQuest, getCompletedCount, getTotalCount: getQuestsTotalCount } = useQuests();
   const { settings, permissionStatus, requestPermissions, updateSettings, rescheduleAllNotifications } = useNotifications();
@@ -553,12 +557,12 @@ export default function GardenScreen() {
             <View style={styles.compactXpBar}>
               <LinearGradient
                 colors={['#9370DB', '#FF69B4']}
-                style={[styles.xpFill, { width: `${(gardenXP / getXPNeeded(gardenLevel)) * 100}%` }]}
+                style={[styles.xpFill, { width: `${Math.min(100, (gardenXP / getXPNeeded(gardenLevel)) * 100)}%` }]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               />
             </View>
-            <Text style={styles.compactXpText}>{manifestations.length}/{maxPlantSlots}</Text>
+            <Text style={styles.compactXpText}>{gardenXP}/{getXPNeeded(gardenLevel)} XP</Text>
           </View>
           
           <View style={styles.topStatsContainer}>
@@ -678,6 +682,7 @@ export default function GardenScreen() {
                     onNurture={() => handleNurture(m.id)}
                     onBoost={() => handleBoostRequest(m.id)}
                     onPress={() => setSelectedManifestationId(m.id)}
+                    gardenLevel={gardenLevel}
                   />
                 ))}
               </>
@@ -2597,6 +2602,25 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.8)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
+  },
+  plantLevelBadge: {
+    position: 'absolute',
+    bottom: 56,
+    right: -5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.5)',
+  },
+  plantLevelText: {
+    fontSize: 10,
+    fontWeight: '800' as const,
+    color: '#FFD700',
   },
   rarityDisplay: {
     borderRadius: 16,
