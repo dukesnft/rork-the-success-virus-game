@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -36,6 +36,82 @@ export default function ProfileScreen() {
 
   const userRanking = bloomedRankings.find((r: any) => r.username === displayUsername);
   const streakRanking = streakRankings.find((r: any) => r.username === displayUsername);
+
+  const generateMockTopManifestations = useCallback((username: string) => {
+    const intentions = {
+      abundance: [
+        'Financial freedom flows to me effortlessly',
+        'I attract wealth and prosperity',
+        'Abundance surrounds me daily',
+        'Money comes to me in expected and unexpected ways'
+      ],
+      love: [
+        'I am worthy of deep, meaningful love',
+        'My relationships are filled with joy and harmony',
+        'Love flows freely in my life',
+        'I attract loving and supportive people'
+      ],
+      health: [
+        'My body is strong, healthy, and vibrant',
+        'I radiate energy and vitality',
+        'Every cell in my body is healing',
+        'I honor my body with healthy choices'
+      ],
+      success: [
+        'I achieve my goals with ease',
+        'Success is my natural state',
+        'I am confident and capable',
+        'Opportunities come to me effortlessly'
+      ],
+      peace: [
+        'I am calm and centered in every moment',
+        'Peace flows through my mind and body',
+        'I release all worry and embrace tranquility',
+        'Inner peace is my foundation'
+      ]
+    };
+
+    const colors = {
+      abundance: ['#FFD700', '#F4C430', '#FFDF00'],
+      love: ['#FF69B4', '#FF1493', '#FF6FBF'],
+      health: ['#00FF7F', '#32CD32', '#7FFF00'],
+      success: ['#FF6347', '#FF4500', '#FF7F50'],
+      peace: ['#87CEEB', '#4682B4', '#6495ED']
+    };
+
+    const rarities: SeedRarity[] = ['common', 'rare', 'epic', 'legendary'];
+    const categories: ('abundance' | 'love' | 'health' | 'success' | 'peace')[] = ['abundance', 'love', 'health', 'success', 'peace'];
+
+    const seed = username.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const mockManifestations: typeof topManifestations = [];
+
+    for (let i = 0; i < 3; i++) {
+      const catIndex = (seed + i * 17) % categories.length;
+      const category = categories[catIndex];
+      const categoryIntentions = intentions[category];
+      const categoryColors = colors[category];
+      const intentionIndex = (seed + i * 23) % categoryIntentions.length;
+      const colorIndex = (seed + i * 31) % categoryColors.length;
+      const rarityIndex = (seed + i * 13) % rarities.length;
+
+      mockManifestations.push({
+        id: `mock_${username}_${i}`,
+        intention: categoryIntentions[intentionIndex],
+        category,
+        color: categoryColors[colorIndex],
+        rarity: rarities[rarityIndex],
+      });
+    }
+
+    return mockManifestations;
+  }, []);
+
+  const displayedTopManifestations = useMemo(() => {
+    if (isOwnProfile) {
+      return topManifestations;
+    }
+    return generateMockTopManifestations(displayUsername as string);
+  }, [isOwnProfile, topManifestations, displayUsername, generateMockTopManifestations]);
 
   const getRarityColor = (rarity: SeedRarity) => {
     switch (rarity) {
@@ -249,7 +325,7 @@ export default function ProfileScreen() {
                 )}
               </View>
 
-              {topManifestations.length === 0 ? (
+              {displayedTopManifestations.length === 0 ? (
                 <View style={styles.emptyState}>
                   <Text style={styles.emptyText}>
                     {isOwnProfile
@@ -259,7 +335,7 @@ export default function ProfileScreen() {
                 </View>
               ) : (
                 <View style={styles.manifestationsList}>
-                  {topManifestations.map((manifestation, index) => (
+                  {displayedTopManifestations.map((manifestation, index) => (
                     <View key={manifestation.id} style={styles.manifestationItem}>
                       <LinearGradient
                         colors={getRarityGradient(manifestation.rarity)}

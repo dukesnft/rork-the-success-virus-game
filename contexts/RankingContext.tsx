@@ -35,27 +35,29 @@ const generateMockRankings = (): { bloomedRankings: BloomedRanking[], legendaryR
     let totalSpent = 0;
     let level = 1;
     
+    const seed = (i * 1337) % 1000;
+    
     if (i === 0) {
-      totalSpent = 700 + Math.floor(Math.random() * 100);
-      level = 45 + Math.floor(Math.random() * 10);
+      totalSpent = 700 + (seed % 100);
+      level = 45 + (seed % 10);
     } else if (i === 1) {
-      totalSpent = 500 + Math.floor(Math.random() * 100);
-      level = 38 + Math.floor(Math.random() * 7);
+      totalSpent = 500 + (seed % 100);
+      level = 38 + (seed % 7);
     } else if (i === 2) {
-      totalSpent = 300 + Math.floor(Math.random() * 100);
-      level = 30 + Math.floor(Math.random() * 8);
+      totalSpent = 300 + (seed % 100);
+      level = 30 + (seed % 8);
     } else if (i < 10) {
-      totalSpent = Math.floor(Math.random() * 300) + 100;
-      level = 20 + Math.floor(Math.random() * 10);
+      totalSpent = (seed % 300) + 100;
+      level = 20 + (seed % 10);
     } else {
-      totalSpent = Math.floor(Math.random() * 100);
-      level = 5 + Math.floor(Math.random() * 15);
+      totalSpent = seed % 100;
+      level = 5 + (seed % 15);
     }
     
-    const totalBloomed = Math.floor(Math.random() * 100) + 20 + Math.floor(totalSpent / 5);
-    const legendaryCount = Math.floor(Math.random() * 20) + 5 + Math.floor(totalSpent / 50);
-    const currentStreak = Math.floor(Math.random() * 80) + 10 + Math.floor(totalSpent / 10);
-    const longestStreak = currentStreak + Math.floor(Math.random() * 50);
+    const totalBloomed = (seed % 100) + 20 + Math.floor(totalSpent / 5);
+    const legendaryCount = (seed % 20) + 5 + Math.floor(totalSpent / 50);
+    const currentStreak = (seed % 80) + 10 + Math.floor(totalSpent / 10);
+    const longestStreak = currentStreak + (seed % 50);
     
     bloomedRankings.push({
       id: `bloomed_${i}`,

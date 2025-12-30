@@ -73,21 +73,30 @@ const generateMockSharedManifestations = (): SharedManifestation[] => {
   const shared: SharedManifestation[] = [];
 
   for (let i = 0; i < 30; i++) {
-    const category = categories[Math.floor(Math.random() * categories.length)];
+    const seed = (i * 1337) % 1000;
+    const category = categories[seed % categories.length];
     const categoryIntentions = intentions[category];
     const categoryColors = colors[category];
     
+    const nameIndex = seed % names.length;
+    let level = 1;
+    if (nameIndex === 0) level = 45 + (seed % 10);
+    else if (nameIndex === 1) level = 38 + (seed % 7);
+    else if (nameIndex === 2) level = 30 + (seed % 8);
+    else if (nameIndex < 10) level = 20 + (seed % 10);
+    else level = 5 + (seed % 15);
+    
     shared.push({
       id: `shared_${i}`,
-      username: names[Math.floor(Math.random() * names.length)],
-      intention: categoryIntentions[Math.floor(Math.random() * categoryIntentions.length)],
+      username: names[nameIndex],
+      intention: categoryIntentions[seed % categoryIntentions.length],
       category,
-      color: categoryColors[Math.floor(Math.random() * categoryColors.length)],
-      likes: Math.floor(Math.random() * 200) + 5,
-      sharedAt: Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000),
+      color: categoryColors[seed % categoryColors.length],
+      likes: (seed % 200) + 5,
+      sharedAt: Date.now() - (seed % (7 * 24 * 60 * 60 * 1000)),
       likedByUser: false,
       rarity: getRandomRarity(),
-      level: Math.floor(Math.random() * 30) + 1,
+      level,
     });
   }
 

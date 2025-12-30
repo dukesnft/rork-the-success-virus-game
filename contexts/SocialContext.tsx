@@ -19,10 +19,17 @@ const generateMockFriends = (): Friend[] => {
     'CosmicDreamer', 'LunarLight', 'StellarSoul', 'MysticVibes', 'ZenMaster',
   ];
 
+  const generateRandomLevel = (index: number) => {
+    if (index === 0) return 45 + Math.floor(Math.random() * 10);
+    if (index === 1) return 38 + Math.floor(Math.random() * 7);
+    if (index === 2) return 30 + Math.floor(Math.random() * 8);
+    return 10 + Math.floor(Math.random() * 30);
+  };
+
   return names.map((name, i) => ({
     id: `friend_${i}`,
     username: name,
-    level: 10 + Math.floor(Math.random() * 30),
+    level: generateRandomLevel(i),
     totalBloomed: 20 + Math.floor(Math.random() * 100),
     currentStreak: 5 + Math.floor(Math.random() * 50),
     addedAt: Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000),
