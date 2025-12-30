@@ -128,8 +128,12 @@ export const [ManifestationProvider, useManifestations] = createContextHook(() =
     setManifestations(prev => {
       const updated = prev.map(m => {
         if (m.id === id) {
-          const isLegendary = m.rarity === 'legendary';
-          const energyGain = isLegendary ? Math.floor(baseEnergyGain * 2.5) : baseEnergyGain;
+          let rarityMultiplier = 1;
+          if (m.rarity === 'legendary') rarityMultiplier = 2.5;
+          else if (m.rarity === 'epic') rarityMultiplier = 1.5;
+          else if (m.rarity === 'rare') rarityMultiplier = 1.3;
+          
+          const energyGain = Math.floor(baseEnergyGain * rarityMultiplier);
           const newEnergy = Math.min(m.energy + energyGain, m.maxEnergy);
           return {
             ...m,

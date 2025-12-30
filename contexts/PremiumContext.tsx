@@ -664,7 +664,7 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
 
   const addGardenXP = useCallback((amount: number) => {
     setGardenXP(prev => {
-      const xpNeeded = gardenLevel * 100;
+      const xpNeeded = Math.floor(100 * Math.pow(1.15, gardenLevel - 1));
       const newXP = prev + amount;
       
       if (newXP >= xpNeeded) {
@@ -681,11 +681,13 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
           maxPlantSlots: newSlots,
         });
         
-        earnGems(25 * newLevel, `Reached Garden Level ${newLevel}`);
+        const gemReward = Math.floor(25 + (newLevel * 15));
+        earnGems(gemReward, `🎉 Level ${newLevel} Reached!`);
         
         setEnergy(prevEnergy => {
           const today = getEasternDateString();
-          const bonusEnergy = Math.min(prevEnergy + (5 * newLevel), maxEnergy);
+          const energyBonus = Math.min(3 + Math.floor(newLevel / 3), 10);
+          const bonusEnergy = Math.min(prevEnergy + energyBonus, maxEnergy);
           saveEnergy({
             energy: bonusEnergy,
             maxEnergy,
@@ -697,6 +699,8 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
         });
         
         updateMilestoneProgress('level', newLevel);
+        
+        console.log(`🎊 Level Up! Level ${newLevel} | Gems: +${gemReward} | Energy: +${Math.min(3 + Math.floor(newLevel / 3), 10)} | Slots: ${newSlots}`);
         
         return remainingXP;
       } else {
