@@ -10,4 +10,5 @@ export interface SharedManifestation {
   sharedAt: number;
   likedByUser: boolean;
   rarity: SeedRarity;
+  level?: number;
 }

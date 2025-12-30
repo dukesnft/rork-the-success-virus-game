@@ -86,6 +86,7 @@ const generateMockSharedManifestations = (): SharedManifestation[] => {
       sharedAt: Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000),
       likedByUser: false,
       rarity: getRandomRarity(),
+      level: Math.floor(Math.random() * 30) + 1,
     });
   }
 

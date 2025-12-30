@@ -17,6 +17,7 @@ import { useCommunity } from '@/contexts/CommunityContext';
 import { useProfile } from '@/contexts/ProfileContext';
 import { useInventory } from '@/contexts/InventoryContext';
 import { useRankings } from '@/contexts/RankingContext';
+import { usePremium } from '@/contexts/PremiumContext';
 import { SeedRarity } from '@/types/manifestation';
 
 export default function ProfileScreen() {
@@ -25,6 +26,7 @@ export default function ProfileScreen() {
   const { topManifestations, addToTopManifestations, removeFromTopManifestations, lastUsernameChange, setLastUsernameChange } = useProfile();
   const { inventory } = useInventory();
   const { bloomedRankings, streakRankings } = useRankings();
+  const { gardenLevel } = usePremium();
   const [showManifestationPicker, setShowManifestationPicker] = useState(false);
   const [showUsernameEdit, setShowUsernameEdit] = useState(false);
   const [newUsername, setNewUsername] = useState('');
@@ -214,9 +216,15 @@ export default function ProfileScreen() {
 
             <View style={styles.statsRow}>
               <View style={styles.statBox}>
+                <Trophy size={24} color="#FFD700" />
+                <Text style={styles.statValue}>{isOwnProfile ? gardenLevel : (userRanking?.level || 1)}</Text>
+                <Text style={styles.statLabel}>Level</Text>
+              </View>
+
+              <View style={styles.statBox}>
                 <Sparkles size={24} color="#FF69B4" />
                 <Text style={styles.statValue}>{userRanking?.score || 0}</Text>
-                <Text style={styles.statLabel}>Seeds</Text>
+                <Text style={styles.statLabel}>Bloomed</Text>
                 <Text style={styles.statRank}>#{userRanking?.rank || '-'}</Text>
               </View>
 
@@ -225,14 +233,6 @@ export default function ProfileScreen() {
                 <Text style={styles.statValue}>{streakRanking?.score || 0}</Text>
                 <Text style={styles.statLabel}>Day Streak</Text>
                 <Text style={styles.statRank}>#{streakRanking?.rank || '-'}</Text>
-              </View>
-
-              <View style={styles.statBox}>
-                <Trophy size={24} color="#FFD700" />
-                <Text style={styles.statValue}>
-                  {Math.max(userRanking?.rank || 99, streakRanking?.rank || 99) <= 3 ? '🏆' : '-'}
-                </Text>
-                <Text style={styles.statLabel}>Top 3</Text>
               </View>
             </View>
 
