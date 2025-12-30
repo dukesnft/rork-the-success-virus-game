@@ -40,3 +40,24 @@ export const ENERGY_PER_STAGE = {
   growing: 75,
   blooming: 100,
 } as const;
+
+export const RARITY_COLORS = {
+  common: '#A0A0A0',
+  rare: '#4A90E2',
+  epic: '#9B59B6',
+  legendary: '#FFD700',
+} as const;
+
+export const RARITY_GLOW_COLORS = {
+  common: ['#A0A0A0', '#C0C0C0'],
+  rare: ['#4A90E2', '#87CEEB'],
+  epic: ['#9B59B6', '#E066FF'],
+  legendary: ['#FFD700', '#FFA500'],
+} as const;
+
+export const RARITY_NAMES = {
+  common: 'Common',
+  rare: 'Rare',
+  epic: 'Epic',
+  legendary: 'Legendary',
+} as const;

@@ -1,8 +1,9 @@
 import { StyleSheet, View, Text, Pressable, Animated, Dimensions, ScrollView, Modal } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getEasternDateString } from '@/utils/dateUtils';
+import { getEasternDateString, formatLocalDateTime } from '@/utils/dateUtils';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Sparkles, Plus, X, Trash2, Bell, Clock, Palette, Package, Share2, ShoppingBag, Gem, Trophy, Target, Zap } from 'lucide-react-native';
+import { RARITY_COLORS, RARITY_GLOW_COLORS, RARITY_NAMES } from '@/constants/manifestation';
 import { useRouter } from 'expo-router';
 import { useManifestations } from '@/contexts/ManifestationContext';
 import { usePremium } from '@/contexts/PremiumContext';
@@ -265,6 +266,10 @@ const ManifestationPlant = memo(({ manifestation, onNurture, onBoost, onPress }:
     outputRange: [0.5, 0.9],
   });
 
+  const rarityColor = RARITY_COLORS[manifestation.rarity];
+  const rarityGlowColors = RARITY_GLOW_COLORS[manifestation.rarity];
+  const isLegendary = manifestation.rarity === 'legendary';
+
   return (
     <Pressable
       onPress={handlePress}
@@ -282,6 +287,17 @@ const ManifestationPlant = memo(({ manifestation, onNurture, onBoost, onPress }:
           }
         ]} 
       />
+      <Animated.View 
+        style={[
+          styles.rarityGlow, 
+          { 
+            opacity: glowOpacity, 
+            borderColor: rarityColor,
+            borderWidth: isLegendary ? 3 : 2,
+            transform: [{ scale: pulseAnim }]
+          }
+        ]} 
+      />
       <Animated.Text 
         style={[
           styles.plantEmoji, 
@@ -292,22 +308,27 @@ const ManifestationPlant = memo(({ manifestation, onNurture, onBoost, onPress }:
       >
         {getEmoji()}
       </Animated.Text>
+      <View style={[styles.rarityBadge, { backgroundColor: rarityColor }]}>
+        <Text style={styles.rarityBadgeText}>{manifestation.rarity[0].toUpperCase()}</Text>
+      </View>
       <View style={styles.energyBarContainer}>
-        <View style={styles.energyBar}>
-          <Animated.View 
+        <View style={[styles.energyBar, { borderColor: rarityColor }]}>
+          <LinearGradient
+            colors={rarityGlowColors as any}
             style={[
               styles.energyFill, 
               { 
-                width: `${manifestation.energy}%`, 
-                backgroundColor: manifestation.color 
+                width: `${manifestation.energy}%`
               }
-            ]} 
+            ]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
           />
         </View>
-        <Text style={styles.energyText}>{manifestation.energy}%</Text>
+        <Text style={[styles.energyText, { color: rarityColor }]}>{manifestation.energy}%</Text>
       </View>
       <Pressable
-        style={styles.quickNurtureButton}
+        style={[styles.quickNurtureButton, { borderColor: rarityColor }]}
         onPress={() => {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           onNurture();
@@ -734,6 +755,20 @@ export default function GardenScreen() {
                   <Text style={styles.detailTitle}>Your Manifestation</Text>
                   <Text style={styles.detailIntention}>{selectedManifestation.intention}</Text>
 
+                  <View style={[styles.rarityDisplay, { borderColor: RARITY_COLORS[selectedManifestation.rarity] }]}>
+                    <LinearGradient
+                      colors={RARITY_GLOW_COLORS[selectedManifestation.rarity] as any}
+                      style={styles.rarityGradient}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                    >
+                      <Text style={styles.rarityLabel}>{RARITY_NAMES[selectedManifestation.rarity]} Seed</Text>
+                      {selectedManifestation.rarity === 'legendary' && (
+                        <Text style={styles.raritySpecial}>✨ 2.5x Growth Speed</Text>
+                      )}
+                    </LinearGradient>
+                  </View>
+
                   <View style={styles.detailStats}>
                     <View style={styles.statCard}>
                       <Text style={styles.statLabel}>Stage</Text>
@@ -761,7 +796,7 @@ export default function GardenScreen() {
                     </View>
                   </View>
 
-                  <Text style={styles.detailAge}>Planted {Math.floor((Date.now() - selectedManifestation.createdAt) / (1000 * 60 * 60 * 24))} days ago</Text>
+                  <Text style={styles.detailAge}>Planted on {formatLocalDateTime(selectedManifestation.createdAt)}</Text>
 
                   <Pressable
                     style={styles.nurtureButton}
@@ -2524,5 +2559,69 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700' as const,
     color: '#FFD700',
+  },
+  rarityGlow: {
+    position: 'absolute',
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    top: -10,
+    left: 10,
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 15,
+    elevation: 8,
+  },
+  rarityBadge: {
+    position: 'absolute',
+    top: -5,
+    left: -5,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.9)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 3,
+    elevation: 6,
+  },
+  rarityBadgeText: {
+    fontSize: 11,
+    fontWeight: '900' as const,
+    color: '#fff',
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  rarityDisplay: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 20,
+    borderWidth: 2,
+  },
+  rarityGradient: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+  },
+  rarityLabel: {
+    fontSize: 16,
+    fontWeight: '800' as const,
+    color: '#fff',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+    marginBottom: 4,
+  },
+  raritySpecial: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: '#fff',
+    opacity: 0.95,
   },
 });
