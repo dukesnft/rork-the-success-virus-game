@@ -2,8 +2,34 @@ export const US_EASTERN_TZ = 'America/New_York';
 
 export const getEasternTime = (): Date => {
   const now = new Date();
-  const easternTimeString = now.toLocaleString('en-US', { timeZone: US_EASTERN_TZ });
-  return new Date(easternTimeString);
+  
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: US_EASTERN_TZ,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
+  
+  const parts = formatter.formatToParts(now);
+  const dateParts: Record<string, string> = {};
+  parts.forEach(part => {
+    if (part.type !== 'literal') {
+      dateParts[part.type] = part.value;
+    }
+  });
+  
+  return new Date(
+    parseInt(dateParts.year, 10),
+    parseInt(dateParts.month, 10) - 1,
+    parseInt(dateParts.day, 10),
+    parseInt(dateParts.hour, 10),
+    parseInt(dateParts.minute, 10),
+    parseInt(dateParts.second, 10)
+  );
 };
 
 export const getLocalTime = (): Date => {
