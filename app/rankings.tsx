@@ -1,6 +1,6 @@
-import { StyleSheet, View, Text, ScrollView, Pressable, Modal, Animated, TextInput } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, Pressable, Modal, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { X, Trophy, Flame, Award, Edit2 } from 'lucide-react-native';
+import { X, Trophy, Flame, Award } from 'lucide-react-native';
 import { useRankings } from '@/contexts/RankingContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useEffect, useRef, useState, memo } from 'react';
@@ -60,16 +60,13 @@ export default function RankingsScreen({ visible, onClose }: RankingsScreenProps
     bloomedRankings, 
     legendaryRankings, 
     streakRankings, 
-    userData, 
-    setUsername,
+    userData,
     getUserBloomedRank,
     getUserLegendaryRank,
     getUserStreakRank 
   } = useRankings();
 
   const [activeTab, setActiveTab] = useState<'bloomed' | 'legendary' | 'streaks'>('bloomed');
-  const [editingUsername, setEditingUsername] = useState(false);
-  const [tempUsername, setTempUsername] = useState(userData.username);
   const slideAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -102,14 +99,6 @@ export default function RankingsScreen({ visible, onClose }: RankingsScreenProps
   const handleTabChange = (tab: 'bloomed' | 'legendary' | 'streaks') => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setActiveTab(tab);
-  };
-
-  const handleSaveUsername = () => {
-    if (tempUsername.trim()) {
-      setUsername(tempUsername.trim());
-      setEditingUsername(false);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    }
   };
 
   const currentRankings = 
@@ -150,30 +139,9 @@ export default function RankingsScreen({ visible, onClose }: RankingsScreenProps
             </View>
 
             <View style={styles.usernameCard}>
-              {editingUsername ? (
-                <View style={styles.usernameEdit}>
-                  <TextInput
-                    style={styles.usernameInput}
-                    value={tempUsername}
-                    onChangeText={setTempUsername}
-                    placeholder="Enter username"
-                    placeholderTextColor="#b8a9d9"
-                    maxLength={20}
-                    autoFocus
-                  />
-                  <Pressable style={styles.saveButton} onPress={handleSaveUsername}>
-                    <Text style={styles.saveButtonText}>Save</Text>
-                  </Pressable>
-                </View>
-              ) : (
-                <Pressable 
-                  style={styles.usernameDisplay}
-                  onPress={() => setEditingUsername(true)}
-                >
-                  <Text style={styles.usernameText}>{userData.username}</Text>
-                  <Edit2 color="#b8a9d9" size={20} />
-                </Pressable>
-              )}
+              <View style={styles.usernameDisplay}>
+                <Text style={styles.usernameText}>{userData.username}</Text>
+              </View>
             </View>
 
             <View style={styles.tabsContainer}>

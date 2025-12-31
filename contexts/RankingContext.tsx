@@ -45,35 +45,49 @@ const generateMockRankings = (): { bloomedRankings: BloomedRanking[], legendaryR
     let totalSpent = 0;
     
     if (i === 0) {
-      totalBloomed = 450 + randomFactor;
-      totalSpent = 2500 + (randomFactor * 10);
+      totalBloomed = 550 + randomFactor;
+      totalSpent = 150 + Math.floor(randomFactor / 2);
     } else if (i === 1) {
-      totalBloomed = 380 + randomFactor;
-      totalSpent = 2100 + (randomFactor * 8);
+      totalBloomed = 480 + randomFactor;
+      totalSpent = 120 + Math.floor(randomFactor / 2);
     } else if (i === 2) {
-      totalBloomed = 320 + randomFactor;
-      totalSpent = 1800 + (randomFactor * 7);
+      totalBloomed = 420 + randomFactor;
+      totalSpent = 100 + Math.floor(randomFactor / 2);
     } else if (i < 5) {
-      totalBloomed = 250 + randomFactor + (5 - i) * 20;
-      totalSpent = 1500 + (randomFactor * 5) + (5 - i) * 100;
+      totalBloomed = 320 + randomFactor + (5 - i) * 25;
+      totalSpent = 80 + Math.floor(randomFactor / 3) + (5 - i) * 10;
     } else if (i < 10) {
-      totalBloomed = 180 + randomFactor + (10 - i) * 10;
-      totalSpent = 1000 + (randomFactor * 4) + (10 - i) * 50;
+      totalBloomed = 220 + randomFactor + (10 - i) * 15;
+      totalSpent = 50 + Math.floor(randomFactor / 3) + (10 - i) * 5;
     } else if (i < 20) {
-      totalBloomed = 120 + randomFactor + (20 - i) * 5;
-      totalSpent = 600 + (randomFactor * 3) + (20 - i) * 30;
+      totalBloomed = 140 + randomFactor + (20 - i) * 8;
+      totalSpent = 30 + Math.floor(randomFactor / 4) + (20 - i) * 3;
     } else if (i < 35) {
-      totalBloomed = 60 + randomFactor + (35 - i) * 2;
-      totalSpent = 300 + (randomFactor * 2) + (35 - i) * 15;
+      totalBloomed = 70 + randomFactor + (35 - i) * 3;
+      totalSpent = 15 + Math.floor(randomFactor / 5) + (35 - i) * 1;
     } else {
-      totalBloomed = 20 + randomFactor;
-      totalSpent = 100 + (randomFactor * 2);
+      totalBloomed = 25 + (randomFactor % 40);
+      totalSpent = 5 + Math.floor(randomFactor / 10);
     }
     
-    const legendaryCount = Math.min(Math.floor(totalBloomed * 0.12) + (randomFactor % 8), Math.floor(totalBloomed * 0.25));
+    const legendaryCount = Math.floor(totalBloomed * 0.08) + (randomFactor % 5);
     
-    const currentStreak = Math.min((seed % 12) + 1 + Math.floor(i / 10), 14);
-    const longestStreak = Math.max(currentStreak, Math.min(currentStreak + (randomFactor % 5), 14));
+    let currentStreak = 1;
+    let longestStreak = 1;
+    
+    if (i < 5) {
+      currentStreak = 8 + (randomFactor % 7);
+      longestStreak = currentStreak + (randomFactor % 4);
+    } else if (i < 15) {
+      currentStreak = 5 + (randomFactor % 6);
+      longestStreak = currentStreak + (randomFactor % 5);
+    } else if (i < 30) {
+      currentStreak = 2 + (randomFactor % 5);
+      longestStreak = currentStreak + (randomFactor % 6);
+    } else {
+      currentStreak = 1 + (randomFactor % 4);
+      longestStreak = currentStreak + (randomFactor % 8);
+    }
     
     bloomedRankings.push({
       id: `bloomed_${i}`,

@@ -21,19 +21,25 @@ import { SeedRarity } from '@/types/manifestation';
 
 export default function ProfileScreen() {
   const { username: otherUsername } = useLocalSearchParams();
-  const { username: myUsername, updateUsername } = useCommunity();
+  const { username: communityUsername, updateUsername: updateCommunityUsername } = useCommunity();
   const { topManifestations, addToTopManifestations, removeFromTopManifestations, lastUsernameChange, setLastUsernameChange } = useProfile();
-  const { inventory } = useInventory();
-  const { bloomedRankings, streakRankings } = useRankings();
+  const { inventory, getBloomingSeeds } = useInventory();
+  const { bloomedRankings, streakRankings, userData, setUsername: setRankingUsername } = useRankings();
   const [showManifestationPicker, setShowManifestationPicker] = useState(false);
   const [showUsernameEdit, setShowUsernameEdit] = useState(false);
   const [newUsername, setNewUsername] = useState('');
 
+  const myUsername = userData.username !== 'You' ? userData.username : communityUsername;
   const isOwnProfile = !otherUsername || otherUsername === myUsername;
   const displayUsername = isOwnProfile ? myUsername : (Array.isArray(otherUsername) ? otherUsername[0] : otherUsername);
 
-  const userRanking = bloomedRankings.find((r: any) => r.username === displayUsername);
-  const streakRanking = streakRankings.find((r: any) => r.username === displayUsername);
+  const userRanking = isOwnProfile 
+    ? bloomedRankings.find((r: any) => r.id === 'user') || { score: getBloomingSeeds(), rank: 0 }
+    : bloomedRankings.find((r: any) => r.username === displayUsername);
+  
+  const streakRanking = isOwnProfile
+    ? streakRankings.find((r: any) => r.id === 'user') || { score: userData.currentStreak, rank: 0, longestStreak: userData.longestStreak }
+    : streakRankings.find((r: any) => r.username === displayUsername);
 
   const generateMockTopManifestations = useCallback((username: string) => {
     const intentions = {
@@ -232,7 +238,8 @@ export default function ProfileScreen() {
         {
           text: 'Confirm',
           onPress: () => {
-            updateUsername(trimmed);
+            updateCommunityUsername(trimmed);
+            setRankingUsername(trimmed);
             setLastUsernameChange(Date.now());
             setShowUsernameEdit(false);
             Alert.alert('Success', 'Your username has been updated!');
@@ -526,8 +533,8 @@ export default function ProfileScreen() {
               />
 
               <Text style={styles.usernameRules}>
-                • 3-20 characters{`\n`}
-                • Letters, numbers, and underscores only
+                • 3-20 characters
+                {`\n`}• Letters, numbers, and underscores only
               </Text>
 
               <View style={styles.usernameModalButtons}>
