@@ -13,5 +13,4 @@ export interface UserProfile {
   topManifestations: TopManifestation[];
   totalSeeds: number;
   streak: number;
-  level: number;
 }

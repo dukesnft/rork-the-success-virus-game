@@ -4,7 +4,6 @@ import { X, Trophy, Flame, Award, Edit2 } from 'lucide-react-native';
 import { useRankings } from '@/contexts/RankingContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useEffect, useRef, useState, memo } from 'react';
-import { usePremium } from '@/contexts/PremiumContext';
 import * as Haptics from 'expo-haptics';
 
 interface RankingsScreenProps {
@@ -17,15 +16,13 @@ const RankingItem = memo(function RankingItem({
   username, 
   score, 
   isUser,
-  subtitle,
-  level 
+  subtitle
 }: { 
   rank: number; 
   username: string; 
   score: number; 
   isUser: boolean;
   subtitle?: string;
-  level: number;
 }) {
   const getRankColor = (rank: number): string => {
     if (rank === 1) return '#FFD700';
@@ -47,14 +44,9 @@ const RankingItem = memo(function RankingItem({
         {getRankIcon(rank)}
       </Text>
       <View style={styles.rankingInfo}>
-        <View style={styles.usernameRow}>
-          <Text style={[styles.rankUsername, isUser && styles.rankUsernameUser]}>
-            {username} {isUser && '👑'}
-          </Text>
-          <View style={styles.levelBadge}>
-            <Text style={styles.levelText}>Lv.{level}</Text>
-          </View>
-        </View>
+        <Text style={[styles.rankUsername, isUser && styles.rankUsernameUser]}>
+          {username} {isUser && '👑'}
+        </Text>
         {subtitle && <Text style={styles.rankSubtitle}>{subtitle}</Text>}
       </View>
       <Text style={[styles.rankScore, isUser && styles.rankScoreUser]}>{score}</Text>
@@ -74,7 +66,7 @@ export default function RankingsScreen({ visible, onClose }: RankingsScreenProps
     getUserLegendaryRank,
     getUserStreakRank 
   } = useRankings();
-  const { gardenLevel: userLevel } = usePremium();
+
   const [activeTab, setActiveTab] = useState<'bloomed' | 'legendary' | 'streaks'>('bloomed');
   const [editingUsername, setEditingUsername] = useState(false);
   const [tempUsername, setTempUsername] = useState(userData.username);
@@ -255,7 +247,6 @@ export default function RankingsScreen({ visible, onClose }: RankingsScreenProps
                         score={ranking.score}
                         isUser={isUser}
                         subtitle={subtitle}
-                        level={isUser ? userLevel : ranking.level}
                       />
                     );
                   })}

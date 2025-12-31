@@ -33,25 +33,19 @@ const generateMockRankings = (): { bloomedRankings: BloomedRanking[], legendaryR
 
   for (let i = 0; i < 20; i++) {
     let totalSpent = 0;
-    let level = 1;
     
     const seed = (i * 1337) % 1000;
     
     if (i === 0) {
       totalSpent = 700 + (seed % 100);
-      level = 45 + (seed % 10);
     } else if (i === 1) {
       totalSpent = 500 + (seed % 100);
-      level = 38 + (seed % 7);
     } else if (i === 2) {
       totalSpent = 300 + (seed % 100);
-      level = 30 + (seed % 8);
     } else if (i < 10) {
       totalSpent = (seed % 300) + 100;
-      level = 20 + (seed % 10);
     } else {
       totalSpent = seed % 100;
-      level = 5 + (seed % 15);
     }
     
     const totalBloomed = (seed % 100) + 20 + Math.floor(totalSpent / 5);
@@ -66,7 +60,6 @@ const generateMockRankings = (): { bloomedRankings: BloomedRanking[], legendaryR
       rank: i + 1,
       totalBloomed,
       totalSpent,
-      level,
     });
 
     legendaryRankings.push({
@@ -76,7 +69,6 @@ const generateMockRankings = (): { bloomedRankings: BloomedRanking[], legendaryR
       rank: i + 1,
       legendaryCount,
       totalSpent,
-      level,
     });
     
     streakRankings.push({
@@ -87,7 +79,6 @@ const generateMockRankings = (): { bloomedRankings: BloomedRanking[], legendaryR
       currentStreak,
       longestStreak,
       totalSpent,
-      level,
     });
   }
 
@@ -114,7 +105,7 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
   });
 
   const { getBloomingSeeds, inventory } = useInventory();
-  const { totalSpent, gardenLevel: level } = usePremium();
+  const { totalSpent } = usePremium();
 
   const userDataQuery = useQuery({
     queryKey: ['userRankingData'],
@@ -227,7 +218,6 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
         currentStreak,
         longestStreak,
         totalSpent,
-        level,
       };
 
       const otherRankings = prevRankings.filter(r => r.id !== 'user');
@@ -239,7 +229,7 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
       saveStreakRankingsMutate(allRankings);
       return allRankings;
     });
-  }, [userData.username, totalSpent, level, saveStreakRankingsMutate]);
+  }, [userData.username, totalSpent, saveStreakRankingsMutate]);
 
   const checkInStreak = useCallback(() => {
     const today = getEasternTime().toDateString();
@@ -293,7 +283,6 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
         rank: 0,
         totalBloomed,
         totalSpent,
-        level,
       };
 
       const otherRankings = prevRankings.filter(r => r.id !== 'user');
@@ -305,7 +294,7 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
       saveBloomedRankingsMutate(allRankings);
       return allRankings;
     });
-  }, [getBloomingSeeds, userData.username, totalSpent, level, saveBloomedRankingsMutate]);
+  }, [getBloomingSeeds, userData.username, totalSpent, saveBloomedRankingsMutate]);
 
   const updateLegendaryRankings = useCallback(() => {
     setLegendaryRankings(prevRankings => {
@@ -322,7 +311,6 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
         rank: 0,
         legendaryCount,
         totalSpent,
-        level,
       };
 
       const otherRankings = prevRankings.filter(r => r.id !== 'user');
@@ -334,7 +322,7 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
       saveLegendaryRankingsMutate(allRankings);
       return allRankings;
     });
-  }, [inventory, userData.username, totalSpent, level, saveLegendaryRankingsMutate]);
+  }, [inventory, userData.username, totalSpent, saveLegendaryRankingsMutate]);
 
   const setUsername = useCallback((username: string) => {
     setUserData(prevData => {

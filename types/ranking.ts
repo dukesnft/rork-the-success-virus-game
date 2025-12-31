@@ -4,7 +4,6 @@ export interface RankingEntry {
   score: number;
   rank: number;
   totalSpent: number;
-  level: number;
 }
 
 export interface BloomedRanking extends RankingEntry {

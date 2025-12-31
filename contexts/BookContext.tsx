@@ -57,24 +57,31 @@ export const [BookProvider, useBooks] = createContextHook(() => {
   }, [booksQuery.data]);
 
   const purchaseBook = useCallback(async (bookId: string) => {
-    const updated = books.map(book => 
-      book.id === bookId ? { ...book, isPurchased: true } : book
-    );
-    setBooks(updated);
-    saveMutate(updated);
+    console.log('Purchasing book:', bookId);
+    setBooks(prev => {
+      const updated = prev.map(book => 
+        book.id === bookId ? { ...book, isPurchased: true } : book
+      );
+      console.log('Updated books:', updated);
+      saveMutate(updated);
+      return updated;
+    });
     
     const now = Date.now();
     setLastPurchaseTime(now);
     await AsyncStorage.setItem(LAST_PURCHASE_KEY, now.toString());
-  }, [books, saveMutate]);
+    console.log('Book purchased successfully');
+  }, [saveMutate]);
 
   const updateReadingProgress = useCallback((bookId: string, progress: number) => {
-    const updated = books.map(book => 
-      book.id === bookId ? { ...book, readingProgress: progress } : book
-    );
-    setBooks(updated);
-    saveMutate(updated);
-  }, [books, saveMutate]);
+    setBooks(prev => {
+      const updated = prev.map(book => 
+        book.id === bookId ? { ...book, readingProgress: progress } : book
+      );
+      saveMutate(updated);
+      return updated;
+    });
+  }, [saveMutate]);
 
   const getBookPrice = useCallback((book: Book) => {
     let price = book.price;

@@ -11,13 +11,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { X, Sparkles, Flame, Trophy, Plus, Check, Edit2 } from 'lucide-react-native';
+import { X, Sparkles, Flame, Plus, Check, Edit2 } from 'lucide-react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCommunity } from '@/contexts/CommunityContext';
 import { useProfile } from '@/contexts/ProfileContext';
 import { useInventory } from '@/contexts/InventoryContext';
 import { useRankings } from '@/contexts/RankingContext';
-import { usePremium } from '@/contexts/PremiumContext';
 import { SeedRarity } from '@/types/manifestation';
 
 export default function ProfileScreen() {
@@ -26,7 +25,6 @@ export default function ProfileScreen() {
   const { topManifestations, addToTopManifestations, removeFromTopManifestations, lastUsernameChange, setLastUsernameChange } = useProfile();
   const { inventory } = useInventory();
   const { bloomedRankings, streakRankings } = useRankings();
-  const { gardenLevel } = usePremium();
   const [showManifestationPicker, setShowManifestationPicker] = useState(false);
   const [showUsernameEdit, setShowUsernameEdit] = useState(false);
   const [newUsername, setNewUsername] = useState('');
@@ -291,12 +289,6 @@ export default function ProfileScreen() {
             </View>
 
             <View style={styles.statsRow}>
-              <View style={styles.statBox}>
-                <Trophy size={24} color="#FFD700" />
-                <Text style={styles.statValue}>{isOwnProfile ? gardenLevel : (userRanking?.level || 1)}</Text>
-                <Text style={styles.statLabel}>Level</Text>
-              </View>
-
               <View style={styles.statBox}>
                 <Sparkles size={24} color="#FF69B4" />
                 <Text style={styles.statValue}>{userRanking?.score || 0}</Text>

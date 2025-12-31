@@ -284,12 +284,7 @@ export default function CommunityScreen() {
                 <View style={styles.rankLeft}>
                   <Text style={styles.medal}>{medal}</Text>
                   <View>
-                    <View style={styles.rankTopRow}>
-                      <Text style={styles.rankNumber}>#{ranking.rank}</Text>
-                      <View style={styles.rankLevelBadge}>
-                        <Text style={styles.rankLevelText}>Lv.{ranking.level}</Text>
-                      </View>
-                    </View>
+                    <Text style={styles.rankNumber}>#{ranking.rank}</Text>
                     <Text style={[styles.rankUsername, isUser && styles.userRank]}>
                       {ranking.username}
                     </Text>
@@ -316,12 +311,7 @@ export default function CommunityScreen() {
                 style={[styles.rankItem, isUser && styles.userRankItem]}
               >
                 <View style={styles.rankLeft}>
-                  <View style={styles.rankInfoRow}>
-                    <Text style={styles.rankNumber}>#{ranking.rank}</Text>
-                    <View style={styles.rankLevelBadge}>
-                      <Text style={styles.rankLevelText}>Lv.{ranking.level}</Text>
-                    </View>
-                  </View>
+                  <Text style={styles.rankNumber}>#{ranking.rank}</Text>
                   <Text style={[styles.rankUsername, isUser && styles.userRank]}>
                     {ranking.username}
                   </Text>
