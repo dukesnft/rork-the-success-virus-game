@@ -4,6 +4,7 @@ import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { configureRevenueCat } from "@/utils/revenuecat";
+import { trpc, trpcClient } from "@/lib/trpc";
 import { ManifestationProvider } from "@/contexts/ManifestationContext";
 import { PremiumProvider, usePremium } from "@/contexts/PremiumContext";
 import { NotificationProvider, useNotifications } from "@/contexts/NotificationContext";
@@ -66,8 +67,9 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <PremiumProvider>
+    <trpc.Provider client={trpcClient} queryClient={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        <PremiumProvider>
         <AchievementProvider>
           <QuestProvider>
             <NotificationProvider>
@@ -97,7 +99,8 @@ export default function RootLayout() {
             </NotificationProvider>
           </QuestProvider>
         </AchievementProvider>
-      </PremiumProvider>
-    </QueryClientProvider>
+        </PremiumProvider>
+      </QueryClientProvider>
+    </trpc.Provider>
   );
 }
