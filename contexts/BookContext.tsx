@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Book } from '@/types/book';
 import { AVAILABLE_BOOKS } from '@/constants/books';
 import { usePremium } from '@/contexts/PremiumContext';
+import { Alert } from 'react-native';
 
 const STORAGE_KEY = 'purchased_books';
 const LAST_PURCHASE_KEY = 'last_book_purchase';
@@ -57,20 +58,39 @@ export const [BookProvider, useBooks] = createContextHook(() => {
   }, [booksQuery.data]);
 
   const purchaseBook = useCallback(async (bookId: string) => {
-    console.log('Purchasing book:', bookId);
-    setBooks(prev => {
-      const updated = prev.map(book => 
-        book.id === bookId ? { ...book, isPurchased: true } : book
-      );
-      console.log('Updated books:', updated);
-      saveMutate(updated);
-      return updated;
-    });
+    console.log('Attempting to purchase book:', bookId);
     
-    const now = Date.now();
-    setLastPurchaseTime(now);
-    await AsyncStorage.setItem(LAST_PURCHASE_KEY, now.toString());
-    console.log('Book purchased successfully');
+    Alert.alert(
+      '💳 Real Money Purchase',
+      'Books are purchased with real money through your app store account. This feature requires RevenueCat integration to be set up.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Purchase',
+          onPress: async () => {
+            console.log('Processing book purchase for:', bookId);
+            
+            setBooks(prev => {
+              const updated = prev.map(book => 
+                book.id === bookId ? { ...book, isPurchased: true } : book
+              );
+              saveMutate(updated);
+              return updated;
+            });
+            
+            const now = Date.now();
+            setLastPurchaseTime(now);
+            await AsyncStorage.setItem(LAST_PURCHASE_KEY, now.toString());
+            
+            Alert.alert(
+              '✅ Purchase Successful',
+              'Your book has been added to your library!',
+              [{ text: 'Great!', style: 'default' }]
+            );
+          }
+        }
+      ]
+    );
   }, [saveMutate]);
 
   const updateReadingProgress = useCallback((bookId: string, progress: number) => {

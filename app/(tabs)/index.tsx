@@ -182,7 +182,7 @@ const Star = memo(({ delay }: { delay: number }) => {
 
 Star.displayName = 'Star';
 
-const ManifestationPlant = memo(({ manifestation, onNurture, onBoost, onPress, gardenLevel }: { manifestation: Manifestation; onNurture: () => void; onBoost: () => void; onPress: () => void; gardenLevel: number }) => {
+const ManifestationPlant = memo(({ manifestation, onNurture, onBoost, onPress }: { manifestation: Manifestation; onNurture: () => void; onBoost: () => void; onPress: () => void }) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -311,10 +311,6 @@ const ManifestationPlant = memo(({ manifestation, onNurture, onBoost, onPress, g
       <View style={[styles.rarityBadge, { backgroundColor: rarityColor }]}>
         <Text style={styles.rarityBadgeText}>{manifestation.rarity[0].toUpperCase()}</Text>
       </View>
-      <View style={styles.plantLevelBadge}>
-        <Trophy color="#FFD700" size={10} />
-        <Text style={styles.plantLevelText}>{gardenLevel}</Text>
-      </View>
       <View style={styles.energyBarContainer}>
         <View style={[styles.energyBar, { borderColor: rarityColor }]}>
           <LinearGradient
@@ -350,7 +346,7 @@ export default function GardenScreen() {
   const router = useRouter();
   const { manifestations, nurtureManifestation, deleteManifestation, harvestManifestation } = useManifestations();
   const { shareManifestation } = useCommunity();
-  const { isPremium, energyBoosts, energy, maxEnergy, streak, gems, comboCount, comboMultiplier, gardenLevel, gardenXP, consumeEnergyBoost, purchaseEnergyBoost, consumeEnergy, refillEnergy, earnGems, incrementCombo, addGardenXP, getXPNeeded } = usePremium();
+  const { isPremium, energyBoosts, energy, maxEnergy, streak, gems, comboCount, comboMultiplier, consumeEnergyBoost, purchaseEnergyBoost, consumeEnergy, refillEnergy, earnGems, incrementCombo } = usePremium();
   const { achievements, newUnlocks, clearNewUnlocks, incrementAchievement, getUnlockedCount, getTotalCount } = useAchievements();
   const { quests, progressQuest, getCompletedCount, getTotalCount: getQuestsTotalCount } = useQuests();
   const { settings, permissionStatus, requestPermissions, updateSettings, rescheduleAllNotifications } = useNotifications();
@@ -370,8 +366,6 @@ export default function GardenScreen() {
   const [showAchievements, setShowAchievements] = useState(false);
   const [showQuests, setShowQuests] = useState(false);
   const [showCombo, setShowCombo] = useState(false);
-  const [showLevelUp, setShowLevelUp] = useState(false);
-  const [previousLevel, setPreviousLevel] = useState(gardenLevel);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [manifestationToDelete, setManifestationToDelete] = useState<string | null>(null);
 
@@ -381,7 +375,6 @@ export default function GardenScreen() {
       if (success) {
         const multiplier = incrementCombo();
         nurtureManifestation(id);
-        addGardenXP(5 * multiplier);
         progressQuest('nurture', 1);
         incrementAchievement('nurture_100', 1);
         incrementAchievement('energy_efficient', 1);
@@ -397,7 +390,7 @@ export default function GardenScreen() {
       setShowEnergyPrompt(true);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
-  }, [energy, consumeEnergy, nurtureManifestation, incrementCombo, addGardenXP, progressQuest, incrementAchievement]);
+  }, [energy, consumeEnergy, nurtureManifestation, incrementCombo, progressQuest, incrementAchievement]);
 
   const handleNurtureAll = useCallback(() => {
     const plantsToNurture = manifestations.filter(m => m.stage !== 'blooming');
@@ -407,9 +400,8 @@ export default function GardenScreen() {
       for (let i = 0; i < energyNeeded; i++) {
         const success = consumeEnergy(1);
         if (success && plantsToNurture[i]) {
-          const multiplier = incrementCombo();
+          incrementCombo();
           nurtureManifestation(plantsToNurture[i].id);
-          addGardenXP(5 * multiplier);
           progressQuest('nurture', 1);
           incrementAchievement('nurture_100', 1);
           incrementAchievement('energy_efficient', 1);
@@ -422,7 +414,7 @@ export default function GardenScreen() {
       setShowEnergyPrompt(true);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
-  }, [manifestations, energy, consumeEnergy, nurtureManifestation, incrementCombo, addGardenXP, progressQuest, incrementAchievement]);
+  }, [manifestations, energy, consumeEnergy, nurtureManifestation, incrementCombo, progressQuest, incrementAchievement]);
 
   const handleBoostRequest = useCallback((id: string) => {
     if (energyBoosts > 0) {
@@ -478,16 +470,6 @@ export default function GardenScreen() {
     updateBloomedRankings();
     updateLegendaryRankings();
   }, [updateBloomedRankings, updateLegendaryRankings]);
-
-  useEffect(() => {
-    if (gardenLevel > previousLevel) {
-      setShowLevelUp(true);
-      setPreviousLevel(gardenLevel);
-      const reward = gardenLevel * 10;
-      earnGems(reward, `Level ${gardenLevel} Reward`);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    }
-  }, [gardenLevel, previousLevel, earnGems]);
 
   const handlePurchaseBoost = () => {
     purchaseEnergyBoost();
@@ -548,22 +530,6 @@ export default function GardenScreen() {
             <Text style={styles.title}>Your Manifestation Garden</Text>
           </View>
           <Text style={styles.subtitle}>Nurture your intentions into reality</Text>
-          
-          <View style={styles.compactLevelBar}>
-            <View style={styles.compactLevelBadge}>
-              <Trophy color="#FFD700" size={14} />
-              <Text style={styles.compactLevelText}>Lv.{gardenLevel}</Text>
-            </View>
-            <View style={styles.compactXpBar}>
-              <LinearGradient
-                colors={['#9370DB', '#FF69B4']}
-                style={[styles.xpFill, { width: `${Math.min(100, (gardenXP / getXPNeeded(gardenLevel)) * 100)}%` }]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-              />
-            </View>
-            <Text style={styles.compactXpText}>{gardenXP}/{getXPNeeded(gardenLevel)} XP</Text>
-          </View>
           
           <View style={styles.topStatsContainer}>
             <View style={styles.statusBar}>
@@ -682,7 +648,6 @@ export default function GardenScreen() {
                     onNurture={() => handleNurture(m.id)}
                     onBoost={() => handleBoostRequest(m.id)}
                     onPress={() => setSelectedManifestationId(m.id)}
-                    gardenLevel={gardenLevel}
                   />
                 ))}
               </>
@@ -1315,32 +1280,6 @@ export default function GardenScreen() {
                 </Pressable>
                 <Pressable style={styles.cancelButton} onPress={() => setShowDeleteConfirm(false)}>
                   <Text style={styles.cancelButtonText}>Cancel</Text>
-                </Pressable>
-              </View>
-            </View>
-          </Modal>
-        )}
-
-        {showLevelUp && (
-          <Modal visible={true} transparent animationType="fade" onRequestClose={() => setShowLevelUp(false)}>
-            <View style={styles.modalOverlay}>
-              <Pressable style={styles.modalBackdrop} onPress={() => setShowLevelUp(false)} />
-              <View style={styles.streakModal}>
-                <Text style={styles.streakModalEmoji}>🎉</Text>
-                <Text style={styles.boostModalTitle}>Level {gardenLevel}!</Text>
-                <Text style={styles.boostModalText}>
-                  Congratulations! Your garden has reached level {gardenLevel}!
-                </Text>
-                <View style={styles.rewardBox}>
-                  <Text style={styles.rewardText}>Reward: +{gardenLevel * 10} gems</Text>
-                </View>
-                <Pressable style={styles.boostButton} onPress={() => {
-                  setShowLevelUp(false);
-                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                }}>
-                  <LinearGradient colors={['#FFD700', '#FFA500']} style={styles.boostButtonGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-                    <Text style={styles.boostButtonText}>Awesome!</Text>
-                  </LinearGradient>
                 </Pressable>
               </View>
             </View>
@@ -2360,43 +2299,6 @@ const styles = StyleSheet.create({
     marginLeft: 40,
   },
 
-  compactLevelBar: {
-    marginTop: 14,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    borderRadius: 14,
-    padding: 10,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  compactLevelBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  compactLevelText: {
-    fontSize: 14,
-    fontWeight: '800' as const,
-    color: '#FFD700',
-  },
-  compactXpBar: {
-    flex: 1,
-    height: 7,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  xpFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
-  compactXpText: {
-    fontSize: 12,
-    fontWeight: '700' as const,
-    color: '#b8a9d9',
-  },
   comboIndicator: {
     position: 'absolute',
     top: 120,
@@ -2602,25 +2504,6 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.8)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
-  },
-  plantLevelBadge: {
-    position: 'absolute',
-    bottom: 56,
-    right: -5,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.5)',
-  },
-  plantLevelText: {
-    fontSize: 10,
-    fontWeight: '800' as const,
-    color: '#FFD700',
   },
   rarityDisplay: {
     borderRadius: 16,

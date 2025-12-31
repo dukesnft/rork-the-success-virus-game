@@ -112,14 +112,7 @@ export default function CommunityScreen() {
                   </Text>
                 </View>
                 <View>
-                  <View style={styles.usernameRow}>
-                    <Text style={styles.username}>{manifestation.username}</Text>
-                    {manifestation.level && (
-                      <View style={styles.levelBadge}>
-                        <Text style={styles.levelText}>Lv.{manifestation.level}</Text>
-                      </View>
-                    )}
-                  </View>
+                  <Text style={styles.username}>{manifestation.username}</Text>
                   <Text style={styles.category}>
                     {manifestation.category.charAt(0).toUpperCase() + manifestation.category.slice(1)}
                   </Text>
@@ -744,48 +737,5 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: 100,
-  },
-  usernameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  levelBadge: {
-    backgroundColor: 'rgba(255,215,0,0.2)',
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderWidth: 1,
-    borderColor: '#FFD700',
-  },
-  levelText: {
-    fontSize: 11,
-    fontWeight: 'bold' as const,
-    color: '#FFD700',
-  },
-  rankTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 4,
-  },
-  rankLevelBadge: {
-    backgroundColor: 'rgba(255,215,0,0.2)',
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderWidth: 1,
-    borderColor: '#FFD700',
-  },
-  rankLevelText: {
-    fontSize: 10,
-    fontWeight: 'bold' as const,
-    color: '#FFD700',
-  },
-  rankInfoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 4,
   },
 });
