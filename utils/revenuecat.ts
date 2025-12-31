@@ -108,16 +108,87 @@ export async function purchaseStoreProduct(storeProduct: any) {
   }
 }
 
-export async function getNonSubscriptionProducts() {
+export async function getProducts(offeringIdentifier: string) {
   try {
     const offerings = await Purchases.getOfferings();
-    const gemOffering = offerings.all['gems'];
-    if (gemOffering) {
-      return gemOffering.availablePackages;
+    console.log('[RevenueCat] All offerings:', Object.keys(offerings.all));
+    
+    const offering = offerings.all[offeringIdentifier];
+    if (offering) {
+      console.log(`[RevenueCat] Found ${offeringIdentifier} with ${offering.availablePackages.length} packages`);
+      return offering.availablePackages;
     }
+    
+    console.warn(`[RevenueCat] Offering '${offeringIdentifier}' not found`);
     return [];
   } catch (error) {
     console.error('[RevenueCat] Error getting products:', error);
     return [];
+  }
+}
+
+export async function getGemsProducts() {
+  return getProducts('gems');
+}
+
+export async function getSeedsProducts() {
+  return getProducts('seeds');
+}
+
+export async function getBoostersProducts() {
+  return getProducts('boosters');
+}
+
+export async function getEnergyProducts() {
+  return getProducts('energy');
+}
+
+export async function getBooksProducts() {
+  return getProducts('books');
+}
+
+export async function getAllShopProducts() {
+  try {
+    const offerings = await Purchases.getOfferings();
+    const products: any = {
+      gems: [],
+      seeds: [],
+      boosters: [],
+      energy: [],
+      books: [],
+    };
+    
+    if (offerings.all['gems']) products.gems = offerings.all['gems'].availablePackages;
+    if (offerings.all['seeds']) products.seeds = offerings.all['seeds'].availablePackages;
+    if (offerings.all['boosters']) products.boosters = offerings.all['boosters'].availablePackages;
+    if (offerings.all['energy']) products.energy = offerings.all['energy'].availablePackages;
+    if (offerings.all['books']) products.books = offerings.all['books'].availablePackages;
+    
+    console.log('[RevenueCat] Loaded shop products:', {
+      gems: products.gems.length,
+      seeds: products.seeds.length,
+      boosters: products.boosters.length,
+      energy: products.energy.length,
+      books: products.books.length,
+    });
+    
+    return products;
+  } catch (error) {
+    console.error('[RevenueCat] Error getting all shop products:', error);
+    return { gems: [], seeds: [], boosters: [], energy: [], books: [] };
+  }
+}
+
+export async function purchaseProduct(productIdentifier: string) {
+  try {
+    console.log('[RevenueCat] Purchasing product:', productIdentifier);
+    const { customerInfo } = await Purchases.purchaseProduct(productIdentifier);
+    console.log('[RevenueCat] Product purchase successful:', customerInfo);
+    return customerInfo;
+  } catch (error: any) {
+    if (!error.userCancelled) {
+      console.error('[RevenueCat] Product purchase error:', error);
+    }
+    throw error;
   }
 }

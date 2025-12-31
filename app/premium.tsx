@@ -9,10 +9,10 @@ import { getOfferings } from '@/utils/revenuecat';
 import { useState } from 'react';
 
 const PREMIUM_BENEFITS = [
-  { icon: Infinity, text: 'Unlimited manifestations', color: '#FFD700' },
-  { icon: Zap, text: 'Faster energy growth', color: '#FF69B4' },
-  { icon: Sparkles, text: 'Exclusive affirmations', color: '#9370DB' },
-  { icon: Crown, text: 'Premium garden themes', color: '#00CED1' },
+  { icon: Infinity, text: '25% off all purchases', color: '#FFD700' },
+  { icon: Zap, text: '+10 max energy daily', color: '#FF69B4' },
+  { icon: Sparkles, text: '+2 free daily seeds', color: '#9370DB' },
+  { icon: Crown, text: '50% faster nurturing', color: '#00CED1' },
 ];
 
 export default function PremiumScreen() {
@@ -182,7 +182,7 @@ export default function PremiumScreen() {
           <View style={styles.featuresGrid}>
             <View style={styles.featureItem}>
               <Sparkles color="#FFD700" size={20} />
-              <Text style={styles.featureText}>No ads</Text>
+              <Text style={styles.featureText}>Save money</Text>
             </View>
             <View style={styles.featureItem}>
               <Sparkles color="#FFD700" size={20} />

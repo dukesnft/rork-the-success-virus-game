@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Text, Pressable, ScrollView, Alert, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getEasternDateString } from '@/utils/dateUtils';
@@ -10,6 +10,7 @@ import * as Haptics from 'expo-haptics';
 import { usePremium } from '@/contexts/PremiumContext';
 import { useInventory } from '@/contexts/InventoryContext';
 import { SeedRarity } from '@/types/inventory';
+import { purchasePackage, getGemsProducts, getSeedsProducts, getBoostersProducts, getEnergyProducts } from '@/utils/revenuecat';
 
 interface ShopItem {
   id: string;
@@ -254,7 +255,6 @@ export default function ShopScreen() {
     purchaseItem,
     spendGems,
     refillEnergy,
-    upgradeToPremium,
   } = usePremium();
   
   const {
@@ -296,59 +296,194 @@ export default function ShopScreen() {
     addSeeds('common', amount);
   };
 
-  const handlePurchase = (item: ShopItem) => {
-    if (Platform.OS === 'web' || __DEV__) {
-      console.log('[Shop] Development mode - processing mock purchase');
-    }
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    
-    switch (item.type) {
-      case 'premium':
-        if (isPremium) {
-          Alert.alert('Already Premium', 'You already have Premium access!');
-        } else {
-          upgradeToPremium(item.duration!);
-          purchaseItem(item.price);
-          Alert.alert('👑 Welcome to Premium!', 'Enjoy 25% off all purchases, extra daily seeds, and more!');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [rcProducts, setRCProducts] = useState<any>({
+    gems: [],
+    seeds: [],
+    boosters: [],
+    energy: [],
+  });
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      if (Platform.OS !== 'web' && !__DEV__) {
+        const [gems, seeds, boosters, energy] = await Promise.all([
+          getGemsProducts(),
+          getSeedsProducts(),
+          getBoostersProducts(),
+          getEnergyProducts(),
+        ]);
+        setRCProducts({ gems, seeds, boosters, energy });
+        console.log('[Shop] Loaded RevenueCat products:', {
+          gems: gems.length,
+          seeds: seeds.length,
+          boosters: boosters.length,
+          energy: energy.length,
+        });
+      }
+    };
+    loadProducts();
+  }, []);
+
+  const handlePurchase = async (item: ShopItem) => {
+    if (isProcessing) return;
+    setIsProcessing(true);
+
+    try {
+      if (Platform.OS === 'web' || __DEV__) {
+        console.log('[Shop] Development/Web mode - mock purchase');
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        
+        switch (item.type) {
+          case 'premium':
+            if (isPremium) {
+              Alert.alert('Already Premium', 'You already have Premium access!');
+            } else {
+              router.push('/premium');
+            }
+            break;
+          case 'gems':
+            purchaseGems(item.amount!, item.price);
+            Alert.alert('✨ Success!', `${item.amount} gems added to your account!`);
+            break;
+          case 'seeds':
+            if (item.id === 'seeds_bundle') {
+              addSeeds('common', 5);
+              addSeeds('rare', 3);
+              addSeeds('epic', 1);
+              purchaseItem(item.price);
+              Alert.alert('✨ Success!', 'Mixed seed bundle added to your inventory!');
+            } else if (item.rarity) {
+              addSeeds(item.rarity, item.amount!);
+              purchaseItem(item.price);
+              const rarityName = item.rarity.charAt(0).toUpperCase() + item.rarity.slice(1);
+              Alert.alert('✨ Success!', `${item.amount} ${rarityName} seeds added to your inventory!`);
+            }
+            break;
+          case 'booster':
+            purchaseGrowthBooster(item.amount!, item.price);
+            Alert.alert('✨ Success!', `${item.amount} growth boosters added!`);
+            break;
+          case 'energy':
+            for (let i = 0; i < item.amount!; i++) {
+              purchaseEnergyBoost();
+            }
+            Alert.alert('✨ Success!', `${item.amount} energy refills added!`);
+            break;
+          case 'auto':
+            if (autoNurtureActive) {
+              Alert.alert('Already Owned', 'You already have Auto-Nurture!');
+            } else {
+              purchaseAutoNurture(item.price);
+              Alert.alert('✨ Success!', 'Auto-Nurture activated forever!');
+            }
+            break;
         }
-        break;
-      case 'gems':
-        purchaseGems(item.amount!, item.price);
-        Alert.alert('Success!', `${item.amount} gems added to your account!`);
-        break;
-      case 'seeds':
-        if (item.id === 'seeds_bundle') {
-          addSeeds('common', 5);
-          addSeeds('rare', 3);
-          addSeeds('epic', 1);
-          purchaseItem(item.price);
-          Alert.alert('Success!', 'Mixed seed bundle added to your inventory!');
-        } else if (item.rarity) {
-          addSeeds(item.rarity, item.amount!);
-          purchaseItem(item.price);
-          const rarityName = item.rarity.charAt(0).toUpperCase() + item.rarity.slice(1);
-          Alert.alert('Success!', `${item.amount} ${rarityName} seeds added to your inventory!`);
-        }
-        break;
-      case 'booster':
-        purchaseGrowthBooster(item.amount!, item.price);
-        Alert.alert('Success!', `${item.amount} growth boosters added!`);
-        break;
-      case 'energy':
-        for (let i = 0; i < (item.amount! - 1); i++) {
-          purchaseEnergyBoost();
-        }
-        purchaseEnergyBoost();
-        Alert.alert('Success!', `${item.amount} energy refills added!`);
-        break;
-      case 'auto':
-        if (autoNurtureActive) {
-          Alert.alert('Already Owned', 'You already have Auto-Nurture!');
-        } else {
+        return;
+      }
+
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+      let productList: any[] = [];
+
+      switch (item.type) {
+        case 'premium':
+          if (isPremium) {
+            Alert.alert('Already Premium', 'You already have Premium access!');
+            return;
+          }
+          router.push('/premium');
+          return;
+        case 'gems':
+          productList = rcProducts.gems;
+          break;
+        case 'seeds':
+          productList = rcProducts.seeds;
+          break;
+        case 'booster':
+          productList = rcProducts.boosters;
+          break;
+        case 'energy':
+          productList = rcProducts.energy;
+          break;
+        case 'auto':
+          if (autoNurtureActive) {
+            Alert.alert('Already Owned', 'You already have Auto-Nurture!');
+            return;
+          }
+          productList = rcProducts.boosters;
+          break;
+      }
+
+      const rcProduct = productList.find(
+        (pkg: any) => pkg.identifier === item.id || pkg.product.identifier === item.id
+      );
+
+      if (!rcProduct) {
+        console.warn('[Shop] Product not found in RevenueCat:', item.id);
+        Alert.alert(
+          '⚠️ Product Not Available',
+          'This item is not available for purchase at the moment. Please try again later.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      console.log('[Shop] Purchasing:', rcProduct.product.identifier);
+      
+      await purchasePackage(rcProduct);
+      
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      
+      switch (item.type) {
+        case 'gems':
+          purchaseGems(item.amount!, item.price);
+          Alert.alert('✨ Success!', `${item.amount} gems added to your account!`);
+          break;
+        case 'seeds':
+          if (item.id === 'seeds_bundle') {
+            addSeeds('common', 5);
+            addSeeds('rare', 3);
+            addSeeds('epic', 1);
+            purchaseItem(item.price);
+            Alert.alert('✨ Success!', 'Mixed seed bundle added to your inventory!');
+          } else if (item.rarity) {
+            addSeeds(item.rarity, item.amount!);
+            purchaseItem(item.price);
+            const rarityName = item.rarity.charAt(0).toUpperCase() + item.rarity.slice(1);
+            Alert.alert('✨ Success!', `${item.amount} ${rarityName} seeds added to your inventory!`);
+          }
+          break;
+        case 'booster':
+          purchaseGrowthBooster(item.amount!, item.price);
+          Alert.alert('✨ Success!', `${item.amount} growth boosters added!`);
+          break;
+        case 'energy':
+          for (let i = 0; i < item.amount!; i++) {
+            purchaseEnergyBoost();
+          }
+          Alert.alert('✨ Success!', `${item.amount} energy refills added!`);
+          break;
+        case 'auto':
           purchaseAutoNurture(item.price);
-          Alert.alert('Success!', 'Auto-Nurture activated forever!');
-        }
-        break;
+          Alert.alert('✨ Success!', 'Auto-Nurture activated forever!');
+          break;
+      }
+    } catch (error: any) {
+      console.error('[Shop] Purchase error:', error);
+      
+      if (error.userCancelled) {
+        console.log('[Shop] User cancelled purchase');
+        return;
+      }
+      
+      Alert.alert(
+        '❌ Purchase Failed',
+        'Unable to complete the purchase. Please try again.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setIsProcessing(false);
     }
   };
 

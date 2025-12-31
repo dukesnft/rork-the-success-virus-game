@@ -6,6 +6,7 @@ import { Book } from '@/types/book';
 import { AVAILABLE_BOOKS } from '@/constants/books';
 import { usePremium } from '@/contexts/PremiumContext';
 import { Alert, Platform } from 'react-native';
+import { purchasePackage, getBooksProducts } from '@/utils/revenuecat';
 
 const STORAGE_KEY = 'purchased_books';
 const LAST_PURCHASE_KEY = 'last_book_purchase';
@@ -57,19 +58,38 @@ export const [BookProvider, useBooks] = createContextHook(() => {
     }
   }, [booksQuery.data]);
 
+  const getBookPrice = useCallback((book: Book) => {
+    let price = book.price;
+    
+    if (isPremium) {
+      price = price * 0.75;
+    }
+    
+    const now = Date.now();
+    const fiveMinutes = 5 * 60 * 1000;
+    if (lastPurchaseTime && (now - lastPurchaseTime) < fiveMinutes) {
+      price = price * 0.75;
+    }
+    
+    return price;
+  }, [isPremium, lastPurchaseTime]);
+
   const purchaseBook = useCallback(async (bookId: string) => {
+    const book = books.find(b => b.id === bookId);
+    if (!book) return;
+
     if (Platform.OS === 'web' || __DEV__) {
       Alert.alert(
         '📚 Purchase Book',
-        'In development/web mode, books are unlocked for testing. In production, this will process real payments through your app store.',
+        `Purchase "${book.title}" for ${getBookPrice(book).toFixed(2)}?`,
         [
           { text: 'Cancel', style: 'cancel' },
           {
-            text: 'Unlock Book',
+            text: 'Purchase',
             onPress: async () => {
               setBooks(prev => {
-                const updated = prev.map(book => 
-                  book.id === bookId ? { ...book, isPurchased: true } : book
+                const updated = prev.map(b => 
+                  b.id === bookId ? { ...b, isPurchased: true } : b
                 );
                 saveMutate(updated);
                 return updated;
@@ -92,47 +112,61 @@ export const [BookProvider, useBooks] = createContextHook(() => {
     }
 
     try {
-      const book = books.find(b => b.id === bookId);
-      if (!book) return;
-
-      Alert.alert(
-        '💳 Purchase Book',
-        `Purchase "${book.title}" for ${book.price.toFixed(2)}?`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Purchase',
-            onPress: async () => {
-              setBooks(prev => {
-                const updated = prev.map(b => 
-                  b.id === bookId ? { ...b, isPurchased: true } : b
-                );
-                saveMutate(updated);
-                return updated;
-              });
-              
-              const now = Date.now();
-              setLastPurchaseTime(now);
-              await AsyncStorage.setItem(LAST_PURCHASE_KEY, now.toString());
-              
-              Alert.alert(
-                '✅ Purchase Successful',
-                'Your book has been added to your library!',
-                [{ text: 'Great!', style: 'default' }]
-              );
-            }
-          }
-        ]
+      const productsData = await getBooksProducts();
+      console.log('[Books] Available book products:', productsData.length);
+      
+      const bookProduct = productsData.find(
+        (pkg: any) => pkg.product.identifier === `book_${bookId}` || pkg.identifier === bookId
       );
-    } catch (error) {
-      console.error('Book purchase error:', error);
+
+      if (!bookProduct) {
+        console.warn('[Books] Book product not found in RevenueCat:', bookId);
+        Alert.alert(
+          '⚠️ Product Not Available',
+          'This book is not available for purchase at the moment. Please try again later.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      console.log('[Books] Initiating purchase for:', bookProduct.product.identifier);
+      
+      await purchasePackage(bookProduct);
+      
+      console.log('[Books] Purchase successful, updating local state');
+      
+      setBooks(prev => {
+        const updated = prev.map(b => 
+          b.id === bookId ? { ...b, isPurchased: true } : b
+        );
+        saveMutate(updated);
+        return updated;
+      });
+      
+      const now = Date.now();
+      setLastPurchaseTime(now);
+      await AsyncStorage.setItem(LAST_PURCHASE_KEY, now.toString());
+      
+      Alert.alert(
+        '✅ Purchase Successful',
+        'Your book has been added to your library!',
+        [{ text: 'Great!', style: 'default' }]
+      );
+    } catch (error: any) {
+      console.error('[Books] Purchase error:', error);
+      
+      if (error.userCancelled) {
+        console.log('[Books] User cancelled purchase');
+        return;
+      }
+      
       Alert.alert(
         '❌ Purchase Failed',
         'Unable to complete the purchase. Please try again.',
         [{ text: 'OK' }]
       );
     }
-  }, [books, saveMutate]);
+  }, [books, saveMutate, getBookPrice]);
 
   const updateReadingProgress = useCallback((bookId: string, progress: number) => {
     setBooks(prev => {
@@ -143,22 +177,6 @@ export const [BookProvider, useBooks] = createContextHook(() => {
       return updated;
     });
   }, [saveMutate]);
-
-  const getBookPrice = useCallback((book: Book) => {
-    let price = book.price;
-    
-    if (isPremium) {
-      price = price * 0.75;
-    }
-    
-    const now = Date.now();
-    const fiveMinutes = 5 * 60 * 1000;
-    if (lastPurchaseTime && (now - lastPurchaseTime) < fiveMinutes) {
-      price = price * 0.75;
-    }
-    
-    return price;
-  }, [isPremium, lastPurchaseTime]);
 
   const purchasedBooks = books.filter(book => book.isPurchased);
   const availableBooks = books.filter(book => !book.isPurchased);
