@@ -26,6 +26,12 @@ export async function configureRevenueCat() {
     return;
   }
 
+  if (Platform.OS === 'web') {
+    console.log('[RevenueCat] Skipping configuration on web (preview only)');
+    isConfigured = true;
+    return;
+  }
+
   try {
     const apiKey = getRCApiKey();
     
