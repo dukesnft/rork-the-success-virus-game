@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, Text, Pressable, ScrollView, Alert } from 'react-native';
+import { StyleSheet, View, Text, Pressable, ScrollView, Alert, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getEasternDateString } from '@/utils/dateUtils';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -297,6 +297,9 @@ export default function ShopScreen() {
   };
 
   const handlePurchase = (item: ShopItem) => {
+    if (Platform.OS === 'web' || __DEV__) {
+      console.log('[Shop] Development mode - processing mock purchase');
+    }
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     
     switch (item.type) {

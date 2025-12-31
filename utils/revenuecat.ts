@@ -4,14 +4,19 @@ import { Platform } from 'react-native';
 let isConfigured = false;
 
 export function getRCApiKey(): string {
-  if (__DEV__ || Platform.OS === 'web') {
-    return process.env.EXPO_PUBLIC_REVENUECAT_TEST_API_KEY || '';
+  if (Platform.OS === 'web' || __DEV__) {
+    const testKey = process.env.EXPO_PUBLIC_REVENUECAT_TEST_API_KEY;
+    if (!testKey) {
+      console.warn('[RevenueCat] No Test API key found, using iOS key as fallback');
+      return process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY || '';
+    }
+    return testKey;
   }
   
   return Platform.select({
     ios: process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY || '',
     android: process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY || '',
-    default: process.env.EXPO_PUBLIC_REVENUECAT_TEST_API_KEY || '',
+    default: process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY || '',
   });
 }
 
@@ -86,5 +91,33 @@ export async function getCustomerInfo() {
   } catch (error) {
     console.error('[RevenueCat] Error getting customer info:', error);
     return null;
+  }
+}
+
+export async function purchaseStoreProduct(storeProduct: any) {
+  try {
+    console.log('[RevenueCat] Purchasing store product:', storeProduct.identifier);
+    const { customerInfo } = await Purchases.purchaseStoreProduct(storeProduct);
+    console.log('[RevenueCat] Purchase successful:', customerInfo);
+    return customerInfo;
+  } catch (error: any) {
+    if (!error.userCancelled) {
+      console.error('[RevenueCat] Purchase error:', error);
+    }
+    throw error;
+  }
+}
+
+export async function getNonSubscriptionProducts() {
+  try {
+    const offerings = await Purchases.getOfferings();
+    const gemOffering = offerings.all['gems'];
+    if (gemOffering) {
+      return gemOffering.availablePackages;
+    }
+    return [];
+  } catch (error) {
+    console.error('[RevenueCat] Error getting products:', error);
+    return [];
   }
 }

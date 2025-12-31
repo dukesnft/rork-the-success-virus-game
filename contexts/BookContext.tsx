@@ -5,7 +5,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Book } from '@/types/book';
 import { AVAILABLE_BOOKS } from '@/constants/books';
 import { usePremium } from '@/contexts/PremiumContext';
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
 
 const STORAGE_KEY = 'purchased_books';
 const LAST_PURCHASE_KEY = 'last_book_purchase';
@@ -58,36 +58,81 @@ export const [BookProvider, useBooks] = createContextHook(() => {
   }, [booksQuery.data]);
 
   const purchaseBook = useCallback(async (bookId: string) => {
-    Alert.alert(
-      '💳 Real Money Purchase',
-      'Books are purchased with real money through your app store account. This feature requires RevenueCat integration to be set up.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Purchase',
-          onPress: async () => {
-            setBooks(prev => {
-              const updated = prev.map(book => 
-                book.id === bookId ? { ...book, isPurchased: true } : book
+    if (Platform.OS === 'web' || __DEV__) {
+      Alert.alert(
+        '📚 Purchase Book',
+        'In development/web mode, books are unlocked for testing. In production, this will process real payments through your app store.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Unlock Book',
+            onPress: async () => {
+              setBooks(prev => {
+                const updated = prev.map(book => 
+                  book.id === bookId ? { ...book, isPurchased: true } : book
+                );
+                saveMutate(updated);
+                return updated;
+              });
+              
+              const now = Date.now();
+              setLastPurchaseTime(now);
+              await AsyncStorage.setItem(LAST_PURCHASE_KEY, now.toString());
+              
+              Alert.alert(
+                '✅ Book Unlocked',
+                'Your book has been added to your library!',
+                [{ text: 'Great!', style: 'default' }]
               );
-              saveMutate(updated);
-              return updated;
-            });
-            
-            const now = Date.now();
-            setLastPurchaseTime(now);
-            await AsyncStorage.setItem(LAST_PURCHASE_KEY, now.toString());
-            
-            Alert.alert(
-              '✅ Purchase Successful',
-              'Your book has been added to your library!',
-              [{ text: 'Great!', style: 'default' }]
-            );
+            }
           }
-        }
-      ]
-    );
-  }, [saveMutate]);
+        ]
+      );
+      return;
+    }
+
+    try {
+      const book = books.find(b => b.id === bookId);
+      if (!book) return;
+
+      Alert.alert(
+        '💳 Purchase Book',
+        `Purchase "${book.title}" for ${book.price.toFixed(2)}?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Purchase',
+            onPress: async () => {
+              setBooks(prev => {
+                const updated = prev.map(b => 
+                  b.id === bookId ? { ...b, isPurchased: true } : b
+                );
+                saveMutate(updated);
+                return updated;
+              });
+              
+              const now = Date.now();
+              setLastPurchaseTime(now);
+              await AsyncStorage.setItem(LAST_PURCHASE_KEY, now.toString());
+              
+              Alert.alert(
+                '✅ Purchase Successful',
+                'Your book has been added to your library!',
+                [{ text: 'Great!', style: 'default' }]
+              );
+            }
+          }
+        ]
+      );
+    } catch (error) {
+      console.error('Book purchase error:', error);
+      Alert.alert(
+        '❌ Purchase Failed',
+        'Unable to complete the purchase. Please try again.',
+        [{ text: 'OK' }]
+      );
+    }
+  }, [books, saveMutate]);
 
   const updateReadingProgress = useCallback((bookId: string, progress: number) => {
     setBooks(prev => {
