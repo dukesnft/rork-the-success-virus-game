@@ -24,38 +24,60 @@ const generateMockRankings = (): { bloomedRankings: BloomedRanking[], legendaryR
     'CosmicDreamer', 'LunarLight', 'StellarSoul', 'MysticVibes', 'ZenMaster',
     'AuraGlow', 'ChakraWarrior', 'SpiritSeeker', 'ManifestKing', 'IntentionQueen',
     'CrystalHeart', 'MindfulOne', 'SacredPath', 'DivinePurpose', 'EnlightenedBeing',
-    'PeacefulJourney', 'AbundanceFlow', 'LoveLight', 'HealingEnergy', 'SuccessVibes'
+    'PeacefulJourney', 'AbundanceFlow', 'LoveLight', 'HealingEnergy', 'SuccessVibes',
+    'SoulShine', 'DreamWeaver', 'StarGazer', 'MoonChild', 'SunSeeker',
+    'OceanWaves', 'MountainPeak', 'ForestSpirit', 'DesertRose', 'RiverFlow',
+    'ThunderBolt', 'RainbowLight', 'CloudWalker', 'EarthAngel', 'FireStarter',
+    'IceCrystal', 'WindDancer', 'SkySail', 'LeafWhisper', 'FlowerBloom',
+    'NightOwl', 'DawnBringer', 'TwilightDream', 'StarlightPath', 'CosmicEnergy',
+    'InfiniteJoy', 'EternalPeace', 'RadiantSoul', 'PureHeart', 'WiseSpirit'
   ];
 
   const bloomedRankings: BloomedRanking[] = [];
   const legendaryRankings: LegendaryRanking[] = [];
   const streakRankings: StreakRanking[] = [];
 
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 50; i++) {
+    const seed = (i * 1337 + 42) % 1000;
+    const randomFactor = (seed * 7919) % 100;
+    
+    let totalBloomed = 0;
     let totalSpent = 0;
     
-    const seed = (i * 1337) % 1000;
-    
     if (i === 0) {
-      totalSpent = 700 + (seed % 100);
+      totalBloomed = 450 + randomFactor;
+      totalSpent = 2500 + (randomFactor * 10);
     } else if (i === 1) {
-      totalSpent = 500 + (seed % 100);
+      totalBloomed = 380 + randomFactor;
+      totalSpent = 2100 + (randomFactor * 8);
     } else if (i === 2) {
-      totalSpent = 300 + (seed % 100);
+      totalBloomed = 320 + randomFactor;
+      totalSpent = 1800 + (randomFactor * 7);
+    } else if (i < 5) {
+      totalBloomed = 250 + randomFactor + (5 - i) * 20;
+      totalSpent = 1500 + (randomFactor * 5) + (5 - i) * 100;
     } else if (i < 10) {
-      totalSpent = (seed % 300) + 100;
+      totalBloomed = 180 + randomFactor + (10 - i) * 10;
+      totalSpent = 1000 + (randomFactor * 4) + (10 - i) * 50;
+    } else if (i < 20) {
+      totalBloomed = 120 + randomFactor + (20 - i) * 5;
+      totalSpent = 600 + (randomFactor * 3) + (20 - i) * 30;
+    } else if (i < 35) {
+      totalBloomed = 60 + randomFactor + (35 - i) * 2;
+      totalSpent = 300 + (randomFactor * 2) + (35 - i) * 15;
     } else {
-      totalSpent = seed % 100;
+      totalBloomed = 20 + randomFactor;
+      totalSpent = 100 + (randomFactor * 2);
     }
     
-    const totalBloomed = (seed % 100) + 20 + Math.floor(totalSpent / 5);
-    const legendaryCount = (seed % 20) + 5 + Math.floor(totalSpent / 50);
-    const currentStreak = (seed % 80) + 10 + Math.floor(totalSpent / 10);
-    const longestStreak = currentStreak + (seed % 50);
+    const legendaryCount = Math.min(Math.floor(totalBloomed * 0.12) + (randomFactor % 8), Math.floor(totalBloomed * 0.25));
+    
+    const currentStreak = Math.min((seed % 12) + 1 + Math.floor(i / 10), 14);
+    const longestStreak = Math.min(currentStreak + (randomFactor % 3), 14);
     
     bloomedRankings.push({
       id: `bloomed_${i}`,
-      username: names[i],
+      username: names[i % names.length] + (i >= names.length ? Math.floor(i / names.length) : ''),
       score: totalBloomed,
       rank: i + 1,
       totalBloomed,
@@ -64,7 +86,7 @@ const generateMockRankings = (): { bloomedRankings: BloomedRanking[], legendaryR
 
     legendaryRankings.push({
       id: `legendary_${i}`,
-      username: names[i],
+      username: names[i % names.length] + (i >= names.length ? Math.floor(i / names.length) : ''),
       score: legendaryCount,
       rank: i + 1,
       legendaryCount,
@@ -73,7 +95,7 @@ const generateMockRankings = (): { bloomedRankings: BloomedRanking[], legendaryR
     
     streakRankings.push({
       id: `streak_${i}`,
-      username: names[i],
+      username: names[i % names.length] + (i >= names.length ? Math.floor(i / names.length) : ''),
       score: currentStreak,
       rank: i + 1,
       currentStreak,

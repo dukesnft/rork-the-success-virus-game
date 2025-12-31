@@ -166,7 +166,7 @@ export default function BooksScreen() {
           </View>
         </ScrollView>
 
-        {selectedBook && !showReader && (
+        {selectedBook && !showReader && !selectedBook.isPurchased && (
           <Modal
             visible={true}
             transparent
@@ -217,59 +217,40 @@ export default function BooksScreen() {
                     </View>
                   </View>
 
-                  {selectedBook.isPurchased ? (
+                  <View>
+                    {(isPremium || hasRecentPurchase) && (
+                      <View style={styles.modalDiscountBadges}>
+                        {isPremium && <Text style={styles.modalDiscountText}>👑 Premium: 25% OFF</Text>}
+                        {hasRecentPurchase && <Text style={styles.modalDiscountText}>⚡ Consecutive Purchase: +25% OFF</Text>}
+                      </View>
+                    )}
                     <Pressable
-                      style={styles.readButton}
-                      onPress={() => handleRead(selectedBook)}
+                      style={styles.purchaseButton}
+                      onPress={() => handlePurchase(selectedBook.id)}
                     >
                       <LinearGradient
-                        colors={['#32CD32', '#228B22']}
+                        colors={['#9370DB', '#FF69B4']}
                         style={styles.buttonGradient}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 1 }}
                       >
-                        <BookOpen color="#fff" size={20} />
-                        <Text style={styles.buttonText}>
-                          {selectedBook.readingProgress > 0 ? 'Continue Reading' : 'Start Reading'}
-                        </Text>
+                        <ShoppingBag color="#fff" size={20} />
+                        <View style={styles.priceButtonContent}>
+                          {getBookPrice(selectedBook) < selectedBook.price && (
+                            <Text style={styles.modalOriginalPrice}>${selectedBook.price.toFixed(2)}</Text>
+                          )}
+                          <Text style={styles.buttonText}>Purchase for ${getBookPrice(selectedBook).toFixed(2)}</Text>
+                        </View>
                       </LinearGradient>
                     </Pressable>
-                  ) : (
-                    <View>
-                      {(isPremium || hasRecentPurchase) && (
-                        <View style={styles.modalDiscountBadges}>
-                          {isPremium && <Text style={styles.modalDiscountText}>👑 Premium: 25% OFF</Text>}
-                          {hasRecentPurchase && <Text style={styles.modalDiscountText}>⚡ Consecutive Purchase: +25% OFF</Text>}
-                        </View>
-                      )}
-                      <Pressable
-                        style={styles.purchaseButton}
-                        onPress={() => handlePurchase(selectedBook.id)}
-                      >
-                        <LinearGradient
-                          colors={['#9370DB', '#FF69B4']}
-                          style={styles.buttonGradient}
-                          start={{ x: 0, y: 0 }}
-                          end={{ x: 1, y: 1 }}
-                        >
-                          <ShoppingBag color="#fff" size={20} />
-                          <View style={styles.priceButtonContent}>
-                            {getBookPrice(selectedBook) < selectedBook.price && (
-                              <Text style={styles.modalOriginalPrice}>${selectedBook.price.toFixed(2)}</Text>
-                            )}
-                            <Text style={styles.buttonText}>Purchase for ${getBookPrice(selectedBook).toFixed(2)}</Text>
-                          </View>
-                        </LinearGradient>
-                      </Pressable>
-                    </View>
-                  )}
+                  </View>
                 </ScrollView>
               </View>
             </View>
           </Modal>
         )}
 
-        {showReader && selectedBook && (
+        {showReader && selectedBook && selectedBook.isPurchased && (
           <Modal
             visible={true}
             animationType="slide"
