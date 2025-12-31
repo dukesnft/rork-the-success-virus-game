@@ -164,6 +164,7 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
         return JSON.parse(stored);
       }
       const { bloomedRankings } = generateMockRankings();
+      await AsyncStorage.setItem(STORAGE_KEY_BLOOMED, JSON.stringify(bloomedRankings));
       return bloomedRankings;
     }
   });
@@ -176,6 +177,7 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
         return JSON.parse(stored);
       }
       const { legendaryRankings } = generateMockRankings();
+      await AsyncStorage.setItem(STORAGE_KEY_LEGENDARY, JSON.stringify(legendaryRankings));
       return legendaryRankings;
     }
   });
@@ -188,6 +190,7 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
         return JSON.parse(stored);
       }
       const { streakRankings } = generateMockRankings();
+      await AsyncStorage.setItem(STORAGE_KEY_STREAK, JSON.stringify(streakRankings));
       return streakRankings;
     }
   });
