@@ -119,7 +119,7 @@ export const [ManifestationProvider, useManifestations] = createContextHook(() =
 
   useEffect(() => {
     if (manifestations.length > maxPlantSlots) {
-      console.warn(`Too many plants: ${manifestations.length}/${maxPlantSlots}`);
+      // Plants limit reached
     }
   }, [manifestations.length, maxPlantSlots]);
 
@@ -174,7 +174,6 @@ export const [ManifestationProvider, useManifestations] = createContextHook(() =
           const currentIndex = rarityOrder.indexOf(manifestation.rarity);
           if (currentIndex < rarityOrder.length - 1) {
             harvestedRarity = rarityOrder[currentIndex + 1];
-            console.log(`✨ Rarity upgraded from ${manifestation.rarity} to ${harvestedRarity}!`);
           }
         }
         

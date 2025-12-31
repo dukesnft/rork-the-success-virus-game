@@ -161,7 +161,10 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
     queryFn: async () => {
       const stored = await AsyncStorage.getItem(STORAGE_KEY_BLOOMED);
       if (stored) {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        if (parsed && parsed.length > 0) {
+          return parsed;
+        }
       }
       const { bloomedRankings } = generateMockRankings();
       await AsyncStorage.setItem(STORAGE_KEY_BLOOMED, JSON.stringify(bloomedRankings));
@@ -174,7 +177,10 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
     queryFn: async () => {
       const stored = await AsyncStorage.getItem(STORAGE_KEY_LEGENDARY);
       if (stored) {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        if (parsed && parsed.length > 0) {
+          return parsed;
+        }
       }
       const { legendaryRankings } = generateMockRankings();
       await AsyncStorage.setItem(STORAGE_KEY_LEGENDARY, JSON.stringify(legendaryRankings));
@@ -187,7 +193,10 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
     queryFn: async () => {
       const stored = await AsyncStorage.getItem(STORAGE_KEY_STREAK);
       if (stored) {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        if (parsed && parsed.length > 0) {
+          return parsed;
+        }
       }
       const { streakRankings } = generateMockRankings();
       await AsyncStorage.setItem(STORAGE_KEY_STREAK, JSON.stringify(streakRankings));

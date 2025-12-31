@@ -75,10 +75,9 @@ export default function BooksScreen() {
   const [showReader, setShowReader] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
 
-  const handlePurchase = (bookId: string) => {
-    purchaseBook(bookId);
+  const handlePurchase = async (bookId: string) => {
+    await purchaseBook(bookId);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setSelectedBook(null);
   };
 
   const handleRead = (book: Book) => {
@@ -531,10 +530,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
   },
   modalBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
   },
   detailModal: {
     backgroundColor: '#2d1b4e',

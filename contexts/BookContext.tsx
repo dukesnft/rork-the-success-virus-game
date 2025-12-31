@@ -58,8 +58,6 @@ export const [BookProvider, useBooks] = createContextHook(() => {
   }, [booksQuery.data]);
 
   const purchaseBook = useCallback(async (bookId: string) => {
-    console.log('Attempting to purchase book:', bookId);
-    
     Alert.alert(
       '💳 Real Money Purchase',
       'Books are purchased with real money through your app store account. This feature requires RevenueCat integration to be set up.',
@@ -68,8 +66,6 @@ export const [BookProvider, useBooks] = createContextHook(() => {
         {
           text: 'Purchase',
           onPress: async () => {
-            console.log('Processing book purchase for:', bookId);
-            
             setBooks(prev => {
               const updated = prev.map(book => 
                 book.id === bookId ? { ...book, isPurchased: true } : book
