@@ -1,0 +1,90 @@
+import Purchases, { LOG_LEVEL } from 'react-native-purchases';
+import { Platform } from 'react-native';
+
+let isConfigured = false;
+
+export function getRCApiKey(): string {
+  if (__DEV__ || Platform.OS === 'web') {
+    return process.env.EXPO_PUBLIC_REVENUECAT_TEST_API_KEY || '';
+  }
+  
+  return Platform.select({
+    ios: process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY || '',
+    android: process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY || '',
+    default: process.env.EXPO_PUBLIC_REVENUECAT_TEST_API_KEY || '',
+  });
+}
+
+export async function configureRevenueCat() {
+  if (isConfigured) {
+    console.log('[RevenueCat] Already configured');
+    return;
+  }
+
+  try {
+    const apiKey = getRCApiKey();
+    
+    if (!apiKey) {
+      console.warn('[RevenueCat] No API key found');
+      return;
+    }
+
+    console.log('[RevenueCat] Configuring with key:', apiKey.substring(0, 10) + '...');
+    
+    Purchases.setLogLevel(LOG_LEVEL.DEBUG);
+    await Purchases.configure({ apiKey });
+    
+    isConfigured = true;
+    console.log('[RevenueCat] Configured successfully');
+  } catch (error) {
+    console.error('[RevenueCat] Configuration error:', error);
+  }
+}
+
+export async function getOfferings() {
+  try {
+    const offerings = await Purchases.getOfferings();
+    console.log('[RevenueCat] Offerings:', offerings);
+    return offerings;
+  } catch (error) {
+    console.error('[RevenueCat] Error fetching offerings:', error);
+    return null;
+  }
+}
+
+export async function purchasePackage(packageToPurchase: any) {
+  try {
+    console.log('[RevenueCat] Purchasing package:', packageToPurchase.identifier);
+    const { customerInfo } = await Purchases.purchasePackage(packageToPurchase);
+    console.log('[RevenueCat] Purchase successful:', customerInfo);
+    return customerInfo;
+  } catch (error: any) {
+    if (!error.userCancelled) {
+      console.error('[RevenueCat] Purchase error:', error);
+    }
+    throw error;
+  }
+}
+
+export async function restorePurchases() {
+  try {
+    console.log('[RevenueCat] Restoring purchases...');
+    const customerInfo = await Purchases.restorePurchases();
+    console.log('[RevenueCat] Restored:', customerInfo);
+    return customerInfo;
+  } catch (error) {
+    console.error('[RevenueCat] Restore error:', error);
+    throw error;
+  }
+}
+
+export async function getCustomerInfo() {
+  try {
+    const customerInfo = await Purchases.getCustomerInfo();
+    console.log('[RevenueCat] Customer info:', customerInfo);
+    return customerInfo;
+  } catch (error) {
+    console.error('[RevenueCat] Error getting customer info:', error);
+    return null;
+  }
+}

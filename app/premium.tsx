@@ -1,9 +1,12 @@
-import { StyleSheet, View, Text, Pressable, ScrollView } from 'react-native';
+import { StyleSheet, View, Text, Pressable, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { X, Crown, Zap, Infinity, Sparkles, Check } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { usePremium } from '@/contexts/PremiumContext';
+import { useQuery } from '@tanstack/react-query';
+import { getOfferings } from '@/utils/revenuecat';
+import { useState } from 'react';
 
 const PREMIUM_BENEFITS = [
   { icon: Infinity, text: 'Unlimited manifestations', color: '#FFD700' },
@@ -14,13 +17,75 @@ const PREMIUM_BENEFITS = [
 
 export default function PremiumScreen() {
   const router = useRouter();
-  const { upgradeToPremium } = usePremium();
+  const { upgradeToPremium, restorePurchases, isPremium } = usePremium();
+  const [loading, setLoading] = useState(false);
 
-  const handleSubscribe = (duration: 'month' | 'year') => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    upgradeToPremium(duration);
-    setTimeout(() => router.back(), 500);
+  const { data: offerings, isLoading } = useQuery({
+    queryKey: ['revenuecat-offerings'],
+    queryFn: getOfferings,
+  });
+
+  const handleSubscribe = async (packageToPurchase: any) => {
+    if (loading) return;
+    
+    try {
+      setLoading(true);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      
+      const success = await upgradeToPremium(packageToPurchase);
+      
+      if (success) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Alert.alert('🎉 Welcome to Premium!', 'You now have access to all premium features!', [
+          { text: 'Awesome!', onPress: () => router.back() }
+        ]);
+      }
+    } catch {
+      Alert.alert('Purchase Failed', 'Could not complete the purchase. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handleRestore = async () => {
+    if (loading) return;
+    
+    try {
+      setLoading(true);
+      const success = await restorePurchases();
+      
+      if (success) {
+        Alert.alert('✅ Purchases Restored', 'Your premium access has been restored!');
+      } else {
+        Alert.alert('No Purchases Found', 'Could not find any previous purchases to restore.');
+      }
+    } catch {
+      Alert.alert('Restore Failed', 'Could not restore purchases. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (isPremium) {
+    return (
+      <View style={styles.container}>
+        <LinearGradient colors={['#1a0a2e', '#2d1b4e', '#3d2b5e']} style={styles.gradient}>
+          <Pressable style={styles.closeButton} onPress={() => router.back()}>
+            <X color="#fff" size={28} />
+          </Pressable>
+          <View style={styles.alreadyPremiumContainer}>
+            <Crown color="#FFD700" size={80} fill="#FFD700" />
+            <Text style={styles.alreadyPremiumTitle}>You&apos;re Premium!</Text>
+            <Text style={styles.alreadyPremiumText}>Enjoy all the premium benefits</Text>
+          </View>
+        </LinearGradient>
+      </View>
+    );
+  }
+
+  const defaultOffering = offerings?.current;
+  const monthlyPackage = defaultOffering?.availablePackages.find(p => p.identifier === 'monthly');
+  const annualPackage = defaultOffering?.availablePackages.find(p => p.identifier === 'annual');
 
   return (
     <View style={styles.container}>
@@ -62,45 +127,57 @@ export default function PremiumScreen() {
             })}
           </View>
 
-          <View style={styles.pricingContainer}>
-            <Pressable
-              style={styles.priceCard}
-              onPress={() => handleSubscribe('year')}
-            >
-              <LinearGradient
-                colors={['#FFD700', '#FFA500']}
-                style={styles.priceGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <View style={styles.popularBadge}>
-                  <Text style={styles.popularText}>BEST VALUE</Text>
-                </View>
-                <Text style={styles.priceDuration}>Yearly</Text>
-                <Text style={styles.priceAmount}>$29.99</Text>
-                <Text style={styles.priceDetail}>$2.50/month</Text>
-                <View style={styles.savingsBadge}>
-                  <Text style={styles.savingsText}>Save 50%</Text>
-                </View>
-              </LinearGradient>
-            </Pressable>
+          {isLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#FFD700" />
+              <Text style={styles.loadingText}>Loading offers...</Text>
+            </View>
+          ) : (
+            <View style={styles.pricingContainer}>
+              {annualPackage && (
+                <Pressable
+                  style={styles.priceCard}
+                  onPress={() => handleSubscribe(annualPackage)}
+                  disabled={loading}
+                >
+                  <LinearGradient
+                    colors={['#FFD700', '#FFA500']}
+                    style={styles.priceGradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                  >
+                    <View style={styles.popularBadge}>
+                      <Text style={styles.popularText}>BEST VALUE</Text>
+                    </View>
+                    <Text style={styles.priceDuration}>Yearly</Text>
+                    <Text style={styles.priceAmount}>{annualPackage.product.priceString}</Text>
+                    <Text style={styles.priceDetail}>billed annually</Text>
+                    {loading && <ActivityIndicator color="#fff" style={styles.buttonLoader} />}
+                  </LinearGradient>
+                </Pressable>
+              )}
 
-            <Pressable
-              style={styles.priceCard}
-              onPress={() => handleSubscribe('month')}
-            >
-              <LinearGradient
-                colors={['#9370DB', '#FF69B4']}
-                style={styles.priceGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <Text style={styles.priceDuration}>Monthly</Text>
-                <Text style={styles.priceAmount}>$4.99</Text>
-                <Text style={styles.priceDetail}>billed monthly</Text>
-              </LinearGradient>
-            </Pressable>
-          </View>
+              {monthlyPackage && (
+                <Pressable
+                  style={styles.priceCard}
+                  onPress={() => handleSubscribe(monthlyPackage)}
+                  disabled={loading}
+                >
+                  <LinearGradient
+                    colors={['#9370DB', '#FF69B4']}
+                    style={styles.priceGradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                  >
+                    <Text style={styles.priceDuration}>Monthly</Text>
+                    <Text style={styles.priceAmount}>{monthlyPackage.product.priceString}</Text>
+                    <Text style={styles.priceDetail}>billed monthly</Text>
+                    {loading && <ActivityIndicator color="#fff" style={styles.buttonLoader} />}
+                  </LinearGradient>
+                </Pressable>
+              )}
+            </View>
+          )}
 
           <View style={styles.featuresGrid}>
             <View style={styles.featureItem}>
@@ -120,6 +197,16 @@ export default function PremiumScreen() {
               <Text style={styles.featureText}>Special rewards</Text>
             </View>
           </View>
+
+          <Pressable
+            style={styles.restoreButton}
+            onPress={handleRestore}
+            disabled={loading}
+          >
+            <Text style={styles.restoreButtonText}>
+              {loading ? 'Restoring...' : 'Restore Purchases'}
+            </Text>
+          </Pressable>
 
           <Text style={styles.disclaimer}>
             Premium subscription gives you unlimited access to all features. Cancel anytime.
@@ -286,5 +373,50 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     marginBottom: 40,
     lineHeight: 20,
+  },
+  loadingContainer: {
+    paddingVertical: 60,
+    alignItems: 'center',
+    gap: 16,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#b8a9d9',
+  },
+  buttonLoader: {
+    marginTop: 12,
+  },
+  restoreButton: {
+    marginHorizontal: 24,
+    marginBottom: 16,
+    paddingVertical: 14,
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  restoreButtonText: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: '#b8a9d9',
+  },
+  alreadyPremiumContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  alreadyPremiumTitle: {
+    fontSize: 36,
+    fontWeight: '800' as const,
+    color: '#fff',
+    marginTop: 24,
+    marginBottom: 12,
+  },
+  alreadyPremiumText: {
+    fontSize: 18,
+    color: '#b8a9d9',
+    textAlign: 'center' as const,
   },
 });

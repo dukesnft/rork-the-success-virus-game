@@ -3,6 +3,7 @@ import createContextHook from '@nkzw/create-context-hook';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useEffect, useState, useCallback } from 'react';
 import { getEasternDateString, getEasternTime } from '@/utils/dateUtils';
+import { purchasePackage, restorePurchases as rcRestorePurchases, getCustomerInfo } from '@/utils/revenuecat';
 
 const PREMIUM_STORAGE_KEY = 'premium_status';
 const ENERGY_BOOSTS_KEY = 'energy_boosts';
@@ -450,15 +451,63 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     }
   }, [milestonesQuery.data]);
 
-  const upgradeToPremium = useCallback((duration: 'month' | 'year') => {
-    const now = Date.now();
-    const expiresAt = duration === 'month' 
-      ? now + 30 * 24 * 60 * 60 * 1000 
-      : now + 365 * 24 * 60 * 60 * 1000;
-    
-    const data: PremiumState = { isPremium: true, expiresAt };
-    setIsPremium(true);
-    savePremium(data);
+  const upgradeToPremium = useCallback(async (packageToPurchase: any) => {
+    try {
+      const customerInfo = await purchasePackage(packageToPurchase);
+      
+      if (customerInfo.entitlements.active['premium']) {
+        const entitlement = customerInfo.entitlements.active['premium'];
+        const expiresAt = entitlement.expirationDate ? new Date(entitlement.expirationDate).getTime() : null;
+        
+        const data: PremiumState = { isPremium: true, expiresAt };
+        setIsPremium(true);
+        savePremium(data);
+        return true;
+      }
+      return false;
+    } catch (error: any) {
+      console.error('Purchase failed:', error);
+      if (!error.userCancelled) {
+        throw error;
+      }
+      return false;
+    }
+  }, [savePremium]);
+
+  const restorePurchases = useCallback(async () => {
+    try {
+      const customerInfo = await rcRestorePurchases();
+      
+      if (customerInfo.entitlements.active['premium']) {
+        const entitlement = customerInfo.entitlements.active['premium'];
+        const expiresAt = entitlement.expirationDate ? new Date(entitlement.expirationDate).getTime() : null;
+        
+        const data: PremiumState = { isPremium: true, expiresAt };
+        setIsPremium(true);
+        savePremium(data);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Restore failed:', error);
+      throw error;
+    }
+  }, [savePremium]);
+
+  const checkPremiumStatus = useCallback(async () => {
+    try {
+      const customerInfo = await getCustomerInfo();
+      if (customerInfo && customerInfo.entitlements.active['premium']) {
+        const entitlement = customerInfo.entitlements.active['premium'];
+        const expiresAt = entitlement.expirationDate ? new Date(entitlement.expirationDate).getTime() : null;
+        
+        const data: PremiumState = { isPremium: true, expiresAt };
+        setIsPremium(true);
+        savePremium(data);
+      }
+    } catch (error) {
+      console.error('Failed to check premium status:', error);
+    }
   }, [savePremium]);
 
   const purchaseEnergyBoost = useCallback(() => {
@@ -851,5 +900,7 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     updateMilestoneProgress,
     claimMilestone,
     getUnclaimedMilestones,
+    restorePurchases,
+    checkPremiumStatus,
   };
 });

@@ -77,16 +77,16 @@ const generateMockRankings = (): { bloomedRankings: BloomedRanking[], legendaryR
     
     if (i < 5) {
       currentStreak = 8 + (randomFactor % 7);
-      longestStreak = currentStreak + (randomFactor % 4);
+      longestStreak = Math.min(14, currentStreak + (randomFactor % 4));
     } else if (i < 15) {
       currentStreak = 5 + (randomFactor % 6);
-      longestStreak = currentStreak + (randomFactor % 5);
+      longestStreak = Math.min(14, currentStreak + (randomFactor % 5));
     } else if (i < 30) {
       currentStreak = 2 + (randomFactor % 5);
-      longestStreak = currentStreak + (randomFactor % 6);
+      longestStreak = Math.min(14, currentStreak + (randomFactor % 6));
     } else {
       currentStreak = 1 + (randomFactor % 4);
-      longestStreak = currentStreak + (randomFactor % 8);
+      longestStreak = Math.min(14, currentStreak + (randomFactor % 8));
     }
     
     bloomedRankings.push({
