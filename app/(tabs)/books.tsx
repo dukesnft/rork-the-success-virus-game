@@ -542,6 +542,7 @@ const styles = StyleSheet.create({
     width: width * 0.9,
     maxWidth: 500,
     maxHeight: '80%',
+    minHeight: 500,
     borderWidth: 2,
     borderColor: 'rgba(255, 255, 255, 0.2)',
   },
@@ -555,7 +556,7 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   modalScroll: {
-    flex: 1,
+    flexGrow: 1,
   },
   modalContent: {
     padding: 24,

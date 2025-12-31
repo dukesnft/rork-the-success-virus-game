@@ -73,7 +73,7 @@ const generateMockRankings = (): { bloomedRankings: BloomedRanking[], legendaryR
     const legendaryCount = Math.min(Math.floor(totalBloomed * 0.12) + (randomFactor % 8), Math.floor(totalBloomed * 0.25));
     
     const currentStreak = Math.min((seed % 12) + 1 + Math.floor(i / 10), 14);
-    const longestStreak = Math.min(currentStreak + (randomFactor % 3), 14);
+    const longestStreak = Math.max(currentStreak, Math.min(currentStreak + (randomFactor % 5), 14));
     
     bloomedRankings.push({
       id: `bloomed_${i}`,
