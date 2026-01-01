@@ -222,14 +222,46 @@ const SHOP_ITEMS: ShopItem[] = [
     bestValue: true,
   },
   {
-    id: 'energy_pack',
-    name: '10 Energy Refills',
-    description: 'Never run out of energy',
-    price: 4.99,
+    id: 'energy_small',
+    name: '5 Energy Refills',
+    description: 'Quick energy boost',
+    price: 0.99,
     icon: Zap,
     color: '#FFA500',
     type: 'energy',
-    amount: 10,
+    amount: 5,
+  },
+  {
+    id: 'energy_medium',
+    name: '15 Energy Refills',
+    description: 'Stay energized longer',
+    price: 2.99,
+    icon: Zap,
+    color: '#FFA500',
+    type: 'energy',
+    amount: 15,
+    popular: true,
+  },
+  {
+    id: 'energy_large',
+    name: '40 Energy Refills',
+    description: 'Best value! Never run out',
+    price: 5.99,
+    icon: Zap,
+    color: '#FFD700',
+    type: 'energy',
+    amount: 40,
+    bestValue: true,
+  },
+  {
+    id: 'energy_mega',
+    name: '100 Energy Refills',
+    description: 'Ultimate energy supply',
+    price: 12.99,
+    icon: Zap,
+    color: '#FFD700',
+    type: 'energy',
+    amount: 100,
   },
   {
     id: 'auto_nurture',
@@ -707,14 +739,14 @@ export default function ShopScreen() {
             <Pressable
               style={styles.gemStoreCard}
               onPress={() => {
-                if (gems >= 900) {
+                if (gems >= 350) {
                   Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                  if (spendGems(900)) {
+                  if (spendGems(350)) {
                     refillEnergy();
                     Alert.alert('💫 Energy Refilled!', 'Full energy restored!');
                   }
                 } else {
-                  Alert.alert('Not Enough Gems', 'You need 900 gems to purchase this item.');
+                  Alert.alert('Not Enough Gems', 'You need 350 gems to purchase this item.');
                 }
               }}
             >
@@ -729,11 +761,45 @@ export default function ShopScreen() {
                 </View>
                 <View style={styles.gemStoreInfo}>
                   <Text style={styles.gemStoreTitle}>Full Energy Refill</Text>
-                  <Text style={styles.gemStoreDescription}>Restore all your energy</Text>
+                  <Text style={styles.gemStoreDescription}>Restore all your energy instantly</Text>
                 </View>
                 <View style={styles.gemStorePriceBox}>
                   <Gem color="#FFD700" size={20} />
-                  <Text style={styles.gemStorePrice}>900</Text>
+                  <Text style={styles.gemStorePrice}>350</Text>
+                </View>
+              </LinearGradient>
+            </Pressable>
+
+            <Pressable
+              style={styles.gemStoreCard}
+              onPress={() => {
+                if (gems >= 150) {
+                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                  if (spendGems(150)) {
+                    purchaseEnergyBoost();
+                    Alert.alert('⚡ Energy Boost!', '10 Energy refills added to your inventory!');
+                  }
+                } else {
+                  Alert.alert('Not Enough Gems', 'You need 150 gems to purchase this item.');
+                }
+              }}
+            >
+              <LinearGradient
+                colors={['#FF8C00', '#FF6347']}
+                style={styles.gemStoreGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.gemStoreIcon}>
+                  <Zap color="#FF8C00" size={32} fill="#FF8C00" />
+                </View>
+                <View style={styles.gemStoreInfo}>
+                  <Text style={styles.gemStoreTitle}>10 Energy Refills</Text>
+                  <Text style={styles.gemStoreDescription}>Stock up on energy for later</Text>
+                </View>
+                <View style={styles.gemStorePriceBox}>
+                  <Gem color="#FFD700" size={20} />
+                  <Text style={styles.gemStorePrice}>150</Text>
                 </View>
               </LinearGradient>
             </Pressable>
