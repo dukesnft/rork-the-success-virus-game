@@ -1,12 +1,12 @@
-import { StyleSheet, View, Text, Pressable, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, Text, Pressable, ScrollView, Alert, ActivityIndicator, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { X, Crown, Zap, Infinity, Sparkles, Check } from 'lucide-react-native';
+import { X, Crown, Zap, Infinity, Sparkles, Check, AlertCircle } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { usePremium } from '@/contexts/PremiumContext';
 import { useQuery } from '@tanstack/react-query';
 import { getOfferings } from '@/utils/revenuecat';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 const PREMIUM_BENEFITS = [
   { icon: Infinity, text: '25% off all purchases', color: '#FFD700' },
@@ -25,8 +25,12 @@ export default function PremiumScreen() {
     queryFn: getOfferings,
   });
 
-  const handleSubscribe = async (packageToPurchase: any) => {
+  const handleSubscribe = useCallback(async (packageToPurchase: any) => {
     if (loading) return;
+    if (Platform.OS === 'web') {
+      Alert.alert('Not Available', 'In-app purchases are only available on mobile devices. Please use the iOS or Android app.');
+      return;
+    }
     
     try {
       setLoading(true);
@@ -40,31 +44,40 @@ export default function PremiumScreen() {
           { text: 'Awesome!', onPress: () => router.back() }
         ]);
       }
-    } catch {
-      Alert.alert('Purchase Failed', 'Could not complete the purchase. Please try again.');
+    } catch (error: any) {
+      if (!error.userCancelled) {
+        Alert.alert('Purchase Failed', error.message || 'Could not complete the purchase. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, [loading, upgradeToPremium, router]);
 
-  const handleRestore = async () => {
+  const handleRestore = useCallback(async () => {
     if (loading) return;
+    if (Platform.OS === 'web') {
+      Alert.alert('Not Available', 'Restore purchases is only available on mobile devices.');
+      return;
+    }
     
     try {
       setLoading(true);
       const success = await restorePurchases();
       
       if (success) {
-        Alert.alert('✅ Purchases Restored', 'Your premium access has been restored!');
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Alert.alert('✅ Purchases Restored', 'Your premium access has been restored!', [
+          { text: 'Great!', onPress: () => router.back() }
+        ]);
       } else {
         Alert.alert('No Purchases Found', 'Could not find any previous purchases to restore.');
       }
-    } catch {
-      Alert.alert('Restore Failed', 'Could not restore purchases. Please try again.');
+    } catch (error: any) {
+      Alert.alert('Restore Failed', error.message || 'Could not restore purchases. Please try again.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [loading, restorePurchases, router]);
 
   if (isPremium) {
     return (
@@ -84,8 +97,14 @@ export default function PremiumScreen() {
   }
 
   const defaultOffering = offerings?.current;
-  const monthlyPackage = defaultOffering?.availablePackages.find(p => p.identifier === 'monthly');
-  const annualPackage = defaultOffering?.availablePackages.find(p => p.identifier === 'annual');
+  const monthlyPackage = defaultOffering?.availablePackages.find(p => 
+    p.identifier === '$rc_monthly' || p.identifier === 'monthly' || p.product.identifier.includes('month')
+  );
+  const annualPackage = defaultOffering?.availablePackages.find(p => 
+    p.identifier === '$rc_annual' || p.identifier === 'annual' || p.product.identifier.includes('year')
+  );
+  
+  const hasProducts = !!(monthlyPackage || annualPackage);
 
   return (
     <View style={styles.container}>
@@ -132,6 +151,26 @@ export default function PremiumScreen() {
               <ActivityIndicator size="large" color="#FFD700" />
               <Text style={styles.loadingText}>Loading offers...</Text>
             </View>
+          ) : !hasProducts && Platform.OS !== 'web' ? (
+            <View style={styles.errorContainer}>
+              <AlertCircle color="#FF6B6B" size={48} />
+              <Text style={styles.errorTitle}>No Products Available</Text>
+              <Text style={styles.errorText}>
+                Premium subscriptions are not configured yet. Please check the RevenueCat dashboard.
+              </Text>
+              <Pressable style={styles.retryButton} onPress={() => window.location.reload()}>
+                <Text style={styles.retryButtonText}>Retry</Text>
+              </Pressable>
+            </View>
+          ) : Platform.OS === 'web' ? (
+            <View style={styles.webNoticeContainer}>
+              <AlertCircle color="#FFD700" size={48} />
+              <Text style={styles.webNoticeTitle}>Mobile Only</Text>
+              <Text style={styles.webNoticeText}>
+                Premium subscriptions are only available on iOS and Android devices.
+                Download the app to upgrade!
+              </Text>
+            </View>
           ) : (
             <View style={styles.pricingContainer}>
               {annualPackage && (
@@ -177,6 +216,12 @@ export default function PremiumScreen() {
                 </Pressable>
               )}
             </View>
+          )}
+
+          {hasProducts && Platform.OS !== 'web' && (
+            <Text style={styles.productInfo}>
+              {defaultOffering?.availablePackages.length || 0} subscription option(s) available
+            </Text>
           )}
 
           <View style={styles.featuresGrid}>
@@ -373,6 +418,63 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     marginBottom: 40,
     lineHeight: 20,
+  },
+  errorContainer: {
+    paddingVertical: 60,
+    paddingHorizontal: 32,
+    alignItems: 'center',
+    gap: 16,
+  },
+  errorTitle: {
+    fontSize: 24,
+    fontWeight: '700' as const,
+    color: '#FF6B6B',
+    marginTop: 16,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#b8a9d9',
+    textAlign: 'center' as const,
+    lineHeight: 24,
+  },
+  retryButton: {
+    marginTop: 16,
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    backgroundColor: 'rgba(255, 107, 107, 0.2)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FF6B6B',
+  },
+  retryButtonText: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: '#FF6B6B',
+  },
+  webNoticeContainer: {
+    paddingVertical: 60,
+    paddingHorizontal: 32,
+    alignItems: 'center',
+    gap: 16,
+  },
+  webNoticeTitle: {
+    fontSize: 24,
+    fontWeight: '700' as const,
+    color: '#FFD700',
+    marginTop: 16,
+  },
+  webNoticeText: {
+    fontSize: 16,
+    color: '#b8a9d9',
+    textAlign: 'center' as const,
+    lineHeight: 24,
+  },
+  productInfo: {
+    fontSize: 14,
+    color: '#b8a9d9',
+    textAlign: 'center' as const,
+    marginTop: -16,
+    marginBottom: 16,
   },
   loadingContainer: {
     paddingVertical: 60,
