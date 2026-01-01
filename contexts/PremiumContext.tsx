@@ -132,7 +132,7 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
         const newStreak = data.lastPlayDate === yesterdayStr ? data.streak + 1 : 1;
         
         return {
-          energy: data.maxEnergy,
+          energy: Math.max(data.energy, data.maxEnergy),
           maxEnergy: data.maxEnergy,
           lastRefreshDate: today,
           streak: newStreak,
