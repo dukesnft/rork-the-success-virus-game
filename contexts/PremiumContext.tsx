@@ -546,15 +546,16 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
 
   const refillEnergy = useCallback(() => {
     const today = new Date().toISOString().split('T')[0];
-    setEnergy(maxEnergy);
+    const newEnergy = energy + maxEnergy;
+    setEnergy(newEnergy);
     saveEnergy({
-      energy: maxEnergy,
+      energy: newEnergy,
       maxEnergy,
       lastRefreshDate: today,
       streak,
       lastPlayDate: today,
     });
-  }, [maxEnergy, streak, saveEnergy]);
+  }, [energy, maxEnergy, streak, saveEnergy]);
 
   const addGems = useCallback((amount: number) => {
     const newGems = gems + amount;
@@ -740,7 +741,7 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
         setEnergy(prevEnergy => {
           const today = getEasternDateString();
           const energyBonus = Math.min(3 + Math.floor(newLevel / 3), 10);
-          const bonusEnergy = Math.min(prevEnergy + energyBonus, maxEnergy);
+          const bonusEnergy = prevEnergy + energyBonus;
           saveEnergy({
             energy: bonusEnergy,
             maxEnergy,
@@ -777,7 +778,7 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     
     setEnergy(prev => {
       const today = getEasternDateString();
-      const newEnergy = Math.min(prev + bonusEnergy, maxEnergy);
+      const newEnergy = prev + bonusEnergy;
       saveEnergy({
         energy: newEnergy,
         maxEnergy,
@@ -819,7 +820,7 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     if (milestone.reward.energy) {
       setEnergy(prev => {
         const today = getEasternDateString();
-        const newEnergy = Math.min(prev + milestone.reward.energy!, maxEnergy);
+        const newEnergy = prev + milestone.reward.energy!;
         saveEnergy({
           energy: newEnergy,
           maxEnergy,
