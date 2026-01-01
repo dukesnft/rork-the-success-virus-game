@@ -6,7 +6,7 @@ import { Book } from '@/types/book';
 import { AVAILABLE_BOOKS } from '@/constants/books';
 import { usePremium } from '@/contexts/PremiumContext';
 import { Alert, Platform } from 'react-native';
-import { purchasePackage, getBooksProducts } from '@/utils/revenuecat';
+import { purchasePackage, getBookProduct, checkAllPurchases } from '@/utils/revenuecat';
 
 const STORAGE_KEY = 'purchased_books';
 const LAST_PURCHASE_KEY = 'last_book_purchase';
@@ -25,6 +25,14 @@ export const [BookProvider, useBooks] = createContextHook(() => {
       const lastPurchase = await AsyncStorage.getItem(LAST_PURCHASE_KEY);
       if (lastPurchase) {
         setLastPurchaseTime(parseInt(lastPurchase));
+      }
+      
+      if (Platform.OS !== 'web' && !__DEV__) {
+        const rcPurchases = await checkAllPurchases();
+        rcPurchases.books.forEach(bookId => {
+          purchasedData[bookId] = { isPurchased: true, readingProgress: purchasedData[bookId]?.readingProgress || 0 };
+        });
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(purchasedData));
       }
       
       return AVAILABLE_BOOKS.map(book => ({
@@ -112,13 +120,10 @@ export const [BookProvider, useBooks] = createContextHook(() => {
     }
 
     try {
-      const productsData = await getBooksProducts();
-      console.log('[Books] Available book products:', productsData.length);
+      console.log('[Books] Starting purchase for:', bookId);
       
-      const bookProduct = productsData.find(
-        (pkg: any) => pkg.product.identifier === `book_${bookId}` || pkg.identifier === bookId
-      );
-
+      const bookProduct = await getBookProduct(bookId);
+      
       if (!bookProduct) {
         console.warn('[Books] Book product not found in RevenueCat:', bookId);
         Alert.alert(
@@ -131,27 +136,37 @@ export const [BookProvider, useBooks] = createContextHook(() => {
 
       console.log('[Books] Initiating purchase for:', bookProduct.product.identifier);
       
-      await purchasePackage(bookProduct);
+      const customerInfo = await purchasePackage(bookProduct);
       
-      console.log('[Books] Purchase successful, updating local state');
-      
-      setBooks(prev => {
-        const updated = prev.map(b => 
-          b.id === bookId ? { ...b, isPurchased: true } : b
+      const bookEntitlement = `book_${bookId}`;
+      if (customerInfo.entitlements.active[bookEntitlement]) {
+        console.log('[Books] Purchase successful, updating local state');
+        
+        setBooks(prev => {
+          const updated = prev.map(b => 
+            b.id === bookId ? { ...b, isPurchased: true } : b
+          );
+          saveMutate(updated);
+          return updated;
+        });
+        
+        const now = Date.now();
+        setLastPurchaseTime(now);
+        await AsyncStorage.setItem(LAST_PURCHASE_KEY, now.toString());
+        
+        Alert.alert(
+          '✅ Purchase Successful',
+          'Your book has been added to your library!',
+          [{ text: 'Great!', style: 'default' }]
         );
-        saveMutate(updated);
-        return updated;
-      });
-      
-      const now = Date.now();
-      setLastPurchaseTime(now);
-      await AsyncStorage.setItem(LAST_PURCHASE_KEY, now.toString());
-      
-      Alert.alert(
-        '✅ Purchase Successful',
-        'Your book has been added to your library!',
-        [{ text: 'Great!', style: 'default' }]
-      );
+      } else {
+        console.warn('[Books] Purchase completed but entitlement not found');
+        Alert.alert(
+          '⚠️ Purchase Issue',
+          'Purchase completed but book access pending. Please contact support if this persists.',
+          [{ text: 'OK' }]
+        );
+      }
     } catch (error: any) {
       console.error('[Books] Purchase error:', error);
       
@@ -181,6 +196,47 @@ export const [BookProvider, useBooks] = createContextHook(() => {
   const purchasedBooks = books.filter(book => book.isPurchased);
   const availableBooks = books.filter(book => !book.isPurchased);
 
+  const restorePurchases = useCallback(async () => {
+    try {
+      console.log('[Books] Restoring book purchases...');
+      const rcPurchases = await checkAllPurchases();
+      
+      if (rcPurchases.books.length > 0) {
+        console.log('[Books] Found purchased books:', rcPurchases.books);
+        
+        setBooks(prev => {
+          const updated = prev.map(b => 
+            rcPurchases.books.includes(b.id) ? { ...b, isPurchased: true } : b
+          );
+          saveMutate(updated);
+          return updated;
+        });
+        
+        Alert.alert(
+          '✅ Purchases Restored',
+          `${rcPurchases.books.length} book(s) restored successfully!`,
+          [{ text: 'Great!', style: 'default' }]
+        );
+        return true;
+      } else {
+        Alert.alert(
+          'ℹ️ No Purchases Found',
+          'No previous book purchases found to restore.',
+          [{ text: 'OK' }]
+        );
+        return false;
+      }
+    } catch (error) {
+      console.error('[Books] Restore error:', error);
+      Alert.alert(
+        '❌ Restore Failed',
+        'Unable to restore purchases. Please try again.',
+        [{ text: 'OK' }]
+      );
+      return false;
+    }
+  }, [saveMutate]);
+
   return {
     books,
     purchasedBooks,
@@ -190,5 +246,6 @@ export const [BookProvider, useBooks] = createContextHook(() => {
     updateReadingProgress,
     getBookPrice,
     hasRecentPurchase: !!(lastPurchaseTime && (Date.now() - lastPurchaseTime) < 5 * 60 * 1000),
+    restorePurchases,
   };
 });

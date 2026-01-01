@@ -153,6 +153,25 @@ export async function getBooksProducts() {
   return getProducts('books');
 }
 
+export async function getBookProduct(bookId: string) {
+  try {
+    const booksProducts = await getBooksProducts();
+    const bookProduct = booksProducts.find(
+      (pkg: any) => pkg.product.identifier === `book_${bookId}` || pkg.identifier === bookId
+    );
+    
+    if (!bookProduct) {
+      console.warn('[RevenueCat] Book product not found:', bookId);
+      return null;
+    }
+    
+    return bookProduct;
+  } catch (error) {
+    console.error('[RevenueCat] Error getting book product:', error);
+    return null;
+  }
+}
+
 export async function getAllShopProducts() {
   try {
     const offerings = await Purchases.getOfferings();
@@ -196,5 +215,44 @@ export async function purchaseProduct(productIdentifier: string) {
       console.error('[RevenueCat] Product purchase error:', error);
     }
     throw error;
+  }
+}
+
+export async function checkBookPurchase(bookId: string) {
+  try {
+    const customerInfo = await getCustomerInfo();
+    if (!customerInfo) return false;
+    
+    const bookEntitlement = `book_${bookId}`;
+    return !!(customerInfo.entitlements.active[bookEntitlement]);
+  } catch (error) {
+    console.error('[RevenueCat] Error checking book purchase:', error);
+    return false;
+  }
+}
+
+export async function checkAllPurchases() {
+  try {
+    const customerInfo = await getCustomerInfo();
+    if (!customerInfo) return { premium: false, books: [], products: {} };
+    
+    const purchases = {
+      premium: !!(customerInfo.entitlements.active['premium']),
+      books: [] as string[],
+      products: {} as Record<string, any>,
+    };
+    
+    Object.keys(customerInfo.entitlements.active).forEach(key => {
+      if (key.startsWith('book_')) {
+        purchases.books.push(key.replace('book_', ''));
+      } else if (key !== 'premium') {
+        purchases.products[key] = customerInfo.entitlements.active[key];
+      }
+    });
+    
+    return purchases;
+  } catch (error) {
+    console.error('[RevenueCat] Error checking all purchases:', error);
+    return { premium: false, books: [], products: {} };
   }
 }
