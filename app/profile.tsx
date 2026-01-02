@@ -396,6 +396,18 @@ export default function ProfileScreen() {
                 </View>
               )}
             </View>
+
+            {isOwnProfile && (
+              <View style={styles.dangerSection}>
+                <Text style={styles.dangerSectionTitle}>Account Management</Text>
+                <TouchableOpacity
+                  style={styles.deleteAccountButton}
+                  onPress={() => router.push('/delete-account')}
+                >
+                  <Text style={styles.deleteAccountText}>Delete Account & Data</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </ScrollView>
         </SafeAreaView>
       </LinearGradient>
@@ -962,5 +974,32 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600' as const,
     color: '#fff',
+  },
+  dangerSection: {
+    marginTop: 32,
+    paddingTop: 24,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  dangerSectionTitle: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: 'rgba(255, 255, 255, 0.6)',
+    marginBottom: 16,
+    paddingHorizontal: 4,
+  },
+  deleteAccountButton: {
+    backgroundColor: 'rgba(255, 71, 87, 0.15)',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 71, 87, 0.3)',
+    alignItems: 'center',
+  },
+  deleteAccountText: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: '#ff4757',
   },
 });

@@ -39,10 +39,16 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
   const settingsQuery = useQuery({
     queryKey: ['notification_settings'],
     queryFn: async () => {
-      const stored = await AsyncStorage.getItem(NOTIFICATION_STORAGE_KEY);
-      return stored ? JSON.parse(stored) : DEFAULT_SETTINGS;
+      try {
+        const stored = await AsyncStorage.getItem(NOTIFICATION_STORAGE_KEY);
+        return stored ? JSON.parse(stored) : DEFAULT_SETTINGS;
+      } catch (error) {
+        console.error('[Notification] Error loading settings:', error);
+        return DEFAULT_SETTINGS;
+      }
     },
     initialData: DEFAULT_SETTINGS,
+    staleTime: Infinity,
   });
 
   const saveSettingsMutation = useMutation({

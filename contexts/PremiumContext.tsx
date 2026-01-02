@@ -87,62 +87,85 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
   const premiumQuery = useQuery({
     queryKey: ['premium'],
     queryFn: async () => {
-      const stored = await AsyncStorage.getItem(PREMIUM_STORAGE_KEY);
-      const data: PremiumState = stored ? JSON.parse(stored) : { isPremium: false, expiresAt: null };
-      
-      if (data.isPremium && data.expiresAt && data.expiresAt < Date.now()) {
+      try {
+        const stored = await AsyncStorage.getItem(PREMIUM_STORAGE_KEY);
+        const data: PremiumState = stored ? JSON.parse(stored) : { isPremium: false, expiresAt: null };
+        
+        if (data.isPremium && data.expiresAt && data.expiresAt < Date.now()) {
+          return { isPremium: false, expiresAt: null };
+        }
+        
+        return data;
+      } catch (error) {
+        console.error('[Premium] Error loading premium status:', error);
         return { isPremium: false, expiresAt: null };
       }
-      
-      return data;
     },
     initialData: { isPremium: false, expiresAt: null },
+    staleTime: Infinity,
   });
 
   const boostsQuery = useQuery({
     queryKey: ['energyBoosts'],
     queryFn: async () => {
-      const stored = await AsyncStorage.getItem(ENERGY_BOOSTS_KEY);
-      return stored ? parseInt(stored) : 0;
+      try {
+        const stored = await AsyncStorage.getItem(ENERGY_BOOSTS_KEY);
+        return stored ? parseInt(stored) : 0;
+      } catch (error) {
+        console.error('[Premium] Error loading energy boosts:', error);
+        return 0;
+      }
     },
     initialData: 0,
+    staleTime: Infinity,
   });
 
   const energyQuery = useQuery({
     queryKey: ['dailyEnergy'],
     queryFn: async () => {
-      const stored = await AsyncStorage.getItem(ENERGY_STORAGE_KEY);
-      const today = getEasternDateString();
-      
-      if (!stored) {
+      try {
+        const stored = await AsyncStorage.getItem(ENERGY_STORAGE_KEY);
+        const today = getEasternDateString();
+        
+        if (!stored) {
+          return {
+            energy: 15,
+            maxEnergy: 15,
+            lastRefreshDate: today,
+            streak: 1,
+            lastPlayDate: today,
+          };
+        }
+        
+        const data: EnergyState = JSON.parse(stored);
+        
+        if (data.lastRefreshDate !== today) {
+          const yesterday = getEasternTime();
+          yesterday.setDate(yesterday.getDate() - 1);
+          const yesterdayStr = yesterday.toISOString().split('T')[0];
+          
+          const newStreak = data.lastPlayDate === yesterdayStr ? data.streak + 1 : 1;
+          
+          return {
+            energy: Math.max(data.energy, data.maxEnergy),
+            maxEnergy: data.maxEnergy,
+            lastRefreshDate: today,
+            streak: newStreak,
+            lastPlayDate: today,
+          };
+        }
+        
+        return data;
+      } catch (error) {
+        console.error('[Premium] Error loading energy:', error);
         return {
           energy: 15,
           maxEnergy: 15,
-          lastRefreshDate: today,
+          lastRefreshDate: getEasternDateString(),
           streak: 1,
-          lastPlayDate: today,
+          lastPlayDate: getEasternDateString(),
         };
       }
-      
-      const data: EnergyState = JSON.parse(stored);
-      
-      if (data.lastRefreshDate !== today) {
-        const yesterday = getEasternTime();
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayStr = yesterday.toISOString().split('T')[0];
-        
-        const newStreak = data.lastPlayDate === yesterdayStr ? data.streak + 1 : 1;
-        
-        return {
-          energy: Math.max(data.energy, data.maxEnergy),
-          maxEnergy: data.maxEnergy,
-          lastRefreshDate: today,
-          streak: newStreak,
-          lastPlayDate: today,
-        };
-      }
-      
-      return data;
     },
     initialData: {
       energy: 15,

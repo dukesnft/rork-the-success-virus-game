@@ -14,19 +14,31 @@ export const [InventoryProvider, useInventory] = createContextHook(() => {
   const inventoryQuery = useQuery({
     queryKey: ['inventory'],
     queryFn: async () => {
-      const stored = await AsyncStorage.getItem(STORAGE_KEY);
-      return stored ? JSON.parse(stored) : [];
+      try {
+        const stored = await AsyncStorage.getItem(STORAGE_KEY);
+        return stored ? JSON.parse(stored) : [];
+      } catch (error) {
+        console.error('[Inventory] Error loading inventory:', error);
+        return [];
+      }
     },
     initialData: [],
+    staleTime: Infinity,
   });
 
   const seedsQuery = useQuery({
     queryKey: ['seeds'],
     queryFn: async () => {
-      const stored = await AsyncStorage.getItem(SEEDS_STORAGE_KEY);
-      return stored ? JSON.parse(stored) : [];
+      try {
+        const stored = await AsyncStorage.getItem(SEEDS_STORAGE_KEY);
+        return stored ? JSON.parse(stored) : [];
+      } catch (error) {
+        console.error('[Inventory] Error loading seeds:', error);
+        return [];
+      }
     },
     initialData: [],
+    staleTime: Infinity,
   });
 
   const saveMutation = useMutation({

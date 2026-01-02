@@ -62,6 +62,7 @@ function RootLayoutNav() {
         <Stack.Screen name="inventory" options={{ presentation: "modal", headerShown: false }} />
         <Stack.Screen name="rankings" options={{ presentation: "modal", headerShown: false }} />
         <Stack.Screen name="profile" options={{ presentation: "modal", headerShown: false }} />
+        <Stack.Screen name="delete-account" options={{ presentation: "modal", headerShown: false }} />
       </Stack>
     </>
   );
@@ -71,15 +72,25 @@ export default function RootLayout() {
   useEffect(() => {
     const init = async () => {
       try {
-        await SplashScreen.hideAsync();
-        console.log('[App] Splash screen hidden');
+        console.log('[App] Starting initialization...');
+        
+        setTimeout(() => {
+          configureRevenueCat().catch(error => {
+            console.log('[App] RevenueCat config skipped:', error.message);
+          });
+        }, 100);
+        
+        setTimeout(async () => {
+          try {
+            await SplashScreen.hideAsync();
+            console.log('[App] Splash screen hidden');
+          } catch (e) {
+            console.log('[App] Splash hide error:', e);
+          }
+        }, 500);
       } catch (e) {
-        console.log('[App] Splash hide error:', e);
+        console.error('[App] Init error:', e);
       }
-      
-      configureRevenueCat().catch(error => {
-        console.log('[App] RevenueCat config skipped:', error.message);
-      });
     };
     
     init();

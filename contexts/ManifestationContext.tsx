@@ -64,10 +64,16 @@ export const [ManifestationProvider, useManifestations] = createContextHook(() =
   const manifestationsQuery = useQuery({
     queryKey: ['manifestations'],
     queryFn: async () => {
-      const stored = await AsyncStorage.getItem(STORAGE_KEY);
-      return stored ? JSON.parse(stored) : [];
+      try {
+        const stored = await AsyncStorage.getItem(STORAGE_KEY);
+        return stored ? JSON.parse(stored) : [];
+      } catch (error) {
+        console.error('[Manifestation] Error loading manifestations:', error);
+        return [];
+      }
     },
     initialData: [],
+    staleTime: Infinity,
   });
 
   const saveMutation = useMutation({
