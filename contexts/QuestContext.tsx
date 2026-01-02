@@ -62,7 +62,8 @@ export const [QuestProvider, useQuests] = createContextHook(() => {
         return parsedQuests;
       }
       return generateDailyQuests();
-    }
+    },
+    initialData: [],
   });
 
   const { mutate: saveMutate } = useMutation({

@@ -15,7 +15,8 @@ export const [JournalProvider, useJournal] = createContextHook(() => {
     queryFn: async () => {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       return stored ? JSON.parse(stored) : [];
-    }
+    },
+    initialData: [],
   });
 
   const saveMutation = useMutation({

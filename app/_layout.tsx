@@ -22,7 +22,15 @@ import { SocialProvider } from "@/contexts/SocialContext";
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 5000,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function NotificationScheduler() {
   const { inventory } = useInventory();
@@ -61,10 +69,20 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   useEffect(() => {
-    SplashScreen.hideAsync();
-    configureRevenueCat().catch(error => {
-      console.error('[App] Failed to configure RevenueCat:', error);
-    });
+    const init = async () => {
+      try {
+        await SplashScreen.hideAsync();
+        console.log('[App] Splash screen hidden');
+      } catch (e) {
+        console.log('[App] Splash hide error:', e);
+      }
+      
+      configureRevenueCat().catch(error => {
+        console.log('[App] RevenueCat config skipped:', error.message);
+      });
+    };
+    
+    init();
   }, []);
 
   return (

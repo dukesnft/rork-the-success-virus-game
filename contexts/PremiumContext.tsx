@@ -95,7 +95,8 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
       }
       
       return data;
-    }
+    },
+    initialData: { isPremium: false, expiresAt: null },
   });
 
   const boostsQuery = useQuery({
@@ -103,7 +104,8 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     queryFn: async () => {
       const stored = await AsyncStorage.getItem(ENERGY_BOOSTS_KEY);
       return stored ? parseInt(stored) : 0;
-    }
+    },
+    initialData: 0,
   });
 
   const energyQuery = useQuery({
@@ -141,7 +143,14 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
       }
       
       return data;
-    }
+    },
+    initialData: {
+      energy: 15,
+      maxEnergy: 15,
+      lastRefreshDate: '',
+      streak: 1,
+      lastPlayDate: '',
+    },
   });
 
   const gemsQuery = useQuery({
@@ -149,7 +158,8 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     queryFn: async () => {
       const stored = await AsyncStorage.getItem(GEMS_STORAGE_KEY);
       return stored ? parseInt(stored) : 0;
-    }
+    },
+    initialData: 0,
   });
 
   const specialSeedsQuery = useQuery({
@@ -157,7 +167,8 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     queryFn: async () => {
       const stored = await AsyncStorage.getItem(SPECIAL_SEEDS_KEY);
       return stored ? parseInt(stored) : 0;
-    }
+    },
+    initialData: 0,
   });
 
   const growthBoostersQuery = useQuery({
@@ -165,7 +176,8 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     queryFn: async () => {
       const stored = await AsyncStorage.getItem(GROWTH_BOOSTERS_KEY);
       return stored ? parseInt(stored) : 0;
-    }
+    },
+    initialData: 0,
   });
 
   const autoNurtureQuery = useQuery({
@@ -173,7 +185,8 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     queryFn: async () => {
       const stored = await AsyncStorage.getItem(AUTO_NURTURE_KEY);
       return stored === 'true';
-    }
+    },
+    initialData: false,
   });
 
   const purchasesQuery = useQuery({
@@ -181,7 +194,8 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     queryFn: async () => {
       const stored = await AsyncStorage.getItem(PURCHASES_KEY);
       return stored ? parseFloat(stored) : 0;
-    }
+    },
+    initialData: 0,
   });
 
   const freeSeedsQuery = useQuery({
@@ -201,7 +215,8 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
       }
       
       return data;
-    }
+    },
+    initialData: { claimedToday: 0, lastClaimDate: '' },
   });
 
   const comboQuery = useQuery({
@@ -209,7 +224,8 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     queryFn: async () => {
       const stored = await AsyncStorage.getItem(COMBO_KEY);
       return stored ? JSON.parse(stored) : { count: 0, multiplier: 1, lastActionTime: 0 };
-    }
+    },
+    initialData: { count: 0, multiplier: 1, lastActionTime: 0 },
   });
 
   const gardenLevelQuery = useQuery({
@@ -217,7 +233,8 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     queryFn: async () => {
       const stored = await AsyncStorage.getItem(GARDEN_LEVEL_KEY);
       return stored ? JSON.parse(stored) : { level: 1, xp: 0, maxPlantSlots: 6 };
-    }
+    },
+    initialData: { level: 1, xp: 0, maxPlantSlots: 6 },
   });
 
   const comebackQuery = useQuery({
@@ -242,7 +259,8 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
       }
       
       return data;
-    }
+    },
+    initialData: { lastLogin: '', consecutiveDays: 1, bonusClaimed: false },
   });
 
   const milestonesQuery = useQuery({
@@ -261,7 +279,8 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
         ] as Milestone[];
       }
       return JSON.parse(stored);
-    }
+    },
+    initialData: [],
   });
 
   const { mutate: savePremium } = useMutation({

@@ -153,7 +153,13 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
         longestStreak: 0,
         lastCheckIn: '',
       };
-    }
+    },
+    initialData: {
+      username: 'You',
+      currentStreak: 0,
+      longestStreak: 0,
+      lastCheckIn: '',
+    },
   });
 
   const bloomedRankingsQuery = useQuery({
@@ -169,7 +175,8 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
       const { bloomedRankings } = generateMockRankings();
       await AsyncStorage.setItem(STORAGE_KEY_BLOOMED, JSON.stringify(bloomedRankings));
       return bloomedRankings;
-    }
+    },
+    initialData: [],
   });
 
   const legendaryRankingsQuery = useQuery({
@@ -185,7 +192,8 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
       const { legendaryRankings } = generateMockRankings();
       await AsyncStorage.setItem(STORAGE_KEY_LEGENDARY, JSON.stringify(legendaryRankings));
       return legendaryRankings;
-    }
+    },
+    initialData: [],
   });
 
   const streakRankingsQuery = useQuery({
@@ -201,7 +209,8 @@ export const [RankingProvider, useRankings] = createContextHook(() => {
       const { streakRankings } = generateMockRankings();
       await AsyncStorage.setItem(STORAGE_KEY_STREAK, JSON.stringify(streakRankings));
       return streakRankings;
-    }
+    },
+    initialData: [],
   });
 
   const { mutate: saveUserDataMutate } = useMutation({

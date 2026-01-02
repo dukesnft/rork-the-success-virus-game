@@ -40,7 +40,8 @@ export const [BookProvider, useBooks] = createContextHook(() => {
         isPurchased: purchasedData[book.id]?.isPurchased || false,
         readingProgress: purchasedData[book.id]?.readingProgress || 0,
       }));
-    }
+    },
+    initialData: AVAILABLE_BOOKS,
   });
 
   const saveMutation = useMutation({

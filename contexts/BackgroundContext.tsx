@@ -29,7 +29,8 @@ export const [BackgroundProvider, useBackgrounds] = createContextHook(() => {
         ...bg,
         isPurchased: bg.id === 'cosmic-purple' || purchasedData[bg.id]?.isPurchased || false,
       }));
-    }
+    },
+    initialData: AVAILABLE_BACKGROUNDS.map(bg => ({ ...bg, isPurchased: bg.id === 'cosmic-purple' })),
   });
 
   const saveMutation = useMutation({

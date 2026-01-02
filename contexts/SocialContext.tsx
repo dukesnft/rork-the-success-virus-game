@@ -116,7 +116,8 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
       const stored = await AsyncStorage.getItem(FRIENDS_KEY);
       if (stored) return JSON.parse(stored);
       return generateMockFriends();
-    }
+    },
+    initialData: [],
   });
 
   const friendRequestsQuery = useQuery({
@@ -124,7 +125,8 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
     queryFn: async () => {
       const stored = await AsyncStorage.getItem(FRIEND_REQUESTS_KEY);
       return stored ? JSON.parse(stored) : [];
-    }
+    },
+    initialData: [],
   });
 
   const giftsQuery = useQuery({
@@ -132,7 +134,8 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
     queryFn: async () => {
       const stored = await AsyncStorage.getItem(GIFTS_KEY);
       return stored ? JSON.parse(stored) : [];
-    }
+    },
+    initialData: [],
   });
 
   const guildQuery = useQuery({
@@ -140,7 +143,8 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
     queryFn: async () => {
       const stored = await AsyncStorage.getItem(GUILD_KEY);
       return stored ? JSON.parse(stored) : null;
-    }
+    },
+    initialData: null,
   });
 
   const challengesQuery = useQuery({
@@ -156,7 +160,8 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
         return data;
       }
       return generateWeeklyChallenges();
-    }
+    },
+    initialData: [],
   });
 
   const eventsQuery = useQuery({
@@ -165,7 +170,8 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
       const stored = await AsyncStorage.getItem(EVENTS_KEY);
       if (stored) return JSON.parse(stored);
       return generateGlobalEvent();
-    }
+    },
+    initialData: null,
   });
 
   const { mutate: saveFriendsMutate } = useMutation({

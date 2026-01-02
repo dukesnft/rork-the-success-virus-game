@@ -20,7 +20,8 @@ export const [AchievementProvider, useAchievements] = createContextHook(() => {
         return JSON.parse(stored);
       }
       return ACHIEVEMENTS.map(a => ({ ...a, currentValue: 0, unlocked: false }));
-    }
+    },
+    initialData: ACHIEVEMENTS.map(a => ({ ...a, currentValue: 0, unlocked: false })),
   });
 
   const { mutate: saveMutate } = useMutation({

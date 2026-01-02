@@ -16,7 +16,8 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
     queryFn: async () => {
       const stored = await AsyncStorage.getItem(STORAGE_KEY_TOP_MANIFESTATIONS);
       return stored ? JSON.parse(stored) : [];
-    }
+    },
+    initialData: [],
   });
 
   const lastUsernameChangeQuery = useQuery({
@@ -24,7 +25,8 @@ export const [ProfileProvider, useProfile] = createContextHook(() => {
     queryFn: async () => {
       const stored = await AsyncStorage.getItem(STORAGE_KEY_LAST_USERNAME_CHANGE);
       return stored ? parseInt(stored, 10) : null;
-    }
+    },
+    initialData: null,
   });
 
   const { mutate: saveTopManifestations } = useMutation({

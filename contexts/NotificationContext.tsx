@@ -41,7 +41,8 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
     queryFn: async () => {
       const stored = await AsyncStorage.getItem(NOTIFICATION_STORAGE_KEY);
       return stored ? JSON.parse(stored) : DEFAULT_SETTINGS;
-    }
+    },
+    initialData: DEFAULT_SETTINGS,
   });
 
   const saveSettingsMutation = useMutation({

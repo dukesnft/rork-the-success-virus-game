@@ -16,7 +16,8 @@ export const [InventoryProvider, useInventory] = createContextHook(() => {
     queryFn: async () => {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       return stored ? JSON.parse(stored) : [];
-    }
+    },
+    initialData: [],
   });
 
   const seedsQuery = useQuery({
@@ -24,7 +25,8 @@ export const [InventoryProvider, useInventory] = createContextHook(() => {
     queryFn: async () => {
       const stored = await AsyncStorage.getItem(SEEDS_STORAGE_KEY);
       return stored ? JSON.parse(stored) : [];
-    }
+    },
+    initialData: [],
   });
 
   const saveMutation = useMutation({

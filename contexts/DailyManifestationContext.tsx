@@ -78,7 +78,8 @@ export const [DailyManifestationProvider, useDailyManifestations] = createContex
         : { manifestations: [], lastGeneratedDate: '', extraSlots: 0 };
       
       return data;
-    }
+    },
+    initialData: { manifestations: [], lastGeneratedDate: '', extraSlots: 0 },
   });
 
   const { mutate: saveMutate } = useMutation({

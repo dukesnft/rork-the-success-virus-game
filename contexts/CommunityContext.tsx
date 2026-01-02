@@ -121,7 +121,8 @@ export const [CommunityProvider, useCommunity] = createContextHook(() => {
       }
       const mock = generateMockSharedManifestations();
       return mock;
-    }
+    },
+    initialData: [],
   });
 
   const userSharedQuery = useQuery({
@@ -129,7 +130,8 @@ export const [CommunityProvider, useCommunity] = createContextHook(() => {
     queryFn: async () => {
       const stored = await AsyncStorage.getItem(STORAGE_KEY_USER_SHARED);
       return stored ? JSON.parse(stored) : [];
-    }
+    },
+    initialData: [],
   });
 
   const likedQuery = useQuery({
@@ -137,7 +139,8 @@ export const [CommunityProvider, useCommunity] = createContextHook(() => {
     queryFn: async () => {
       const stored = await AsyncStorage.getItem(STORAGE_KEY_LIKED);
       return stored ? new Set<string>(JSON.parse(stored)) : new Set<string>();
-    }
+    },
+    initialData: new Set<string>(),
   });
 
   const usernameQuery = useQuery({
@@ -145,7 +148,8 @@ export const [CommunityProvider, useCommunity] = createContextHook(() => {
     queryFn: async () => {
       const stored = await AsyncStorage.getItem(STORAGE_KEY_USERNAME);
       return stored || 'Dreamer';
-    }
+    },
+    initialData: 'Dreamer',
   });
 
   const { mutate: saveSharedMutate } = useMutation({
