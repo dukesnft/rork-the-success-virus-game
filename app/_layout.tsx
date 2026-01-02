@@ -63,7 +63,9 @@ function RootLayoutNav() {
 export default function RootLayout() {
   useEffect(() => {
     SplashScreen.hideAsync();
-    configureRevenueCat();
+    configureRevenueCat().catch(error => {
+      console.error('[App] Failed to configure RevenueCat:', error);
+    });
   }, []);
 
   return (

@@ -32,6 +32,7 @@ export async function configureRevenueCat() {
     
     if (!apiKey) {
       console.warn('[RevenueCat] No API key found for platform:', Platform.OS);
+      isConfigured = true;
       return;
     }
 
@@ -50,7 +51,8 @@ export async function configureRevenueCat() {
     console.log('[RevenueCat] Customer ID:', customerInfo.originalAppUserId);
   } catch (error) {
     console.error('[RevenueCat] ❌ Configuration error:', error);
-    throw error;
+    console.log('[RevenueCat] App will continue without RevenueCat features');
+    isConfigured = true;
   }
 }
 
