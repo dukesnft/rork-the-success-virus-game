@@ -74,22 +74,19 @@ export default function RootLayout() {
       try {
         console.log('[App] Starting initialization...');
         
+        await SplashScreen.hideAsync();
+        console.log('[App] Splash screen hidden');
+        
         setTimeout(() => {
           configureRevenueCat().catch(error => {
             console.log('[App] RevenueCat config skipped:', error.message);
           });
-        }, 100);
-        
-        setTimeout(async () => {
-          try {
-            await SplashScreen.hideAsync();
-            console.log('[App] Splash screen hidden');
-          } catch (e) {
-            console.log('[App] Splash hide error:', e);
-          }
-        }, 500);
+        }, 1000);
       } catch (e) {
         console.error('[App] Init error:', e);
+        try {
+          await SplashScreen.hideAsync();
+        } catch {}
       }
     };
     
