@@ -28,7 +28,7 @@ export async function configureRevenueCat() {
   }
 
   const timeoutPromise = new Promise((_, reject) => {
-    setTimeout(() => reject(new Error('RevenueCat configuration timeout')), 5000);
+    setTimeout(() => reject(new Error('RevenueCat configuration timeout')), 3000);
   });
 
   try {
@@ -43,7 +43,7 @@ export async function configureRevenueCat() {
     console.log('[RevenueCat] Configuring SDK...');
     console.log('[RevenueCat] Platform:', Platform.OS);
     
-    Purchases.setLogLevel(LOG_LEVEL.WARN);
+    Purchases.setLogLevel(LOG_LEVEL.ERROR);
     
     await Promise.race([
       Purchases.configure({ apiKey }),
@@ -53,8 +53,11 @@ export async function configureRevenueCat() {
     isConfigured = true;
     console.log('[RevenueCat] ✅ Configured successfully');
     
-    const customerInfo = await Purchases.getCustomerInfo();
-    console.log('[RevenueCat] Customer ID:', customerInfo.originalAppUserId);
+    Purchases.getCustomerInfo().then(customerInfo => {
+      console.log('[RevenueCat] Customer ID:', customerInfo.originalAppUserId);
+    }).catch(err => {
+      console.log('[RevenueCat] Could not fetch customer info:', err.message);
+    });
   } catch (error: any) {
     console.error('[RevenueCat] ❌ Configuration error:', error?.message || error);
     console.log('[RevenueCat] App will continue without RevenueCat features');

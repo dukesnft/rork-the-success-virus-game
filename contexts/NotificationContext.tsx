@@ -65,7 +65,9 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
   }, [settingsQuery.data]);
 
   useEffect(() => {
-    checkPermissions();
+    setTimeout(() => {
+      checkPermissions();
+    }, 1000);
   }, []);
 
   const checkPermissions = async () => {
@@ -74,8 +76,13 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
       return;
     }
 
-    const { status } = await Notifications.getPermissionsAsync();
-    setPermissionStatus(status);
+    try {
+      const { status } = await Notifications.getPermissionsAsync();
+      setPermissionStatus(status);
+    } catch (error) {
+      console.log('[Notification] Permission check failed:', error);
+      setPermissionStatus('undetermined');
+    }
   };
 
   const requestPermissions = useCallback(async (): Promise<boolean> => {

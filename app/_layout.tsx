@@ -26,9 +26,11 @@ SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 1,
-      staleTime: 5000,
+      retry: 0,
+      staleTime: Infinity,
       refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      refetchOnReconnect: false,
     },
   },
 });
@@ -70,10 +72,20 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
+  const [isReady, setIsReady] = React.useState(false);
+
   useEffect(() => {
     const init = async () => {
       try {
         console.log('[App] Starting initialization...');
+        
+        configureRevenueCat().catch(error => {
+          console.log('[App] RevenueCat config skipped:', error.message);
+        });
+        
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        setIsReady(true);
         
         setTimeout(async () => {
           try {
@@ -82,20 +94,20 @@ export default function RootLayout() {
           } catch {
             console.log('[App] Splash screen already hidden');
           }
-        }, 500);
-        
-        setTimeout(() => {
-          configureRevenueCat().catch(error => {
-            console.log('[App] RevenueCat config skipped:', error.message);
-          });
-        }, 2000);
+        }, 300);
       } catch (e) {
         console.error('[App] Init error:', e);
+        setIsReady(true);
+        SplashScreen.hideAsync().catch(() => {});
       }
     };
     
     init();
   }, []);
+
+  if (!isReady) {
+    return null;
+  }
 
   return (
     <ErrorBoundary>

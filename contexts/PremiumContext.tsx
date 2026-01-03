@@ -103,6 +103,8 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
     },
     initialData: { isPremium: false, expiresAt: null },
     staleTime: Infinity,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   });
 
   const boostsQuery = useQuery({
@@ -174,6 +176,8 @@ export const [PremiumProvider, usePremium] = createContextHook(() => {
       streak: 1,
       lastPlayDate: '',
     },
+    staleTime: 60000,
+    refetchOnMount: false,
   });
 
   const gemsQuery = useQuery({
