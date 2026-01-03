@@ -4,7 +4,6 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useEffect, useState, useCallback } from 'react';
 import { Background } from '@/types/background';
 import { AVAILABLE_BACKGROUNDS } from '@/constants/backgrounds';
-import { usePremium } from '@/contexts/PremiumContext';
 
 const STORAGE_KEY = 'backgrounds';
 const SELECTED_BG_KEY = 'selected_background';
@@ -12,7 +11,7 @@ const SELECTED_BG_KEY = 'selected_background';
 export const [BackgroundProvider, useBackgrounds] = createContextHook(() => {
   const [backgrounds, setBackgrounds] = useState<Background[]>(AVAILABLE_BACKGROUNDS);
   const [selectedBackgroundId, setSelectedBackgroundId] = useState<string>('cosmic-purple');
-  const { isPremium } = usePremium();
+  const [isPremium, setIsPremium] = useState(false);
 
   const backgroundsQuery = useQuery({
     queryKey: ['backgrounds'],
@@ -68,12 +67,16 @@ export const [BackgroundProvider, useBackgrounds] = createContextHook(() => {
     await AsyncStorage.setItem(SELECTED_BG_KEY, backgroundId);
   }, []);
 
-  const getBackgroundPrice = useCallback((background: Background) => {
-    if (isPremium) {
+  const getBackgroundPrice = useCallback((background: Background, premiumStatus?: boolean) => {
+    if (premiumStatus !== undefined ? premiumStatus : isPremium) {
       return background.price * 0.5;
     }
     return background.price;
   }, [isPremium]);
+
+  const updatePremiumStatus = useCallback((status: boolean) => {
+    setIsPremium(status);
+  }, []);
 
   const selectedBackground = backgrounds.find(bg => bg.id === selectedBackgroundId) || backgrounds[0];
   const purchasedBackgrounds = backgrounds.filter(bg => bg.isPurchased);
@@ -88,5 +91,6 @@ export const [BackgroundProvider, useBackgrounds] = createContextHook(() => {
     purchaseBackground,
     selectBackground,
     getBackgroundPrice,
+    updatePremiumStatus,
   };
 });

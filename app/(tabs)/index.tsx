@@ -95,7 +95,7 @@ const BackgroundStoreModal = memo(({ onClose }: { onClose: () => void }) => {
                     {isPremium && (
                       <Text style={styles.bgOriginalPrice}>${bg.price.toFixed(2)}</Text>
                     )}
-                    <Text style={styles.bgPriceText}>${getBackgroundPrice(bg).toFixed(2)}</Text>
+                    <Text style={styles.bgPriceText}>${getBackgroundPrice(bg, isPremium).toFixed(2)}</Text>
                   </View>
                 )}
               </Pressable>
@@ -127,7 +127,7 @@ const BackgroundStoreModal = memo(({ onClose }: { onClose: () => void }) => {
                   end={{ x: 1, y: 1 }}
                 >
                   <Text style={styles.purchaseConfirmText}>
-                    Buy for ${getBackgroundPrice(selectedBg).toFixed(2)}
+                    Buy for ${getBackgroundPrice(selectedBg, isPremium).toFixed(2)}
                   </Text>
                 </LinearGradient>
               </Pressable>

@@ -9,7 +9,7 @@ import { PremiumProvider, usePremium } from "@/contexts/PremiumContext";
 import { NotificationProvider, useNotifications } from "@/contexts/NotificationContext";
 import { BookProvider } from "@/contexts/BookContext";
 import { DailyManifestationProvider } from "@/contexts/DailyManifestationContext";
-import { BackgroundProvider } from "@/contexts/BackgroundContext";
+import { BackgroundProvider, useBackgrounds } from "@/contexts/BackgroundContext";
 import { JournalProvider } from "@/contexts/JournalContext";
 import { InventoryProvider, useInventory } from "@/contexts/InventoryContext";
 import { RankingProvider } from "@/contexts/RankingContext";
@@ -41,13 +41,20 @@ function NotificationScheduler() {
   const { scheduleManifestationReminders, permissionStatus } = useNotifications();
 
   useEffect(() => {
-    if (permissionStatus === 'granted' && inventory.length > 0) {
-      const bloomedCount = inventory.filter(item => item.stage === 'blooming').length;
-      if (bloomedCount > 0) {
-        console.log(`Scheduling reminders for ${bloomedCount} bloomed manifestations`);
-        scheduleManifestationReminders(inventory, isPremium);
+    const schedule = async () => {
+      try {
+        if (permissionStatus === 'granted' && inventory.length > 0) {
+          const bloomedCount = inventory.filter(item => item.stage === 'blooming').length;
+          if (bloomedCount > 0) {
+            console.log(`Scheduling reminders for ${bloomedCount} bloomed manifestations`);
+            await scheduleManifestationReminders(inventory, isPremium);
+          }
+        }
+      } catch (error) {
+        console.log('[NotificationScheduler] Error:', error);
       }
-    }
+    };
+    schedule();
   }, [inventory, isPremium, scheduleManifestationReminders, permissionStatus]);
 
   return null;
@@ -71,6 +78,17 @@ function RootLayoutNav() {
   );
 }
 
+function AppInitializer() {
+  const { updatePremiumStatus } = useBackgrounds();
+  const { isPremium } = usePremium();
+
+  useEffect(() => {
+    updatePremiumStatus(isPremium);
+  }, [isPremium, updatePremiumStatus]);
+
+  return null;
+}
+
 export default function RootLayout() {
   const [isReady, setIsReady] = React.useState(false);
 
@@ -79,26 +97,35 @@ export default function RootLayout() {
       try {
         console.log('[App] Starting initialization...');
         
-        configureRevenueCat().catch(error => {
-          console.log('[App] RevenueCat config skipped:', error.message);
-        });
+        const timeoutId = setTimeout(() => {
+          console.log('[App] Init timeout, forcing ready state');
+          setIsReady(true);
+        }, 3000);
         
-        await new Promise(resolve => setTimeout(resolve, 100));
+        try {
+          await configureRevenueCat();
+          console.log('[App] RevenueCat configured');
+        } catch (error: any) {
+          console.log('[App] RevenueCat config skipped:', error?.message || 'Unknown error');
+        }
         
+        clearTimeout(timeoutId);
         setIsReady(true);
         
         setTimeout(async () => {
           try {
             await SplashScreen.hideAsync();
             console.log('[App] Splash screen hidden');
-          } catch {
-            console.log('[App] Splash screen already hidden');
+          } catch (error) {
+            console.log('[App] Splash screen already hidden or error:', error);
           }
-        }, 300);
+        }, 500);
       } catch (e) {
         console.error('[App] Init error:', e);
         setIsReady(true);
-        SplashScreen.hideAsync().catch(() => {});
+        try {
+          await SplashScreen.hideAsync();
+        } catch {}
       }
     };
     
@@ -114,35 +141,36 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <GestureHandlerRootView style={{ flex: 1 }}>
           <ErrorBoundary>
-            <ManifestationProvider>
-              <InventoryProvider>
-                <PremiumProvider>
-                  <NotificationProvider>
-                    <AchievementProvider>
-                      <QuestProvider>
-                        <DailyManifestationProvider>
-                          <BookProvider>
-                            <BackgroundProvider>
+            <PremiumProvider>
+              <ManifestationProvider>
+                <InventoryProvider>
+                  <BackgroundProvider>
+                    <NotificationProvider>
+                      <AchievementProvider>
+                        <QuestProvider>
+                          <DailyManifestationProvider>
+                            <BookProvider>
                               <JournalProvider>
                                 <SocialProvider>
                                   <RankingProvider>
                                     <CommunityProvider>
                                       <ProfileProvider>
+                                        <AppInitializer />
                                         <RootLayoutNav />
                                       </ProfileProvider>
                                     </CommunityProvider>
                                   </RankingProvider>
                                 </SocialProvider>
                               </JournalProvider>
-                            </BackgroundProvider>
-                          </BookProvider>
-                        </DailyManifestationProvider>
-                      </QuestProvider>
-                    </AchievementProvider>
-                  </NotificationProvider>
-                </PremiumProvider>
-              </InventoryProvider>
-            </ManifestationProvider>
+                            </BookProvider>
+                          </DailyManifestationProvider>
+                        </QuestProvider>
+                      </AchievementProvider>
+                    </NotificationProvider>
+                  </BackgroundProvider>
+                </InventoryProvider>
+              </ManifestationProvider>
+            </PremiumProvider>
           </ErrorBoundary>
         </GestureHandlerRootView>
       </QueryClientProvider>
