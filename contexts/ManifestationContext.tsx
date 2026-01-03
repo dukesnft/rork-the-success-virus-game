@@ -4,9 +4,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useEffect, useState, useCallback } from 'react';
 import { Manifestation, GrowthStage, SeedRarity } from '@/types/manifestation';
 import { ENERGY_PER_STAGE } from '@/constants/manifestation';
-import { usePremium } from '@/contexts/PremiumContext';
-import { useNotifications } from '@/contexts/NotificationContext';
-import { useInventory } from '@/contexts/InventoryContext';
+
 import { Dimensions } from 'react-native';
 
 const STORAGE_KEY = 'manifestations';
@@ -57,9 +55,13 @@ const generateSmartPosition = (existingManifestations: Manifestation[]): { x: nu
 
 export const [ManifestationProvider, useManifestations] = createContextHook(() => {
   const [manifestations, setManifestations] = useState<Manifestation[]>([]);
-  const { isPremium, earnGems, maxPlantSlots } = usePremium();
-  const { scheduleManifestationNotification, cancelManifestationNotification } = useNotifications();
-  const { addToInventory } = useInventory();
+  const [maxPlantSlots] = useState(6);
+  const [isPremiumUser] = useState(false);
+  
+  const scheduleNotificationStub = (_id: string, _intention: string, _category: string) => {};
+  const cancelNotificationStub = (_id: string) => {};
+  const addToInventoryStub = (_item: any) => {};
+  const earnGemsStub = (_amount: number, _reason: string) => {};
 
   const manifestationsQuery = useQuery({
     queryKey: ['manifestations'],
@@ -114,7 +116,7 @@ export const [ManifestationProvider, useManifestations] = createContextHook(() =
       const updated = [...prev, newManifestation];
       saveMutate(updated);
       
-      scheduleManifestationNotification(
+      scheduleNotificationStub(
         newManifestation.id,
         newManifestation.intention,
         newManifestation.category
@@ -122,16 +124,16 @@ export const [ManifestationProvider, useManifestations] = createContextHook(() =
       
       return updated;
     });
-  }, [maxPlantSlots, saveMutate, scheduleManifestationNotification]);
+  }, [maxPlantSlots, saveMutate]);
 
   useEffect(() => {
     if (manifestations.length > maxPlantSlots) {
-      // Plants limit reached
+      console.log('[Manifestation] Plants limit reached');
     }
   }, [manifestations.length, maxPlantSlots]);
 
   const nurtureManifestation = useCallback((id: string) => {
-    const baseEnergyGain = isPremium ? 18 : 12;
+    const baseEnergyGain = isPremiumUser ? 18 : 12;
     setManifestations(prev => {
       const updated = prev.map(m => {
         if (m.id === id) {
@@ -155,16 +157,16 @@ export const [ManifestationProvider, useManifestations] = createContextHook(() =
       saveMutate(updated);
       return updated;
     });
-  }, [saveMutate, isPremium]);
+  }, [saveMutate, isPremiumUser]);
 
   const deleteManifestation = useCallback((id: string) => {
     setManifestations(prev => {
       const updated = prev.filter(m => m.id !== id);
       saveMutate(updated);
-      cancelManifestationNotification(id);
+      cancelNotificationStub(id);
       return updated;
     });
-  }, [saveMutate, cancelManifestationNotification]);
+  }, [saveMutate]);
 
   const harvestManifestation = useCallback((id: string) => {
     setManifestations(prev => {
@@ -184,7 +186,7 @@ export const [ManifestationProvider, useManifestations] = createContextHook(() =
           }
         }
         
-        addToInventory({
+        addToInventoryStub({
           intention: manifestation.intention,
           category: manifestation.category,
           stage: manifestation.stage,
@@ -196,26 +198,26 @@ export const [ManifestationProvider, useManifestations] = createContextHook(() =
         const gemReward = harvestedRarity === 'legendary' ? 200 : 
                           harvestedRarity === 'epic' ? 80 : 
                           harvestedRarity === 'rare' ? 35 : 20;
-        earnGems(gemReward, `Harvested ${harvestedRarity} bloom`);
+        earnGemsStub(gemReward, `Harvested ${harvestedRarity} bloom`);
         
         if (isLegendary) {
-          earnGems(100, '🌟 Legendary Bloom Bonus!');
+          earnGemsStub(100, '🌟 Legendary Bloom Bonus!');
           const bonusRoll = Math.random();
           if (bonusRoll < 0.3) {
-            earnGems(150, '🎰 Legendary Jackpot!');
+            earnGemsStub(150, '🎰 Legendary Jackpot!');
           }
           if (bonusRoll < 0.05) {
-            earnGems(250, '💎 Ultra Rare Legendary Bonus!');
+            earnGemsStub(250, '💎 Ultra Rare Legendary Bonus!');
           }
         }
       }
       
       const updated = prev.filter(m => m.id !== id);
       saveMutate(updated);
-      cancelManifestationNotification(id);
+      cancelNotificationStub(id);
       return updated;
     });
-  }, [saveMutate, cancelManifestationNotification, addToInventory, earnGems]);
+  }, [saveMutate]);
 
   const instantGrowManifestation = useCallback((id: string) => {
     setManifestations(prev => {

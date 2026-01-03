@@ -18,6 +18,7 @@ import { ProfileProvider } from "@/contexts/ProfileContext";
 import { AchievementProvider } from "@/contexts/AchievementContext";
 import { QuestProvider } from "@/contexts/QuestContext";
 import { SocialProvider } from "@/contexts/SocialContext";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -74,19 +75,22 @@ export default function RootLayout() {
       try {
         console.log('[App] Starting initialization...');
         
-        await SplashScreen.hideAsync();
-        console.log('[App] Splash screen hidden');
+        setTimeout(async () => {
+          try {
+            await SplashScreen.hideAsync();
+            console.log('[App] Splash screen hidden');
+          } catch {
+            console.log('[App] Splash screen already hidden');
+          }
+        }, 500);
         
         setTimeout(() => {
           configureRevenueCat().catch(error => {
             console.log('[App] RevenueCat config skipped:', error.message);
           });
-        }, 1000);
+        }, 2000);
       } catch (e) {
         console.error('[App] Init error:', e);
-        try {
-          await SplashScreen.hideAsync();
-        } catch {}
       }
     };
     
@@ -94,38 +98,42 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-        <PremiumProvider>
-        <AchievementProvider>
-          <QuestProvider>
-            <NotificationProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <ErrorBoundary>
+            <ManifestationProvider>
               <InventoryProvider>
-                <SocialProvider>
-                  <RankingProvider>
-                    <CommunityProvider>
-                      <ProfileProvider>
-                        <ManifestationProvider>
-                  <DailyManifestationProvider>
-                    <BookProvider>
-                      <BackgroundProvider>
-                        <JournalProvider>
-                          <GestureHandlerRootView>
-                            <RootLayoutNav />
-                          </GestureHandlerRootView>
-                        </JournalProvider>
-                      </BackgroundProvider>
-                    </BookProvider>
-                  </DailyManifestationProvider>
-                        </ManifestationProvider>
-                      </ProfileProvider>
-                    </CommunityProvider>
-                  </RankingProvider>
-                </SocialProvider>
+                <PremiumProvider>
+                  <NotificationProvider>
+                    <AchievementProvider>
+                      <QuestProvider>
+                        <DailyManifestationProvider>
+                          <BookProvider>
+                            <BackgroundProvider>
+                              <JournalProvider>
+                                <SocialProvider>
+                                  <RankingProvider>
+                                    <CommunityProvider>
+                                      <ProfileProvider>
+                                        <RootLayoutNav />
+                                      </ProfileProvider>
+                                    </CommunityProvider>
+                                  </RankingProvider>
+                                </SocialProvider>
+                              </JournalProvider>
+                            </BackgroundProvider>
+                          </BookProvider>
+                        </DailyManifestationProvider>
+                      </QuestProvider>
+                    </AchievementProvider>
+                  </NotificationProvider>
+                </PremiumProvider>
               </InventoryProvider>
-            </NotificationProvider>
-          </QuestProvider>
-        </AchievementProvider>
-        </PremiumProvider>
+            </ManifestationProvider>
+          </ErrorBoundary>
+        </GestureHandlerRootView>
       </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
